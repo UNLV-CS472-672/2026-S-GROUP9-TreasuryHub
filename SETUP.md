@@ -184,9 +184,6 @@ git checkout main
 
 # Get the latest changes (including your merged work)
 git pull origin main
-
-# Delete your local feature branch (optional, keeps things clean)
-git branch -d feature/your-name-feature
 ```
 
 ### Useful Git Commands
