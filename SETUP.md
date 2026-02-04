@@ -72,7 +72,7 @@ cd treasury_hub
 npm install
 
 # Copy environment variables
-cp .env.example .env.local
+cp .envexample .env.local
 
 # Open .env.local and verify it has the Supabase URL and anon key
 # (They should already be there from .env.example)
