@@ -1,0 +1,4 @@
+# In your local repository, you will create a .env.local file. It should have the following two lines:
+
+NEXT_PUBLIC_SUPABASE_URL=https://rdzovwebfyusnnkzvtnf.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_J-EsTuiD_iy8Ug46au5myg_cm-0IRQp
