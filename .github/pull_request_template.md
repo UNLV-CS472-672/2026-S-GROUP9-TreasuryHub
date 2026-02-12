@@ -1,6 +1,5 @@
-## What does this PR do?
+## Description
 <!-- One sentence description -->
-
 
 ---
 
@@ -21,10 +20,9 @@
 ## Screenshots
 <!-- Only if you changed the UI - drag and drop images here -->
 
-
 ---
 
 ## Checklist
 <!-- Mark with an X -->
-- [ ] Tested locally
-- [ ] No errors in console
+- [ _ ] Tested locally
+- [ _ ] No errors in console
