@@ -1,0 +1,56 @@
+# Always leave one line of space before the next set of separators i.e
+# --------------
+# Section Title
+# --------------
+# Your input for the section
+# Line of Space
+# --------------
+# Next Section
+# --------------
+# Your input
+# and so on ....
+--------------------------------------------------------------------------------
+# STEP 1: Choose any applicable types (delete the # before your choice)
+Type:
+--------------------------------------------------------------------------------
+# [feat]     New feature/page
+# [fix]      Bug fix
+# [update]   Improving existing feature
+# [style]    UI/design changes
+# [docs]     Documentation
+# [setup]    Config/dependencies
+
+--------------------------------------------------------------------------------
+# STEP 2: Short description (what did you do? Keep under 50 chars)
+Short Description:
+--------------------------------------------------------------------------------
+
+# Example: Added login page and created username/password login functionality
+
+--------------------------------------------------------------------------------
+# STEP 3: What changed? (list the main changes)
+Changes:
+--------------------------------------------------------------------------------
+- 
+- 
+- 
+# Add/remove from the list as needed
+# Example:
+# - Added login/page.tsx
+# - Added username/password input elements
+# - Connected form to Supabase auth API
+
+--------------------------------------------------------------------------------
+# STEP 4: Why was this needed?
+Reasoning:
+--------------------------------------------------------------------------------
+
+# Example: Core functionality for user authentication per MVP requirements
+
+--------------------------------------------------------------------------------
+# STEP 5: Notes (optional - anything teammates should know?)
+Notes:
+--------------------------------------------------------------------------------
+
+
+# Example: Work in progress, needs password reset feature to be fully complete
