@@ -68,6 +68,9 @@ git clone https://github.com/UNLV-CS472-672/2026-S-GROUP9-TreasuryHub.git treasu
 # Enter the project directory
 cd treasury_hub
 
+# Set up the commit template as your default for commits
+Run the command "git config commit.template .gitmessage" in your terminal
+
 # Install dependencies (this might take a minute)
 npm install
 
