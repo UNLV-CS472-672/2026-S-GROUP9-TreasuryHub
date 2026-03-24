@@ -1,4 +1,8 @@
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 -- TreasuryHub Database Schema
+
+-- Tables:
 
 -- Organizations Table
 -- Represents an organization workspace.
@@ -11,6 +15,32 @@ CREATE TABLE organizations (
 );
 
 -- Users Table
+-- Added this in with some starting fields, as it will need to be used for 
+-- work with uploading/viewing files, as we will need to check users accessing 
+-- files and create necessary restrictions. For now, left it with user_id, 
+-- this will need to be expanded on further. This links to supabase built 
+-- in auth table for users. 
+-- See docs on this at https://supabase.com/docs/guides/auth/managing-user-data
+-- except we would be using a public users table rather than "profiles"
+CREATE TABLE users (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- Org Members Table
+-- Added this in with some starting fields, as it will need to be used for 
+-- work with uploading/viewing files, as we will need to check users to ensure 
+-- they're part of the org when accessing files, we will need to use it
+-- to create necessary restrictions. For now, left it with user_id, org_id, role,
+-- with a check to see if the role is part of a specific set. This will need
+-- to be expanded on further. The role part is subject to change 
+-- upon the addition of the Roles table which would add more flexibility for 
+-- creating/managing roles
+CREATE TABLE org_members (
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    org_id  UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, org_id),
+    role    TEXT NOT NULL CHECK (role IN ('member', 'executive', 'advisor', 'treasury_team', 'treasurer'))
+);
 
 -- Files Table
 CREATE TABLE files (
@@ -34,4 +64,46 @@ CREATE TABLE files (
 CREATE TABLE transactions (
     transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE
+);
+
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+-- RLS rules: 
+
+-- Enable RLS on files table
+ALTER TABLE files ENABLE ROW LEVEL SECURITY;
+
+-- Only treasurer can view all files in their org
+CREATE POLICY "Treasurer can view files"
+ON files FOR SELECT
+USING (
+    org_id IN (
+        SELECT org_id FROM org_members
+        WHERE user_id = auth.uid()
+        AND role = 'treasurer'
+    )
+);
+
+-- Only treasurer can upload files
+CREATE POLICY "Treasurer can upload files"
+ON files FOR INSERT
+WITH CHECK (
+    org_id IN (
+        SELECT org_id FROM org_members
+        WHERE user_id = auth.uid()
+        AND role = 'treasurer'
+    )
+);
+
+-- Only treasurer can delete files
+CREATE POLICY "Treasurer can delete files"
+ON files FOR DELETE
+USING (
+    org_id IN (
+        SELECT org_id FROM org_members
+        WHERE user_id = auth.uid()
+        AND role = 'treasurer'
+    )
 );
