@@ -107,3 +107,19 @@ USING (
         AND role = 'treasurer'
     )
 );
+
+-- Automatically create a public users row when someone signs up
+-- This trigger fires after every new auth.users insert
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.users (user_id)
+  VALUES (new.id);
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Attach the trigger to auth.users
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
