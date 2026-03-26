@@ -27,11 +27,7 @@ CREATE TABLE users (
 );
 
 -- Org Members Table
--- Added this in with some starting fields, as it will need to be used for 
--- work with uploading/viewing files, as we will need to check users to ensure 
--- they're part of the org when accessing files, we will need to use it
--- to create necessary restrictions. For now, left it with user_id, org_id, role,
--- with a check to see if the role is part of a specific set. This will need
+-- Added this in with some starting fields, may need
 -- to be expanded on further. The role part is subject to change 
 -- upon the addition of the Roles table which would add more flexibility for 
 -- creating/managing roles
@@ -40,6 +36,16 @@ CREATE TABLE org_members (
     org_id  UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, org_id),
     role    TEXT NOT NULL CHECK (role IN ('member', 'executive', 'advisor', 'treasury_team', 'treasurer'))
+);
+
+-- Transactions table
+-- Added this in with some starting fields, as it will need to be used for 
+-- work with uploading/viewing files, as these files should be able to link 
+-- to transactions. For now, left it with just transaction_id and org_id, 
+-- this will need to be expanded on
+CREATE TABLE transactions (
+    transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE
 );
 
 -- Files Table
@@ -55,16 +61,6 @@ CREATE TABLE files (
 );
 
 -- Roles Table
-
--- Transactions table
--- Added this in with some starting fields, as it will need to be used for 
--- work with uploading/viewing files, as these files should be able to link 
--- to transactions. For now, left it with just transaction_id and org_id, 
--- this will need to be expanded on
-CREATE TABLE transactions (
-    transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE
-);
 
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,3 +103,28 @@ USING (
         AND role = 'treasurer'
     )
 );
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-- Storage Policies:
+
+-- Allow authenticated users to upload files to the files bucket
+CREATE POLICY "Authenticated users can upload files"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'files');
+
+-- Allow authenticated users to read/view files from the files bucket
+-- This is needed for generating signed URLs in UC8
+CREATE POLICY "Authenticated users can read files"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (bucket_id = 'files');
+
+-- Allow authenticated users to delete files from the files bucket
+CREATE POLICY "Authenticated users can delete files"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'files');
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
