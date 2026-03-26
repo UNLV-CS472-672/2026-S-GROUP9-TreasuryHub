@@ -6,12 +6,17 @@ import { redirect } from "next/navigation";
 // Server action for registration
 // Called from the client form, runs on the server
 
-export async function signUp(email:string, password:string) {
+export async function signUp(email:string, password:string, displayName:string) {
     const supabase = await createClient();
 
     const {error} = await supabase.auth.signUp({
         email,
         password,
+        options: {
+            data: {
+                display_name: displayName,
+            }
+        },
     });
 
     if(error) {

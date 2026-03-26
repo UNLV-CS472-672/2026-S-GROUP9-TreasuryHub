@@ -5,6 +5,7 @@ import { signUp } from "./actions";
 
 export default function RegistrationPage(){
     const [email, setEmail] = useState("");
+    const [displayName, setDisplayName] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
@@ -17,7 +18,7 @@ export default function RegistrationPage(){
 
         setError(""); //clear previous errors
 
-        const result = await signUp(email, password);
+        const result = await signUp(email, password, displayName);
 
         // signUp returns { error: "..." if it failed}
         // If it succeeded, it redirects (so this code wont run)
@@ -28,6 +29,13 @@ export default function RegistrationPage(){
 
     return(
         <div>
+            <input 
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="border border-white rounded p-2 text-white bg-transparent"
+                placeholder="Display Name"
+            />
             <input 
                 type="email"
                 value={email}
