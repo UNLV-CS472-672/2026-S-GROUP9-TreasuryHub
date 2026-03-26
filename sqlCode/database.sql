@@ -15,16 +15,17 @@ CREATE TABLE organizations (
 );
 
 -- Users Table
--- Added this in with some starting fields, as it will need to be used for 
--- work with uploading/viewing files, as we will need to check users accessing 
--- files and create necessary restrictions. For now, left it with user_id, 
--- this will need to be expanded on further. This links to supabase built 
--- in auth table for users. 
--- See docs on this at https://supabase.com/docs/guides/auth/managing-user-data
--- except we would be using a public users table rather than "profiles"
+-- Public mirror of auth.users. Auto-populated via trigger on registration.
+-- Teammates: query this table to look up users by ID or email.
 CREATE TABLE users (
-    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
+    user_id      UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email        TEXT NOT NULL,
+    display_name TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE INDEX idx_users_email ON users(email);
 
 -- Org Members Table
 -- Added this in with some starting fields, as it will need to be used for 
@@ -110,11 +111,12 @@ USING (
 
 -- Automatically create a public users row when someone signs up
 -- This trigger fires after every new auth.users insert
+-- Populates user_id and email from the auth.users row
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.users (user_id)
-  VALUES (new.id);
+  INSERT INTO public.users (user_id, email)
+  VALUES (new.id, new.email);
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
