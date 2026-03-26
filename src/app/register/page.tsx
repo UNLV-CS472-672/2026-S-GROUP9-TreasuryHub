@@ -1,16 +1,26 @@
 "use client"
 
 import { useState } from "react"
-import { signIn } from "./actions";
+import { signUp } from "./actions";
 
-export default function LoginPage() {
+export default function RegistrationPage(){
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
 
     async function handleSubmit() {
-        const result = await signIn(email, password);
+        if(password !== confirmPassword) {
+            setError("Passwords do not match")
+            return;
+        }
 
+        setError(""); //clear previous errors
+
+        const result = await signUp(email, password);
+
+        // signUp returns { error: "..." if it failed}
+        // If it succeeded, it redirects (so this code wont run)
         if(result?.error) {
             setError(result.error);
         }
@@ -24,8 +34,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="border border-white rounded p-2 text-white bg-transparent"
                 placeholder="Email"
-                />
-
+            />
             <input 
                 type="password"
                 value={password}
@@ -33,11 +42,20 @@ export default function LoginPage() {
                 className="border border-white rounded p-2 text-white bg-transparent"
                 placeholder="Password"
             />
+            <input 
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="border border-white rounded p-2 text-white bg-transparent"
+                placeholder="confirmPassword"
+            />
 
             {error && <p className="text-red-500">{error}</p>}
 
-            <button onClick={handleSubmit}>Login</button>
+            <button onClick={handleSubmit}>
+                SUBMIT!
+            </button>
+                    
         </div>
     );
-    
 }
