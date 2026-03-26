@@ -103,3 +103,28 @@ USING (
         AND role = 'treasurer'
     )
 );
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-- Storage Policies:
+
+-- Allow authenticated users to upload files to the files bucket
+CREATE POLICY "Authenticated users can upload files"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'files');
+
+-- Allow authenticated users to read/view files from the files bucket
+-- This is needed for generating signed URLs in UC8
+CREATE POLICY "Authenticated users can read files"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (bucket_id = 'files');
+
+-- Allow authenticated users to delete files from the files bucket
+CREATE POLICY "Authenticated users can delete files"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'files');
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
