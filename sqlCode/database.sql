@@ -61,6 +61,29 @@ CREATE TABLE files (
     uploaded_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Audit Log Table
+--  - audit_id: unique identifier for each log entry
+--  - org_id: identifies the organization the entry belongs to
+--  - user_id: identifies which user performed the action
+--  - action: type of change (CREATE, UPDATE, DELETE)
+--  - entity: type of object affected (transactions and files for now)
+--  - before_data: JSON snapshot of the object before the change
+--  - after_data: JSON snapshot of the object after the change
+--  - created_at: timestamp of when the audit entry was created
+-- Note: audit logs for an organization must be archived or manually deleted before 
+-- an organization could be deleted.
+CREATE TABLE audit_logs (
+    audit_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE RESTRICT, 
+    user_id        UUID REFERENCES users(user_id) ON DELETE RESTRICT,
+    action         TEXT NOT NULL CHECK (action IN ('CREATE', 'UPDATE', 'DELETE')),
+    entity         TEXT NOT NULL, -- This is for 'transaction', ' file', etc.
+    entity_id      UUID NOT NULL, 
+    before_data    JSONB,
+    after_data     JSONB,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+)
+
 -- Roles Table
 
 
@@ -71,6 +94,9 @@ CREATE TABLE files (
 
 -- Enable RLS on files table
 ALTER TABLE files ENABLE ROW LEVEL SECURITY;
+
+-- Enable RLS on audit_log table
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Only treasurer can view all files in their org
 CREATE POLICY "Treasurer can view files"
@@ -97,6 +123,17 @@ WITH CHECK (
 -- Only treasurer can delete files
 CREATE POLICY "Treasurer can delete files"
 ON files FOR DELETE
+USING (
+    org_id IN (
+        SELECT org_id FROM org_members
+        WHERE user_id = auth.uid()
+        AND role = 'treasurer'
+    )
+);
+
+-- Only treasurer can view audit logs
+CREATE POLICY "Treasurer can view audit logs"
+ON audit_logs FOR SELECT 
 USING (
     org_id IN (
         SELECT org_id FROM org_members
