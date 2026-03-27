@@ -39,14 +39,29 @@ CREATE TABLE org_members (
     role    TEXT NOT NULL CHECK (role IN ('member', 'executive', 'advisor', 'treasury_team', 'treasurer'))
 );
 
--- Transactions table
--- Added this in with some starting fields, as it will need to be used for 
--- work with uploading/viewing files, as these files should be able to link 
--- to transactions. For now, left it with just transaction_id and org_id, 
--- this will need to be expanded on
+-- Table: Transactions Table
+-- Description: Stores financial transactions
+-- Dependencies: organizations (org_id FK)
 CREATE TABLE transactions (
     transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE
+    org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
+    date           DATE NOT NULL CHECK (date <= CURRENT_DATE),
+    description    TEXT NOT NULL,
+    category       TEXT NOT NULL,
+    type           TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+    amount         NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+    notes          TEXT, -- Additional notes not included in description
+    -- TODO: Incorporate audit fields
+    -- -- Audit Fields
+    -- created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- created_by     UUID NOT NULL REFERENCES users(user_id) ON DELETE SET NULL,
+    -- updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+    -- updated_by     UUID NOT NULL,
+    -- deleted_at     TIMESTAMPTZ, -- if NULL, not deleted
+    -- deleted_by     UUID,
+    -- TODO: Create views for active records, or have trigger once in audit log for deletion
+    -- TODO: Create triggers for updates, deletions
+    -- TODO: Create indexes for search
 );
 
 -- Files Table
