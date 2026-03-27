@@ -9,7 +9,6 @@ export type LogEntry = {
     userId: string;
     action: "CREATE" | "UPDATE" | "DELETE";
     entity: string;
-    entityId: string;
     before_data?: any;
     after_data?: any;
 }
@@ -26,7 +25,6 @@ export async function logAuditEntry(entry: LogEntry){
         user_id: entry.userId,
         action: entry.action,
         entity: entry.entity,
-        entity_id: entry.entityId,
         before_data: entry.before_data || null,
         after_data: entry.after_data || null,
     }
