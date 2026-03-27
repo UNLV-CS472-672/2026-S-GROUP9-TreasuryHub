@@ -22,6 +22,7 @@ export async function uploadFile(file: File, orgId: string, fileType: 'receipt' 
             file_path: filePath,
             file_name: file.name,
             file_type: fileType,
+            mime_type: file.type,
         })
         .select()
         .single()
