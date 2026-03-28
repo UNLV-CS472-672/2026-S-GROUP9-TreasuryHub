@@ -1,15 +1,13 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 
-export async function getQuotes(eventId: number){
+export async function getQuotes(){
     const supabase = await createClient();
 
     const {data, error} = await supabase
         .from("quotes")
         .select("*")
-        .eq("event_id", eventId)
 
     if(error){
         return { error: error.message };
@@ -18,15 +16,26 @@ export async function getQuotes(eventId: number){
 }
 
 // adds new quote to database
-export async function addQuote(eventId: number, vendor: string, memo: string, amount: number){
+export async function addQuote(vendor: string, memo: string, amount: number){
     const supabase = await createClient();
-    const {error} = await supabase
-        .from("quotes")
-        .insert({event_id: eventId, vendor, memo, amount, accepted: false});
+
+    console.log("Attempting insert with:", { vendor, memo, amount })
+
+    const {data, error} = await supabase.from("quotes")
+    
+        .insert({
+            vendor: vendor,
+            memo: memo,
+            amount: amount,
+        })
+        .select()
         
+    console.log("Result:", { data, error })
+
     if(error){
         return { error: error.message };
     }
+    return { data }
 }
 
 // marks as accepted
@@ -35,7 +44,7 @@ export async function acceptQuote(id: number) {
     const { error } = await supabase
         .from("quotes")
         .update({ accepted: true })
-        .eq("id", id);
+        .eq("quotes_id", id);
     if (error){
         return { error: error.message };
     }
