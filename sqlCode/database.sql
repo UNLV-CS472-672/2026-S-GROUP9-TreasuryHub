@@ -168,6 +168,18 @@ USING (
     )
 );
 
+-- Only treasurer can export csv of transactions
+DROP POLICY IF EXISTS "Treasurer can export transactions" ON transactions;
+CREATE POLICY "Treasurer can export transactions"
+ON transactions FOR SELECT
+USING (
+    org_id IN (
+        SELECT org_id FROM org_members
+        WHERE user_id = auth.uid()
+        AND role = 'treasurer'
+    )
+);
+
 -- Automatically create a public users row when someone signs up
 -- This trigger fires after every new auth.users insert
 -- Populates user_id and email from the auth.users row
