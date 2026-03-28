@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS org_members (
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     org_id  UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, org_id),
-    role    TEXT NOT NULL CHECK (role IN ('member', 'executive', 'advisor', 'treasury_team', 'treasurer'))
+    role    TEXT NOT NULL CHECK (role IN ('member', 'executive', 'advisor', 'treasury_team', 'treasurer', 'admin'))
 );
 
 -- Table: Transactions Table
