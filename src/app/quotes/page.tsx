@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useDebugValue, useEffect, useState } from "react"
+import { addQuote, getQuotes, acceptQuote } from "./actions"
 
 // The Treasurer/Admin can view and review uploaded quotes for products 
 // or services for a certain event with an established budget. They can 
 // evaluate available options and publish the selected quote to propose 
 // during budget planning and purchasing decisions.  
 
-export default function quotesPage() {
+export default function QuotesPage() {
     const [quotes, setQuotes] = useState<{
         quotes_id: number
         vendor: string
@@ -19,32 +20,53 @@ export default function quotesPage() {
     const [vendor, setVendor] = useState("")
     const [memo, setMemo] = useState("")
     const [amount, setAmount] = useState("")
+    const [error, setError] = useState("");
 
-    function addingQuote(){
-        // maybe add error?
-        if (!vendor || !memo || !amount) return 
-        setQuotes([...quotes, {
-            quotes_id: Date.now(), // will change
-            vendor,
-            memo,
-            amount: parseFloat(amount),
-            accepted: false,
-        }])
+    useEffect(() => {
+        fetchQuotes()
+    }, [])
 
-        setVendor("")
-        setMemo("")
-        setAmount("")
+    async function fetchQuotes() {
+        const result = await getQuotes()
+        if (result?.error) {
+            setError(result.error)
+        } else if (result?.data) {
+            setQuotes(result.data)
+        }
     }
 
-    function isAccepted(quotes_id: number){
-        const confirmed = window.confirm("Accept?")
+    async function handleAddQuote(){
+        if (!vendor || !memo || !amount) return 
+        const result = await addQuote(vendor, memo, parseFloat(amount));
+
+        if(result?.error){
+            setError(result.error);
+        }
+        else{
+           await fetchQuotes()
+           setVendor("")
+           setMemo("")
+           setAmount("")
+        }
+    }
+
+    async function handleAcceptQuote(id: number) {
+        const confirmed = window.confirm("Accept this quote?")
         if (!confirmed) return
-        setQuotes(quotes.map((q) => q.quotes_id === quotes_id ? { ...q, accepted: true } : q))
+
+        const result = await acceptQuote(id)
+        if (result?.error) {
+            setError(result.error)
+        } else {
+            setQuotes(quotes.map((q) =>
+                q.quotes_id === id ? { ...q, accepted: true } : q
+            ))
+        }
     }
 
     return (
-        <div className="max-w-x1 mxx-auto p-6">
-            <h1 className="text-x1 font-medium mb-6">Quotes</h1>
+        <div className="max-w-xl mxx-auto p-6">
+            <h1 className="text-xl font-medium mb-6">Quotes</h1>
 
             {/* quote form */}
             <div className="flex flex-col gap-3 mb-8">
@@ -53,7 +75,7 @@ export default function quotesPage() {
                     placeholder="Vendor"
                     value={vendor}
                     onChange={(e) => setVendor(e.target.value)}
-                    className="border border-gray-300 rounded p-2 test-sm"
+                    className="border border-gray-300 rounded p-2 text-sm"
                 />
                 <textarea
                     placeholder="Memo"
@@ -70,7 +92,7 @@ export default function quotesPage() {
                     className="border border-gray-300 rounded p-2 text-sm"
                 />
                 <button
-                    onClick={addingQuote}
+                    onClick={handleAddQuote}
                     className="bg-black text-white text-sm rounded p-2"
                 >
                     Add Quote
@@ -94,7 +116,7 @@ export default function quotesPage() {
                         {/* after the quote is accepted, button changes to a label */}
                         {!q.accepted ? (
                             <button
-                                onClick={() => isAccepted(q.quotes_id)}
+                                onClick={() => handleAcceptQuote(q.quotes_id)}
                                 className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500"
                             >
                                 Accept
