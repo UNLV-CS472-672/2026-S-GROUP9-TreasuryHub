@@ -1,0 +1,110 @@
+"use client"
+
+import { useState } from "react"
+
+// The Treasurer/Admin can view and review uploaded quotes for products 
+// or services for a certain event with an established budget. They can 
+// evaluate available options and publish the selected quote to propose 
+// during budget planning and purchasing decisions.  
+
+export default function quotesPage() {
+    const [quotes, setQuotes] = useState<{
+        quotes_id: number
+        vendor: string
+        memo: string
+        amount: number
+        accepted: boolean
+    }[]>([])
+
+    const [vendor, setVendor] = useState("")
+    const [memo, setMemo] = useState("")
+    const [amount, setAmount] = useState("")
+
+    function addingQuote(){
+        // maybe add error?
+        if (!vendor || !memo || !amount) return 
+        setQuotes([...quotes, {
+            quotes_id: Date.now(), // will change
+            vendor,
+            memo,
+            amount: parseFloat(amount),
+            accepted: false,
+        }])
+
+        setVendor("")
+        setMemo("")
+        setAmount("")
+    }
+
+    function isAccepted(quotes_id: number){
+        const confirmed = window.confirm("Accept?")
+        if (!confirmed) return
+        setQuotes(quotes.map((q) => q.quotes_id === quotes_id ? { ...q, accepted: true } : q))
+    }
+
+    return (
+        <div className="max-w-x1 mxx-auto p-6">
+            <h1 className="text-x1 font-medium mb-6">Quotes</h1>
+
+            {/* quote form */}
+            <div className="flex flex-col gap-3 mb-8">
+                <input
+                    type="text"
+                    placeholder="Vendor"
+                    value={vendor}
+                    onChange={(e) => setVendor(e.target.value)}
+                    className="border border-gray-300 rounded p-2 test-sm"
+                />
+                <textarea
+                    placeholder="Memo"
+                    value={memo}
+                    onChange={(e) => setMemo(e.target.value)}
+                    className="border border-gray-300 rounded p-2 text-sm resize-none"
+                    rows={3}
+                /> 
+                <input
+                    type="number"
+                    placeholder="Amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="border border-gray-300 rounded p-2 text-sm"
+                />
+                <button
+                    onClick={addingQuote}
+                    className="bg-black text-white text-sm rounded p-2"
+                >
+                    Add Quote
+                </button>
+            </div>
+
+            {/* display the quotes/memos */}
+            {quotes.length === 0 && (
+                <p className="text-sm text-gray-400">No quotes yet.</p>
+            )}
+
+            {quotes.map((q) => (
+                <div key={q.quotes_id} className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <div>
+                        <p className="text-sm font-medium">{q.vendor}</p>
+                        <p className="text-xs text-gray-500">{q.memo}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm">${q.amount.toLocaleString()}</span>
+                        
+                        {/* after the quote is accepted, button changes to a label */}
+                        {!q.accepted ? (
+                            <button
+                                onClick={() => isAccepted(q.quotes_id)}
+                                className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500"
+                            >
+                                Accept
+                            </button>
+                        ) : (
+                            <span className="text-xs text-green-700">Accepted</span>
+                        )}
+                    </div>    
+                </div>     
+            ))}
+        </div>
+    )
+}
