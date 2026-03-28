@@ -7,7 +7,7 @@
 -- Organizations Table
 -- Represents an organization workspace.
 -- Each org is isolated; users can only access data within their org.
-CREATE TABLE organizations (
+CREATE TABLE IF NOT EXISTS organizations (
     org_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_name    TEXT NOT NULL,
     description TEXT,
@@ -17,7 +17,8 @@ CREATE TABLE organizations (
 -- Users Table
 -- Public mirror of auth.users. Auto-populated via trigger on registration.
 -- Teammates: query this table to look up users by ID or email.
-CREATE TABLE users (
+-- See Supabase auth docs: https://supabase.com/docs/guides/auth/managing-user-data
+CREATE TABLE IF NOT EXISTS users (
     user_id      UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email        TEXT NOT NULL,
     display_name TEXT,
@@ -25,14 +26,13 @@ CREATE TABLE users (
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- Org Members Table
--- Added this in with some starting fields, may need
--- to be expanded on further. The role part is subject to change 
--- upon the addition of the Roles table which would add more flexibility for 
--- creating/managing roles
-CREATE TABLE org_members (
+-- Table connecting users to organizations with a role.
+-- Role field is subject to change upon addition of the Roles table,
+-- which would add more flexibility for creating/managing roles (UC3)
+CREATE TABLE IF NOT EXISTS org_members (
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     org_id  UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, org_id),
@@ -42,7 +42,7 @@ CREATE TABLE org_members (
 -- Table: Transactions Table
 -- Description: Stores financial transactions
 -- Dependencies: organizations (org_id FK)
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
     date           DATE NOT NULL CHECK (date <= CURRENT_DATE),
@@ -65,13 +65,16 @@ CREATE TABLE transactions (
 );
 
 -- Files Table
-CREATE TABLE files (
+-- Stores metadata for uploaded receipts and documents.
+-- Actual files live in the private Supabase Storage bucket named 'files'.
+CREATE TABLE IF NOT EXISTS files (
     file_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
     transaction_id UUID REFERENCES transactions(transaction_id) ON DELETE SET NULL,
     file_path      TEXT NOT NULL UNIQUE,
     file_name      TEXT NOT NULL,
     file_type      TEXT NOT NULL CHECK (file_type IN ('receipt', 'document')),
+    mime_type      TEXT NOT NULL,
     uploaded_by    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     uploaded_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -85,9 +88,9 @@ CREATE TABLE files (
 --  - before_data: JSON snapshot of the object before the change
 --  - after_data: JSON snapshot of the object after the change
 --  - created_at: timestamp of when the audit entry was created
--- Note: audit logs for an organization must be archived or manually deleted before 
--- an organization could be deleted.
-CREATE TABLE audit_logs (
+-- Note: audit logs for an organization must be archived or manually deleted
+-- before an organization could be deleted.
+CREATE TABLE IF NOT EXISTS audit_logs (
     audit_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE RESTRICT, 
     user_id        UUID REFERENCES users(user_id) ON DELETE RESTRICT,
@@ -97,9 +100,10 @@ CREATE TABLE audit_logs (
     before_data    JSONB,
     after_data     JSONB,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
-)
+);
 
 -- Roles Table
+-- Placeholder for future role management feature (UC3)
 
 -- Quotes Table
 CREATE TABLE IF NOT EXISTS quotes (
@@ -116,15 +120,16 @@ CREATE TABLE IF NOT EXISTS quotes (
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
--- RLS rules: 
+-- RLS Rules:
 
 -- Enable RLS on files table
 ALTER TABLE files ENABLE ROW LEVEL SECURITY;
 
--- Enable RLS on audit_log table
+-- Enable RLS on audit_logs table
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Only treasurer can view all files in their org
+-- Drop policies before recreating them
+DROP POLICY IF EXISTS "Treasurer can view files" ON files;
 CREATE POLICY "Treasurer can view files"
 ON files FOR SELECT
 USING (
@@ -135,7 +140,7 @@ USING (
     )
 );
 
--- Only treasurer can upload files
+DROP POLICY IF EXISTS "Treasurer can upload files" ON files;
 CREATE POLICY "Treasurer can upload files"
 ON files FOR INSERT
 WITH CHECK (
@@ -146,7 +151,7 @@ WITH CHECK (
     )
 );
 
--- Only treasurer can delete files
+DROP POLICY IF EXISTS "Treasurer can delete files" ON files;
 CREATE POLICY "Treasurer can delete files"
 ON files FOR DELETE
 USING (
@@ -157,7 +162,7 @@ USING (
     )
 );
 
--- Only treasurer can view audit logs
+DROP POLICY IF EXISTS "Treasurer can view audit logs" ON audit_logs;
 CREATE POLICY "Treasurer can view audit logs"
 ON audit_logs FOR SELECT 
 USING (
@@ -180,9 +185,9 @@ USING (
     )
 );
 
--- Automatically create a public users row when someone signs up
--- This trigger fires after every new auth.users insert
--- Populates user_id and email from the auth.users row
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-- Trigger: Auto-create a public users row when someone signs up.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
@@ -196,28 +201,30 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Attach the trigger to auth.users
+-- Drop and recreate the trigger so re-runs don't throw a "trigger already exists" error
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -- Storage Policies:
+-- Same pattern as RLS — drop first since there's no IF NOT EXISTS for policies.
 
--- Allow authenticated users to upload files to the files bucket
+DROP POLICY IF EXISTS "Authenticated users can upload files" ON storage.objects;
 CREATE POLICY "Authenticated users can upload files"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'files');
 
--- Allow authenticated users to read/view files from the files bucket
--- This is needed for generating signed URLs in UC8
+DROP POLICY IF EXISTS "Authenticated users can read files" ON storage.objects;
 CREATE POLICY "Authenticated users can read files"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (bucket_id = 'files');
 
--- Allow authenticated users to delete files from the files bucket
+DROP POLICY IF EXISTS "Authenticated users can delete files" ON storage.objects;
 CREATE POLICY "Authenticated users can delete files"
 ON storage.objects FOR DELETE
 TO authenticated
