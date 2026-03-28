@@ -1,4 +1,6 @@
 import { fetchTransactions } from "@/app/transaction/lib/data";
+import { DeleteTransaction, UpdateTransaction } from "@/app/transaction/ui/buttons";
+
 
 export default async function TransactionTable() {
   // TODO: Add color and formatting
@@ -26,6 +28,8 @@ export default async function TransactionTable() {
                 <td>{transaction.amount}</td>
                 <td>{transaction.type}</td>
                 <td>{transaction.notes}</td>
+                <td><UpdateTransaction id={transaction.transaction_id}/></td>
+                {/*<td><DeleteTransaction /></td>*/}
               </tr>
           );
         })}

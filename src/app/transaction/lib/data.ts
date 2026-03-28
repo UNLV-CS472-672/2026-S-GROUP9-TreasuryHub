@@ -45,3 +45,17 @@ export async function fetchUserId() {
   }
   return user.id;
 }
+
+export async function fetchTransactionFromId(transactionId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('transaction_id', transactionId);
+
+  if (error) {
+    console.error('Database error:', error.message);
+    throw new Error('Failed to fetch transaction from ID');
+  }
+  return data[0];
+}
