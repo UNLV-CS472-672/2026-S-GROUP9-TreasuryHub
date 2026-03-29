@@ -1,6 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  getTasks,
+  addTaskAction,
+  updateTaskAction,
+  deleteTaskAction,
+} from "./actions";
 
 /*
   This defines what a Task looks like in our app.
@@ -20,14 +26,38 @@ type Task = {
 };
 
 /*
-  These are our sample existing roles and members.
+  This type matches what comes back from the Supabase tasks table.
+  We keep this separate because the database column names use snake_case.
+*/
+type DatabaseTask = {
+  id: number;
+  title: string;
+  task_type: string;
+  assign_type: "role" | "individual";
+  assigned_to: string;
+  due_date?: string | null;
+};
+
+/*
+  existing roles and members.
   For now they are hardcoded, but later these could come from a database.
 */
 const existingRoles = ["Officer", "Treasurer", "Secretary", "Member"];
-const existingMembers = ["Prabh", "Enrique", "Mathew", "Danilo", "Keith", "Tracy", "Ricardo", "Kaley", "Miguel", "Xae"];
+const existingMembers = [
+  "Prabh",
+  "Enrique",
+  "Mathew",
+  "Danilo",
+  "Keith",
+  "Tracy",
+  "Ricardo",
+  "Kaley",
+  "Miguel",
+  "Xae",
+];
 
 /*
-  This is a fake current user role for frontend testing.
+  
   The UC says only officer-level or above can create/edit/delete tasks.
 */
 const currentUserRole = "Officer";
@@ -41,7 +71,7 @@ function hasOfficerAccess(role: string) {
 }
 
 export default function TasksPage() {
-  // stores all tasks
+  // stores all tasks from Supabase
   const [tasks, setTasks] = useState<Task[]>([]);
 
   // stores form input values
@@ -52,9 +82,37 @@ export default function TasksPage() {
   const [dueDate, setDueDate] = useState("");
 
   /*
+    This loads tasks from Supabase when the page first opens.
+  */
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const result = await getTasks();
+
+      if (result.error) {
+        alert(result.error);
+        return;
+      }
+
+      const formattedTasks: Task[] = (result.data as DatabaseTask[]).map(
+        (task) => ({
+          id: task.id,
+          title: task.title,
+          type: task.task_type,
+          assignType: task.assign_type,
+          assignedTo: task.assigned_to,
+          dueDate: task.due_date ?? "",
+        })
+      );
+
+      setTasks(formattedTasks);
+    };
+
+    fetchTasks();
+  }, []);
+
+  /*
     FUNCTION: isValidFutureDate
     Checks if the selected date is a valid future date.
-    The UC says due date must be a valid future date if it is provided.
   */
   const isValidFutureDate = (dateString: string) => {
     if (!dateString) return true; // due date is optional
@@ -88,9 +146,9 @@ export default function TasksPage() {
     - validates title
     - validates due date
     - validates assignment
-    - creates the task and adds it to the list
+    - sends the new task to the backend action
   */
-  const addTask = () => {
+  const addTask = async () => {
     // only officer-level or above can do this
     if (!hasOfficerAccess(currentUserRole)) {
       alert("Only officer-level users or above can create tasks.");
@@ -117,16 +175,18 @@ export default function TasksPage() {
       return;
     }
 
-    const newTask: Task = {
-      id: Date.now(),
+    const result = await addTaskAction({
       title,
-      type: taskType,
+      taskType,
       assignType,
       assignedTo,
       dueDate,
-    };
+    });
 
-    setTasks([...tasks, newTask]);
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
 
     // clear form after adding
     setTitle("");
@@ -134,14 +194,15 @@ export default function TasksPage() {
     setAssignType("role");
     setAssignedTo("");
     setDueDate("");
+
+    window.location.reload();
   };
 
   /*
     FUNCTION: editTask
     Lets the user edit all main task fields.
-    I used prompt() to keep it simple and beginner-friendly.
   */
-  const editTask = (id: number) => {
+  const editTask = async (id: number) => {
     if (!hasOfficerAccess(currentUserRole)) {
       alert("Only officer-level users or above can edit tasks.");
       return;
@@ -209,40 +270,49 @@ export default function TasksPage() {
       return;
     }
 
-    setTasks(
-      tasks.map((task) =>
-        task.id === id
-          ? {
-              ...task,
-              title: newTitle,
-              type: newType,
-              assignType: newAssignTypeInput,
-              assignedTo: newAssignedTo,
-              dueDate: newDueDate || "",
-            }
-          : task
-      )
-    );
+    const result = await updateTaskAction(id, {
+      title: newTitle,
+      taskType: newType,
+      assignType: newAssignTypeInput,
+      assignedTo: newAssignedTo,
+      dueDate: newDueDate || "",
+    });
+
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
+
+    // simple refresh so the newest DB data shows up right away
+    window.location.reload();
   };
 
   /*
     FUNCTION: deleteTask
-    Removes a task from the list
+    Removes a task from the database using the backend action
   */
-  const deleteTask = (id: number) => {
+  const deleteTask = async (id: number) => {
     if (!hasOfficerAccess(currentUserRole)) {
       alert("Only officer-level users or above can delete tasks.");
       return;
     }
 
-    setTasks(tasks.filter((task) => task.id !== id));
+    const result = await deleteTaskAction(id);
+
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
+
+    // reload so the deleted task disappears from the list
+    window.location.reload();
   };
 
   /*
     FUNCTION: getAlert
     Shows an alert label based on the due date.
     Since due dates must be future dates, this will mainly show:
-    - due soon
+    - due tomorrow
     - upcoming
   */
   function getAlert(dueDate?: string) {
@@ -273,7 +343,14 @@ export default function TasksPage() {
       </p>
 
       {/* INPUT SECTION */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "400px" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          maxWidth: "400px",
+        }}
+      >
         {/* task title */}
         <input
           placeholder="Task title"
