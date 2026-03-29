@@ -1,0 +1,35 @@
+import { fetchTransactions } from "@/app/transaction/lib/data";
+
+export default async function TransactionTable() {
+  // TODO: Add color and formatting
+
+  const transactions = await fetchTransactions();
+  return(
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th>Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {transactions.map((transaction) => {
+          return(
+              <tr key={transaction.transaction_id}>
+                <td>{transaction.date}</td>
+                <td>{transaction.description}</td>
+                <td>{transaction.category}</td>
+                <td>{transaction.amount}</td>
+                <td>{transaction.type}</td>
+                <td>{transaction.notes}</td>
+              </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}

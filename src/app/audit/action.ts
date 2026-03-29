@@ -3,15 +3,15 @@
 import { createClient } from "@/lib/supabase/server";
 
 // List of fields required for an audit log entry
-// This type checks that the correct data is passed to the logAuditEntry function.
+// This type checks to ensure the correct data is passed to the logAuditEntry function.
 export type LogEntry = {
     orgId: string;
     userId: string;
     action: "CREATE" | "UPDATE" | "DELETE";
-    entity: string;
-    entityId: string;
-    before_data?: any;
-    after_data?: any;
+    entity_type: string;
+    entity_id: string;
+    before_data?: Record<string, any>;
+    after_data?: Record<string, any>;
 }
 
 // Server action to log an audit entry
@@ -25,10 +25,10 @@ export async function logAuditEntry(entry: LogEntry){
         org_id: entry.orgId,
         user_id: entry.userId,
         action: entry.action,
-        entity: entry.entity,
-        entity_id: entry.entityId,
-        before_data: entry.before_data || null,
-        after_data: entry.after_data || null,
+        entity: entry.entity_type,
+        entity_id: entry.entity_id,
+        before_data: entry.before_data ?? null,
+        after_data: entry.after_data ?? null,
     }
     ]);
 
