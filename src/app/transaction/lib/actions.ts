@@ -37,9 +37,9 @@ export async function createTransaction(_prevState: any, formData: FormData) {
     return {
       errors: z.flattenError(result.error).fieldErrors,
     };
-  } 
+  }
 
-  const { orgId, type, description , category, amount, date, notes } = result.data;
+  const { orgId, type, description, category, amount, date, notes } = result.data;
 
   // Insert to database
   const { error } = await supabase
@@ -81,11 +81,11 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
       errors: z.flattenError(result.error).fieldErrors,
       message: z.flattenError(result.error).formErrors,
     };
-  } 
+  }
 
 
-  const { transaction_id, orgId, type, description, category, amount, date, 
-          notes } = result.data;
+  const { transaction_id, orgId, type, description, category, amount, date,
+    notes } = result.data;
 
   // Update database
   const { error } = await supabase
@@ -108,6 +108,24 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
 
   revalidatePath('/transaction')
   redirect('/transaction')
+}
+
+export async function deleteTransaction(transaction_id: string, _formData: FormData) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('transactions')
+    .delete()
+    .eq("transaction_id", transaction_id);
+
+  if (error) {
+    console.error(error)
+    return {
+      message: 'Database Error: Failed to Delete Transaction.'
+    };
+  }
+
+  revalidatePath('/transaction')
 }
 
 export type Transaction = z.infer<typeof TransactionSchema>;
