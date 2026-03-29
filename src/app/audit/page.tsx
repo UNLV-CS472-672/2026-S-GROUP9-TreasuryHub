@@ -287,6 +287,7 @@ export default function AuditPage(){
                             <th style={headerStyle}>Role</th>
                             <th style={headerStyle}>Timestamp</th>
                             <th style={headerStyle}>Action Type</th>
+                            <th style={headerStyle}>Item</th>
                             <th style={headerStyle}>Description</th>
                         </tr>
                     </thead>
@@ -314,6 +315,11 @@ export default function AuditPage(){
                                 {/* Action Type Column */}
                                 <td style={cellStyle}>
                                     {formatAction(log.action)}
+                                </td>
+
+                                {/* Item Column */}
+                                <td style={cellStyle}>
+                                    {log.entity}-{log.entity_id?.slice(0, 4) || ""}
                                 </td>
 
                                 {/* Description Column */}
