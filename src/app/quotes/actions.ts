@@ -49,3 +49,16 @@ export async function acceptQuote(id: number) {
         return { error: error.message };
     }
 }
+
+// deleting quotes
+export async function deleteQuote(id: number){
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from("quotes")
+        .delete()
+        .eq("quotes_id", id); // check id
+    if(error){
+        return {
+            error: error.message };
+        }
+    }
