@@ -1,7 +1,7 @@
 "use client"
 
 import { useDebugValue, useEffect, useState } from "react"
-import { addQuote, getQuotes, acceptQuote } from "./actions"
+import { addQuote, getQuotes, acceptQuote, deleteQuote } from "./actions"
 
 // The Treasurer/Admin can view and review uploaded quotes for products 
 // or services for a certain event with an established budget. They can 
@@ -21,6 +21,18 @@ export default function QuotesPage() {
     const [memo, setMemo] = useState("")
     const [amount, setAmount] = useState("")
     const [error, setError] = useState("");
+
+    const [confirmingId, setConfirmingId] = useState<number | null>(null)
+
+    // delete quote
+    async function handleDeleteQuote(id: number){
+        const result = await deleteQuote(id)
+        if(result?.error){
+            setError(result.error)
+        } else{
+            setQuotes(quotes.filter((q) => q.quotes_id !== id))
+        }
+    }
 
     useEffect(() => {
         fetchQuotes()
@@ -124,6 +136,33 @@ export default function QuotesPage() {
                         ) : (
                             <span className="text-xs text-green-700">Accepted</span>
                         )}
+
+                        {confirmingId === q.quotes_id ? (
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => {
+                                        handleDeleteQuote(q.quotes_id)
+                                        setConfirmingId(null)
+                                    }}
+                                    className="text-xs px-3 py-1 rounded border border-red-400 text-red-500"
+                                >
+                                    Confirm
+                                </button>
+                                <button
+                                    onClick={() => setConfirmingId(null)}
+                                    className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-400"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setConfirmingId(q.quotes_id)}
+                                className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-400"
+                            >
+                                Delete
+                            </button>
+                                )}
                     </div>    
                 </div>     
             ))}

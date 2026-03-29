@@ -25,14 +25,14 @@ export async function fetchOrgFromCurrentUser() {
       .from('org_members')
       .select('org_id')
       .eq("user_id", userId)
-      .single();
+      .limit(1);
 
     if (error) {
       console.error('Database error:', error.message);
       throw new Error('Failed to fetch org_id from user_id.');
     }
 
-    return data.org_id;
+    return data[0].org_id;
 }
 
 export async function fetchUserId() {
@@ -44,4 +44,18 @@ export async function fetchUserId() {
     throw new Error('Failed to fetch user_id. Authorization failure.')
   }
   return user.id;
+}
+
+export async function fetchTransactionFromId(transactionId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('transaction_id', transactionId);
+
+  if (error) {
+    console.error('Database error:', error.message);
+    throw new Error('Failed to fetch transaction from ID');
+  }
+  return data[0];
 }
