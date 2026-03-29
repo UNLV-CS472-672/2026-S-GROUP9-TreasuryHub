@@ -176,11 +176,9 @@ export async function deleteTransaction(transaction_id: string, _formData: FormD
     .eq('transaction_id', transaction_id)
     .single();
 
-  if (beforeDataError) {
+  if (beforeDataError || !beforeData) {
     console.error(beforeDataError);
-    return {
-      message: 'Database Error: Failed to Fetch Existing Transaction Data.',
-    };
+    return;
   }
 
   const { error } = await supabase
