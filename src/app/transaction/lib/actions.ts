@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { fetchOrgFromCurrentUser, fetchUserId  } from "@/app/transaction/lib/data";
+import { fetchOrgFromCurrentUser, fetchUserId } from "@/app/transaction/lib/data";
 import { z } from "zod";
 
 const TransactionSchema = z.object({
@@ -114,19 +114,13 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
 
 export async function deleteTransaction(transaction_id: string, _formData: FormData) {
   const supabase = await createClient();
-
   const { error } = await supabase
     .from('transactions')
     .delete()
     .eq("transaction_id", transaction_id);
-
   if (error) {
-    console.error(error)
-    return {
-      message: 'Database Error: Failed to Delete Transaction.'
-    };
+    console.error('Database Error: Failed to Delete Transaction.', error)
   }
-
   revalidatePath('/transaction')
 }
 
