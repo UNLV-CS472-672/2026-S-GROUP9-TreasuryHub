@@ -46,7 +46,7 @@ export async function createTransaction(_prevState: any, formData: FormData) {
   const { error } = await supabase
     .from('transactions')
     .insert({
-      org_id: orgId, created_by: userId, date: date, description: desc, category: category,
+      org_id: orgId, created_by: userId, date: date, description: description, category: category,
       type: type, amount: amount, notes: notes
     });
 
@@ -70,7 +70,7 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
     transaction_id: formData.get("transId"),
     orgId: fetchOrgId,
     type: formData.get("type"),
-    description: formData.get("desc"),
+    description: formData.get("description"),
     category: formData.get("category"),
     amount: formData.get("amount"),
     date: formData.get("date"),
