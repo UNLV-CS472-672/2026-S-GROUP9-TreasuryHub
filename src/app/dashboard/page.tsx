@@ -1,30 +1,16 @@
-/**
- * DASHBOARD PAGE (Server Component)
- *
- * - Fetches dashboard data from Supabase
- * - Displays different UI based on role
- * - Includes sign out + quotes navigation
- */
-
 import Link from "next/link";
 import { getDashboardData } from "@/lib/supabase/dashboard";
 
-// Force dynamic rendering (needed for auth/cookies)
 export const dynamic = "force-dynamic";
 
-/**
- * Format numbers as USD currency
- */
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
+    maximumFractionDigits: 0,
   }).format(value);
 }
 
-/**
- * Reusable stat card
- */
 function StatCard({
   label,
   value,
@@ -33,189 +19,213 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm">
-      <div className="text-sm text-slate-500">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-slate-900">{value}</div>
+    <div
+      className="
+        rounded-2xl
+        border border-white/[0.12]
+        bg-white/[0.03]
+        p-5
+        backdrop-blur-sm
+        transition duration-300
+        shadow-[0_0_20px_rgba(255,255,255,0.05)]
+        hover:border-white/[0.25]
+        hover:bg-white/[0.06]
+        hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
+      "
+    >
+      <p className="text-xs uppercase tracking-[0.18em] text-neutral-400">
+        {label}
+      </p>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+        {value}
+      </p>
     </div>
   );
 }
 
-/**
- * MAIN PAGE
- */
+function QuotesCard() {
+  return (
+    <Link
+      href="/quotes"
+      className="
+        group
+        rounded-2xl
+        border border-white/[0.12]
+        bg-white/[0.03]
+        p-5
+        backdrop-blur-sm
+        transition duration-300
+        shadow-[0_0_20px_rgba(255,255,255,0.05)]
+        hover:border-white/[0.25]
+        hover:bg-white/[0.06]
+        hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
+      "
+    >
+      <p className="text-xs uppercase tracking-[0.18em] text-neutral-400">
+        Quotes
+      </p>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+        Open
+      </p>
+      <p className="mt-2 text-sm text-neutral-300 transition group-hover:text-white">
+        Review and manage vendor quotes →
+      </p>
+    </Link>
+  );
+}
+
+function TransactionsTable({
+  title,
+  transactions,
+}: {
+  title: string;
+  transactions: {
+    transaction_id: string;
+    date: string;
+    description: string;
+    category: string;
+    type: string;
+    amount: number;
+  }[];
+}) {
+  return (
+    <section
+      className="
+        rounded-2xl
+        border border-white/[0.12]
+        bg-white/[0.03]
+        p-6
+        backdrop-blur-sm
+        shadow-[0_0_20px_rgba(255,255,255,0.05)]
+      "
+    >
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-lg font-semibold tracking-tight text-white">
+          {title}
+        </h2>
+        <span className="text-xs uppercase tracking-[0.18em] text-neutral-400">
+          Latest Activity
+        </span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm text-neutral-200">
+          <thead>
+            <tr className="border-b border-white/[0.2] text-left text-xs uppercase tracking-[0.16em] text-neutral-400">
+              <th className="py-3 pr-6 font-medium">Date</th>
+              <th className="py-3 pr-6 font-medium">Description</th>
+              <th className="py-3 pr-6 font-medium">Category</th>
+              <th className="py-3 pr-6 font-medium">Type</th>
+              <th className="py-3 text-right font-medium">Amount</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {transactions.map((tx) => (
+              <tr
+                key={tx.transaction_id}
+                className="
+                  border-b border-white/[0.12]
+                  transition
+                  hover:bg-white/[0.05]
+                "
+              >
+                <td className="py-4 pr-6 text-neutral-400">
+                  {new Date(tx.date).toLocaleDateString()}
+                </td>
+                <td className="py-4 pr-6 text-white">{tx.description}</td>
+                <td className="py-4 pr-6 text-neutral-400">{tx.category}</td>
+                <td className="py-4 pr-6 capitalize text-neutral-300">
+                  {tx.type}
+                </td>
+                <td className="py-4 text-right font-semibold text-white">
+                  {formatCurrency(tx.amount)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 export default async function DashboardPage() {
   const data = await getDashboardData();
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <main className="min-h-screen bg-black text-white">
+      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+        <header className="mb-10 flex flex-col gap-6 border-b border-white/[0.2] pb-8 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-3 text-xs uppercase tracking-[0.22em] text-neutral-400">
+              TreasuryHub
+            </p>
 
-        {/* ============================= */}
-        {/* HEADER */}
-        {/* ============================= */}
-        <div className="flex items-center justify-between">
-          
-          {/* LEFT: Title + Org */}
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-              Dashboard
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+                Dashboard
+              </h1>
 
-            <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
-              {data.orgName}
-            </span>
+              <span className="rounded-full border border-white/[0.2] bg-white/[0.05] px-3 py-1 text-xs uppercase tracking-[0.16em] text-neutral-200">
+                {data.orgName}
+              </span>
+            </div>
           </div>
 
-          {/* RIGHT: Sign Out */}
           <form action="/auth/signout" method="POST">
             <button
               type="submit"
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
+              className="
+                rounded-xl
+                border border-white/[0.2]
+                bg-white/[0.05]
+                px-4 py-2
+                text-sm font-medium text-white
+                transition
+                hover:border-white/[0.35]
+                hover:bg-white/[0.08]
+              "
             >
               Sign Out
             </button>
           </form>
-        </div>
+        </header>
 
-        {/* ============================= */}
-        {/* ORGANIZATION DASHBOARD */}
-        {/* ============================= */}
         {data.scope === "organization" ? (
-          <>
-            {/* ============================= */}
-            {/* TOP STAT CARDS */}
-            {/* ============================= */}
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+          <div className="space-y-8">
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
               <StatCard label="Income" value={formatCurrency(data.summary.income)} />
               <StatCard label="Expenses" value={formatCurrency(data.summary.expenses)} />
               <StatCard label="Net" value={formatCurrency(data.summary.net)} />
               <StatCard label="Transactions" value={data.summary.transactionCount} />
               <StatCard
-                label="Files / Audit Logs"
+                label="Files / Audit"
                 value={`${data.summary.fileCount} / ${data.summary.auditCount}`}
               />
-
-              {/* ============================= */}
-              {/* QUOTES NAVIGATION CARD */}
-              {/* ============================= */}
-              <Link
-                href="/quotes"
-                className="rounded-2xl border bg-gradient-to-r from-blue-500 to-purple-500 p-5 text-white shadow hover:opacity-95 transition"
-              >
-                <p className="text-sm opacity-80">Quotes</p>
-                <p className="mt-2 text-xl font-semibold">
-                  View & Manage Quotes →
-                </p>
-                <p className="mt-1 text-xs opacity-80">
-                  Review and approve vendor quotes
-                </p>
-              </Link>
-            </div>
-
-            {/* ============================= */}
-            {/* TRANSACTIONS TABLE */}
-            {/* ============================= */}
-            <section className="rounded-2xl border bg-white p-5 shadow-sm">
-              <h2 className="mb-4 text-lg font-semibold text-slate-900">
-                Recent Organization Transactions
-              </h2>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm text-slate-700">
-                  <thead className="text-left text-slate-500">
-                    <tr className="border-b">
-                      <th className="py-2 pr-4">Date</th>
-                      <th className="py-2 pr-4">Description</th>
-                      <th className="py-2 pr-4">Category</th>
-                      <th className="py-2 pr-4">Type</th>
-                      <th className="py-2 pr-4">Amount</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {data.recentTransactions.map((tx) => (
-                      <tr key={tx.transaction_id} className="border-b last:border-0">
-                        <td className="py-3 pr-4">
-                          {new Date(tx.date).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 pr-4">{tx.description}</td>
-                        <td className="py-3 pr-4">{tx.category}</td>
-                        <td className="py-3 pr-4 capitalize">{tx.type}</td>
-                        <td className="py-3 pr-4">
-                          {formatCurrency(tx.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <QuotesCard />
             </section>
-          </>
+
+            <TransactionsTable
+              title="Recent Organization Transactions"
+              transactions={data.recentTransactions}
+            />
+          </div>
         ) : (
-          <>
-            {/* ============================= */}
-            {/* PERSONAL DASHBOARD */}
-            {/* ============================= */}
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-              <StatCard
-                label="My Reimbursements"
-                value={formatCurrency(data.summary.reimbursementsTotal)}
-              />
-              <StatCard
-                label="My Payables"
-                value={formatCurrency(data.summary.payablesTotal)}
-              />
-              <StatCard
-                label="My Receivables"
-                value={formatCurrency(data.summary.receivablesTotal)}
-              />
-              <StatCard
-                label="My Transactions"
-                value={data.summary.personalTransactionCount}
-              />
-              <StatCard
-                label="My Uploaded Files"
-                value={data.summary.uploadedFilesCount}
-              />
-            </div>
-
-            {/* Personal transactions table */}
-            <section className="rounded-2xl border bg-white p-5 shadow-sm">
-              <h2 className="mb-4 text-lg font-semibold text-slate-900">
-                My Recent Transactions
-              </h2>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm text-slate-700">
-                  <thead className="text-left text-slate-500">
-                    <tr className="border-b">
-                      <th className="py-2 pr-4">Date</th>
-                      <th className="py-2 pr-4">Description</th>
-                      <th className="py-2 pr-4">Category</th>
-                      <th className="py-2 pr-4">Type</th>
-                      <th className="py-2 pr-4">Amount</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {data.recentTransactions.map((tx) => (
-                      <tr key={tx.transaction_id} className="border-b last:border-0">
-                        <td className="py-3 pr-4">
-                          {new Date(tx.date).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 pr-4">{tx.description}</td>
-                        <td className="py-3 pr-4">{tx.category}</td>
-                        <td className="py-3 pr-4 capitalize">{tx.type}</td>
-                        <td className="py-3 pr-4">
-                          {formatCurrency(tx.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          <div className="space-y-8">
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <StatCard label="Reimbursements" value={formatCurrency(data.summary.reimbursementsTotal)} />
+              <StatCard label="Payables" value={formatCurrency(data.summary.payablesTotal)} />
+              <StatCard label="Receivables" value={formatCurrency(data.summary.receivablesTotal)} />
+              <StatCard label="Transactions" value={data.summary.personalTransactionCount} />
+              <StatCard label="Uploaded Files" value={data.summary.uploadedFilesCount} />
             </section>
-          </>
+
+            <TransactionsTable
+              title="My Recent Transactions"
+              transactions={data.recentTransactions}
+            />
+          </div>
         )}
       </div>
     </main>

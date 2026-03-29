@@ -1,317 +1,194 @@
-/**
- * DASHBOARD DATA LAYER
- *
- * - Fetches all data needed for the dashboard
- * - Handles role-based logic (org vs personal)
- * - Runs ONLY on server (uses Supabase + cookies)
- */
+import { createClient } from "@/lib/supabase/server";
+import { fetchOrgFromCurrentUser, fetchUserId } from "@/app/transaction/lib/data";
 
-import "server-only";
-import { createClient } from "./server";
-
-/**
- * Roles that can see organization-wide financial data
- */
-const ORG_WIDE_ROLES = [
-  "treasurer",
-  "treasury_team",
-  "executive",
-  "advisor",
-] as const;
-
-/**
- * Check if a role has access to org-wide dashboard
- */
-function canViewOrgDashboard(role: string) {
-  return ORG_WIDE_ROLES.includes(role as (typeof ORG_WIDE_ROLES)[number]);
-}
-
-/**
- * Transaction shape used in UI
- */
 type TransactionRow = {
   transaction_id: string;
+  org_id: string;
+  created_by?: string | null;
   date: string;
   description: string;
   category: string;
   type: "income" | "expense";
   amount: number;
-  notes: string | null;
+  notes?: string | null;
 };
 
-/**
- * Dashboard return type
- */
-type DashboardData =
-  | {
-      scope: "organization";
-      role: string;
-      orgName: string;
-      summary: {
-        income: number;
-        expenses: number;
-        net: number;
-        transactionCount: number;
-        fileCount: number;
-        auditCount: number;
-      };
-      recentTransactions: TransactionRow[];
-    }
-  | {
-      scope: "personal";
-      role: string;
-      orgName: string;
-      summary: {
-        reimbursementsTotal: number;
-        payablesTotal: number;
-        receivablesTotal: number;
-        personalTransactionCount: number;
-        uploadedFilesCount: number;
-      };
-      recentTransactions: TransactionRow[];
-    };
+type OrganizationDashboardData = {
+  scope: "organization";
+  orgName: string;
+  summary: {
+    income: number;
+    expenses: number;
+    net: number;
+    transactionCount: number;
+    fileCount: number;
+    auditCount: number;
+  };
+  recentTransactions: TransactionRow[];
+};
 
-/**
- * MAIN FUNCTION
- * Builds dashboard data based on user + role
- */
+type PersonalDashboardData = {
+  scope: "personal";
+  orgName: string;
+  summary: {
+    reimbursementsTotal: number;
+    payablesTotal: number;
+    receivablesTotal: number;
+    personalTransactionCount: number;
+    uploadedFilesCount: number;
+  };
+  recentTransactions: TransactionRow[];
+};
+
+export type DashboardData = OrganizationDashboardData | PersonalDashboardData;
+
+function sumAmounts(
+  transactions: TransactionRow[],
+  type?: "income" | "expense"
+): number {
+  return transactions
+    .filter((tx) => (type ? tx.type === type : true))
+    .reduce((sum, tx) => sum + Number(tx.amount ?? 0), 0);
+}
+
 export async function getDashboardData(): Promise<DashboardData> {
   const supabase = await createClient();
+  const userId = await fetchUserId();
+  const orgId = await fetchOrgFromCurrentUser();
 
-  // =============================
-  // 🔐 1. GET CURRENT USER
-  // =============================
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    throw new Error("Unauthorized");
-  }
-
-  // =============================
-  // 🧩 2. GET USER MEMBERSHIP
-  // =============================
-  // Determines:
-  // - which organization user belongs to
-  // - what role they have
-  const { data: membership, error: membershipError } = await supabase
-    .from("org_members")
-    .select("org_id, role")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
-
-  if (membershipError) {
-    throw new Error(`Membership lookup failed: ${membershipError.message}`);
-  }
-
-  if (!membership) {
-    throw new Error("User is not part of any organization");
-  }
-
-  const orgId = membership.org_id;
-  const role = membership.role as string;
-
-  // =============================
-  // 🏢 3. GET ORGANIZATION NAME
-  // =============================
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .select("org_name")
-    .eq("org_id", orgId)
-    .single();
-
-  if (orgError || !org) {
-    throw new Error("Failed to fetch organization");
-  }
-
-  const orgName = org.org_name;
-
-  // =============================
-  // 🏢 4. ORGANIZATION DASHBOARD
-  // =============================
-  // For treasurer / exec / advisor roles
-  if (canViewOrgDashboard(role)) {
-    const [
-      incomeRes,
-      expenseRes,
-      txRes,
-      filesRes,
-      auditRes,
-    ] = await Promise.all([
-      // Get all income
+  const [{ data: membership, error: membershipError }, { data: org, error: orgError }] =
+    await Promise.all([
       supabase
-        .from("transactions")
-        .select("amount")
+        .from("org_members")
+        .select("role")
         .eq("org_id", orgId)
-        .eq("type", "income"),
-
-      // Get all expenses
+        .eq("user_id", userId)
+        .single(),
       supabase
-        .from("transactions")
-        .select("amount")
+        .from("organizations")
+        .select("org_name")
         .eq("org_id", orgId)
-        .eq("type", "expense"),
-
-      // Get recent transactions for table
-      supabase
-        .from("transactions")
-        .select(
-          "transaction_id, date, description, category, type, amount, notes",
-          { count: "exact" },
-        )
-        .eq("org_id", orgId)
-        .order("date", { ascending: false })
-        .limit(8),
-
-      // Count uploaded files
-      supabase
-        .from("files")
-        .select("file_id", { count: "exact", head: true })
-        .eq("org_id", orgId),
-
-      // Count audit logs
-      supabase
-        .from("audit_logs")
-        .select("audit_id", { count: "exact", head: true })
-        .eq("org_id", orgId),
+        .single(),
     ]);
 
-    // Handle any errors
-    if (incomeRes.error) throw incomeRes.error;
-    if (expenseRes.error) throw expenseRes.error;
-    if (txRes.error) throw txRes.error;
-    if (filesRes.error) throw filesRes.error;
-    if (auditRes.error) throw auditRes.error;
+  if (membershipError || !membership) {
+    console.error("Dashboard membership error:", membershipError?.message);
+    throw new Error("Failed to fetch user role for dashboard.");
+  }
 
-    // Calculate totals
-    const income = (incomeRes.data ?? []).reduce(
-      (sum, row) => sum + Number(row.amount),
-      0,
-    );
+  if (orgError || !org) {
+    console.error("Dashboard organization error:", orgError?.message);
+    throw new Error("Failed to fetch organization name.");
+  }
 
-    const expenses = (expenseRes.data ?? []).reduce(
-      (sum, row) => sum + Number(row.amount),
-      0,
-    );
+  const role = membership.role;
+  const isOrgScope =
+    role === "admin" ||
+    role === "treasurer" ||
+    role === "owner" ||
+    role === "creator";
+
+  if (isOrgScope) {
+    const { data: transactionsRaw, error: transactionsError } = await supabase
+      .from("transactions")
+      .select(
+        "transaction_id, org_id, created_by, date, description, category, type, amount, notes"
+      )
+      .eq("org_id", orgId)
+      .order("date", { ascending: false })
+      .limit(10);
+
+    if (transactionsError) {
+      console.error("Dashboard transactions error:", transactionsError.message);
+      throw new Error("Failed to fetch organization transactions.");
+    }
+
+    const transactions = (transactionsRaw ?? []) as TransactionRow[];
+
+    const income = sumAmounts(transactions, "income");
+    const expenses = sumAmounts(transactions, "expense");
+
+    const [{ count: fileCount, error: filesError }, { count: auditCount, error: auditError }] =
+      await Promise.all([
+        supabase
+          .from("files")
+          .select("*", { count: "exact", head: true })
+          .eq("org_id", orgId),
+        supabase
+          .from("audit_logs")
+          .select("*", { count: "exact", head: true })
+          .eq("org_id", orgId),
+      ]);
+
+    if (filesError) {
+      console.error("Dashboard files count error:", filesError.message);
+    }
+
+    if (auditError) {
+      console.error("Dashboard audit count error:", auditError.message);
+    }
 
     return {
       scope: "organization",
-      role,
-      orgName,
+      orgName: org.org_name,
       summary: {
         income,
         expenses,
         net: income - expenses,
-        transactionCount: txRes.count ?? 0,
-        fileCount: filesRes.count ?? 0,
-        auditCount: auditRes.count ?? 0,
+        transactionCount: transactions.length,
+        fileCount: fileCount ?? 0,
+        auditCount: auditCount ?? 0,
       },
-      recentTransactions: (txRes.data ?? []).map((tx) => ({
-        ...tx,
-        amount: Number(tx.amount),
-      })),
+      recentTransactions: transactions,
     };
   }
 
-  // =============================
-  // 👤 5. PERSONAL DASHBOARD
-  // =============================
-  // Members only see their own activity
-
-  // We infer "ownership" using files uploaded by the user
-  const filesForUserRes = await supabase
-    .from("files")
-    .select("transaction_id")
-    .eq("org_id", orgId)
-    .eq("uploaded_by", user.id)
-    .not("transaction_id", "is", null);
-
-  if (filesForUserRes.error) throw filesForUserRes.error;
-
-  const personalTransactionIds = (filesForUserRes.data ?? [])
-    .map((f) => f.transaction_id)
-    .filter(Boolean) as string[];
-
-  // No personal data yet
-  if (personalTransactionIds.length === 0) {
-    return {
-      scope: "personal",
-      role,
-      orgName,
-      summary: {
-        reimbursementsTotal: 0,
-        payablesTotal: 0,
-        receivablesTotal: 0,
-        personalTransactionCount: 0,
-        uploadedFilesCount: 0,
-      },
-      recentTransactions: [],
-    };
-  }
-
-  const [myTransactionsRes, myFilesCountRes] = await Promise.all([
-    // Get personal transactions
-    supabase
+  const { data: personalTransactionsRaw, error: personalTransactionsError } =
+    await supabase
       .from("transactions")
       .select(
-        "transaction_id, date, description, category, type, amount, notes",
+        "transaction_id, org_id, created_by, date, description, category, type, amount, notes"
       )
       .eq("org_id", orgId)
-      .in("transaction_id", personalTransactionIds)
+      .eq("created_by", userId)
       .order("date", { ascending: false })
-      .limit(8),
+      .limit(10);
 
-    // Count user's uploaded files
-    supabase
-      .from("files")
-      .select("file_id", { count: "exact", head: true })
-      .eq("org_id", orgId)
-      .eq("uploaded_by", user.id),
-  ]);
+  if (personalTransactionsError) {
+    console.error(
+      "Dashboard personal transactions error:",
+      personalTransactionsError.message
+    );
+    throw new Error("Failed to fetch personal transactions.");
+  }
 
-  if (myTransactionsRes.error) throw myTransactionsRes.error;
-  if (myFilesCountRes.error) throw myFilesCountRes.error;
+  const personalTransactions = (personalTransactionsRaw ?? []) as TransactionRow[];
 
-  const myTransactions: TransactionRow[] = (myTransactionsRes.data ?? []).map(
-    (tx) => ({
-      ...tx,
-      amount: Number(tx.amount),
-    }),
-  );
+  const reimbursementsTotal = sumAmounts(personalTransactions);
 
-  // Infer categories (since schema doesn't define ownership types)
-  const reimbursementsTotal = myTransactions
-    .filter((tx) =>
-      /reimbursement/i.test(`${tx.category} ${tx.description} ${tx.notes ?? ""}`),
-    )
-    .reduce((sum, tx) => sum + tx.amount, 0);
+  const { count: uploadedFilesCount, error: uploadedFilesError } = await supabase
+    .from("files")
+    .select("*", { count: "exact", head: true })
+    .eq("org_id", orgId)
+    .eq("uploaded_by", userId);
 
-  const payablesTotal = myTransactions
-    .filter((tx) =>
-      /payable/i.test(`${tx.category} ${tx.description} ${tx.notes ?? ""}`),
-    )
-    .reduce((sum, tx) => sum + tx.amount, 0);
-
-  const receivablesTotal = myTransactions
-    .filter((tx) =>
-      /receivable/i.test(`${tx.category} ${tx.description} ${tx.notes ?? ""}`),
-    )
-    .reduce((sum, tx) => sum + tx.amount, 0);
+  if (uploadedFilesError) {
+    console.error(
+      "Dashboard uploaded files count error:",
+      uploadedFilesError.message
+    );
+  }
 
   return {
     scope: "personal",
-    role,
-    orgName,
+    orgName: org.org_name,
     summary: {
       reimbursementsTotal,
-      payablesTotal,
-      receivablesTotal,
-      personalTransactionCount: myTransactions.length,
-      uploadedFilesCount: myFilesCountRes.count ?? 0,
+      payablesTotal: 0,
+      receivablesTotal: 0,
+      personalTransactionCount: personalTransactions.length,
+      uploadedFilesCount: uploadedFilesCount ?? 0,
     },
-    recentTransactions: myTransactions,
+    recentTransactions: personalTransactions,
   };
 }

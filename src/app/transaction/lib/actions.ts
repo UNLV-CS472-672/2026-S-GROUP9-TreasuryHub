@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { fetchOrgFromCurrentUser } from "@/app/transaction/lib/data";
+import { fetchOrgFromCurrentUser, fetchUserId  } from "@/app/transaction/lib/data";
 import { z } from "zod";
 
 const TransactionSchema = z.object({
@@ -22,6 +22,7 @@ const CreateTransactionSchema = TransactionSchema.omit({ transaction_id: true })
 export async function createTransaction(_prevState: any, formData: FormData) {
   const supabase = await createClient();
   const fetchOrgId = await fetchOrgFromCurrentUser();
+  const userId = await fetchUserId();
 
   const result = CreateTransactionSchema.safeParse({
     orgId: fetchOrgId,
@@ -45,7 +46,7 @@ export async function createTransaction(_prevState: any, formData: FormData) {
   const { error } = await supabase
     .from('transactions')
     .insert({
-      org_id: orgId, date: date, description: description, category: category,
+      org_id: orgId, created_by: userId, date: date, description: description, category: category,
       type: type, amount: amount, notes: notes
     });
 
@@ -57,6 +58,7 @@ export async function createTransaction(_prevState: any, formData: FormData) {
   }
 
   revalidatePath('/transaction')
+  revalidatePath("/dashboard");
   redirect('/transaction')
 }
 
