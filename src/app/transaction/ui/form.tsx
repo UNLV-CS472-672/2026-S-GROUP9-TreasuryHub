@@ -32,7 +32,7 @@ export function CreateTransactionForm() {
       <div>
         <label>Category</label>
         <input
-          type="text" name="category" placeholder="University Grant" 
+          type="text" name="category" placeholder="University Grant"
         />
         {state?.errors?.category && <p className={state.errors ? "text-red-500" : "text-green-500"}>{state.errors.category[0]}</p>}
       </div>
@@ -66,7 +66,7 @@ export function CreateTransactionForm() {
   );
 }
 
-export function UpdateTransactionForm(transaction : {
+export function UpdateTransactionForm(transaction: {
   transaction: Transaction;
 }) {
   const [state, formAction] = useActionState(updateTransaction, undefined);
@@ -76,7 +76,7 @@ export function UpdateTransactionForm(transaction : {
   return (
     <form action={formAction}>
       <div>
-        <input type="hidden" name="transId" value={transObj.transaction_id}/>
+        <input type="hidden" name="transId" value={transObj.transaction_id} />
         <label>Type</label>
         <select defaultValue={transObj.type} name="type" required>
           <option value="" disabled>Select a type</option>
@@ -109,7 +109,7 @@ export function UpdateTransactionForm(transaction : {
       <div>
         <label>Date</label>
         <input
-          type="date" name="date" defaultValue={transObj.date} required
+          type="date" name="date" defaultValue={String(transObj.date)} required
         />
         {state?.errors?.date && <p className={state.errors ? "text-red-500" : "text-green-500"}>{state.errors.date[0]}</p>}
       </div>

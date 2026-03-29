@@ -16,24 +16,24 @@ export type LogEntry = {
 
 // Server action to log an audit entry
 // Can be called from anywhere in the app to log important actions for auditing purposes
-export async function logAuditEntry(entry: LogEntry){
+export async function logAuditEntry(entry: LogEntry) {
     const supabase = await createClient();
 
     const { data, error } = await supabase.from("audit_logs")
-    .insert([
-    {
-        org_id: entry.orgId,
-        user_id: entry.userId,
-        action: entry.action,
-        entity: entry.entity_type,
-        entity_id: entry.entity_id,
-        before_data: entry.before_data ?? null,
-        after_data: entry.after_data ?? null,
-    }
-    ]);
+        .insert([
+            {
+                org_id: entry.orgId,
+                user_id: entry.userId,
+                action: entry.action,
+                entity: entry.entity_type,
+                entity_id: entry.entity_id,
+                before_data: entry.before_data ?? null,
+                after_data: entry.after_data ?? null,
+            }
+        ]);
 
     // This is outputted on the console for now for debugging. 
-    if(error) {
+    if (error) {
         console.error("Failed to log audit entry:", error.message);
     }
     else {
