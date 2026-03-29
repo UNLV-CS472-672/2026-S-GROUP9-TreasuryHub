@@ -17,9 +17,16 @@ type OrganizationListItem = {
   role: string;
 };
 
-export default async function Organizations() {
-  // This page is just the org selector for now.
-  // Each organization links straight to that org's members page.
+type OrganizationsPageProps = {
+  searchParams: Promise<{
+    error?: string;
+  }>;
+};
+
+export default async function Organizations({
+  searchParams,
+}: OrganizationsPageProps) {
+  const { error } = await searchParams;
   const supabase = await createClient();
 
   const whoIsUser = await supabase.auth.getUser();
@@ -29,8 +36,7 @@ export default async function Organizations() {
   let loadError = "";
 
   if (user != null) {
-    // First get the current user's memberships.
-    // We only need org_id and role here.
+    // First get the org memberships for this user.
     const membershipResult = await supabase
       .from("org_members")
       .select("org_id, role")
@@ -44,8 +50,7 @@ export default async function Organizations() {
       if (memberships.length > 0) {
         const orgIds = memberships.map((membership) => membership.org_id);
 
-        // Then load the matching organizations in a second query.
-        // This avoids the nested relation typing issue that broke the build.
+        // Then get the actual org names for those ids.
         const organizationResult = await supabase
           .from("organizations")
           .select("org_id, org_name")
@@ -55,9 +60,6 @@ export default async function Organizations() {
           loadError = organizationResult.error.message;
         } else {
           const orgRows = (organizationResult.data ?? []) as OrganizationRow[];
-
-          // Build a small lookup map so we can pair each membership
-          // with the matching organization name.
           const orgMap = new Map(
             orgRows.map((organization) => [organization.org_id, organization])
           );
@@ -99,6 +101,13 @@ export default async function Organizations() {
             </button>
           </Link>
         </div>
+
+        {/* This lets redirects from the protected members page show an actual message */}
+        {error && (
+          <p className="rounded border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-200">
+            {error}
+          </p>
+        )}
 
         {loadError && (
           <p className="text-red-500">

@@ -209,6 +209,25 @@ CREATE TRIGGER on_auth_user_created
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+-- One-time backfill for users that exist in auth.users
+-- but are missing from public.users.
+--
+-- This matters because the members page reads from public.users
+-- for display name + email. If older accounts never got copied over,
+-- they show up as Unknown User / Unknown Email.
+
+INSERT INTO public.users (user_id, email, display_name)
+SELECT
+    auth_user.id,
+    auth_user.email,
+    COALESCE(auth_user.raw_user_meta_data->>'display_name', split_part(auth_user.email, '@', 1))
+FROM auth.users AS auth_user
+LEFT JOIN public.users AS public_user
+    ON public_user.user_id = auth_user.id
+WHERE public_user.user_id IS NULL;
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 -- Storage Policies:
 -- Same pattern as RLS — drop first since there's no IF NOT EXISTS for policies.
 

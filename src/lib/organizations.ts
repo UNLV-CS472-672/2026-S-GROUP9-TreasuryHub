@@ -1,12 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 
+// Keeping the allowed roles in one place so the page + server action
+// are using the same source of truth.
+export const ORGANIZATION_MEMBER_ROLE_OPTIONS = [
+  "member",
+  "executive",
+  "advisor",
+  "treasury_team",
+  "treasurer",
+  "admin",
+] as const;
+
 export type OrganizationMemberRole =
-  | "member"
-  | "executive"
-  | "advisor"
-  | "treasury_team"
-  | "treasurer"
-  | "admin";
+  (typeof ORGANIZATION_MEMBER_ROLE_OPTIONS)[number];
 
 export type OrganizationMembership = {
   user_id: string;
@@ -29,22 +35,29 @@ export type OrganizationMemberListItem = {
   user_id: string;
   org_id: string;
   role: OrganizationMemberRole;
-  users: OrganizationMemberUser | null;
+  user: OrganizationMemberUser | null;
 };
 
-type RawOrganizationMemberListItem = {
-  user_id: string;
-  org_id: string;
-  role: OrganizationMemberRole;
-  users: OrganizationMemberUser[] | null;
-};
-
-// For UC3, only treasurer and admin should be able to manage members.
-// Keeping this in one helper makes the permission rule easy to reuse later.
+// For UC3, only treasurers and admins are supposed to manage members.
 export function canManageOrganizationMembers(role: string | null | undefined) {
   return role === "treasurer" || role === "admin";
 }
 
+// Basic role validation so the server does not trust whatever comes from the form.
+export function isOrganizationMemberRole(
+  value: string | null | undefined
+): value is OrganizationMemberRole {
+  return ORGANIZATION_MEMBER_ROLE_OPTIONS.includes(
+    value as OrganizationMemberRole
+  );
+}
+
+// Normalizing email avoids dumb mismatches like uppercase letters or spaces.
+export function normalizeMemberEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+// Gets the logged-in user and also checks whether they belong to this org.
 export async function getCurrentUserWithOrganizationMembership(orgId: string) {
   const supabase = await createClient();
 
@@ -57,6 +70,7 @@ export async function getCurrentUserWithOrganizationMembership(orgId: string) {
     throw new Error(userError.message);
   }
 
+  // If no auth user exists, just return null values and let caller decide what to do.
   if (user === null) {
     return {
       user: null,
@@ -81,6 +95,7 @@ export async function getCurrentUserWithOrganizationMembership(orgId: string) {
   };
 }
 
+// Small helper for getting the org name/header info.
 export async function getOrganizationById(orgId: string) {
   const supabase = await createClient();
 
@@ -97,41 +112,67 @@ export async function getOrganizationById(orgId: string) {
   return result.data as OrganizationSummary | null;
 }
 
+// Looks up an already-existing app user by email.
+// PR2 is NOT doing invitations, so the user has to already exist.
+export async function getUserByEmail(email: string) {
+  const supabase = await createClient();
+
+  const result = await supabase
+    .from("users")
+    .select("user_id, email, display_name")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return result.data as OrganizationMemberUser | null;
+}
+
+// Gets all org_members rows for this org, then separately loads the users.
+// This is simpler/more reliable than relying on a nested join shape.
+// It should also help with the "Unknown User" issue from PR1.
 export async function getOrganizationMembers(
   orgId: string
 ): Promise<OrganizationMemberListItem[]> {
   const supabase = await createClient();
 
-  // Supabase gives the joined users relation back as an array here,
-  // even though each org_members row should match one user.
-  // So we normalize it into a single object to keep the page code cleaner.
-  const { data: members, error } = await supabase
+  const membershipResult = await supabase
     .from("org_members")
-    .select(
-      `
-        user_id,
-        org_id,
-        role,
-        users (
-          user_id,
-          email,
-          display_name
-        )
-      `
-    )
+    .select("user_id, org_id, role")
     .eq("org_id", orgId)
     .order("role", { ascending: true });
 
-  if (error) {
-    throw new Error(error.message);
+  if (membershipResult.error) {
+    throw new Error(membershipResult.error.message);
   }
 
-  const rows = ((members ?? []) as unknown) as RawOrganizationMemberListItem[];
+  const memberships =
+    (membershipResult.data as OrganizationMembership[] | null) ?? [];
 
-  return rows.map((member) => ({
-    user_id: member.user_id,
-    org_id: member.org_id,
-    role: member.role,
-    users: member.users?.[0] ?? null,
+  if (memberships.length === 0) {
+    return [];
+  }
+
+  const userIds = memberships.map((membership) => membership.user_id);
+
+  const usersResult = await supabase
+    .from("users")
+    .select("user_id, email, display_name")
+    .in("user_id", userIds);
+
+  if (usersResult.error) {
+    throw new Error(usersResult.error.message);
+  }
+
+  const users = (usersResult.data as OrganizationMemberUser[] | null) ?? [];
+  const userMap = new Map(users.map((user) => [user.user_id, user]));
+
+  return memberships.map((membership) => ({
+    user_id: membership.user_id,
+    org_id: membership.org_id,
+    role: membership.role,
+    user: userMap.get(membership.user_id) ?? null,
   }));
 }
