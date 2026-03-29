@@ -25,18 +25,14 @@ export default function QuotesPage() {
     const [confirmingId, setConfirmingId] = useState<number | null>(null)
 
     // delete quote
-    async function handleDeleteQuote(id: number){
+    async function handleDeleteQuote(id: number) {
         const result = await deleteQuote(id)
-        if(result?.error){
+        if (result?.error) {
             setError(result.error)
-        } else{
+        } else {
             setQuotes(quotes.filter((q) => q.quotes_id !== id))
         }
     }
-
-    useEffect(() => {
-        fetchQuotes()
-    }, [])
 
     async function fetchQuotes() {
         const result = await getQuotes()
@@ -47,18 +43,22 @@ export default function QuotesPage() {
         }
     }
 
-    async function handleAddQuote(){
-        if (!vendor || !memo || !amount) return 
+    useEffect(() => {
+        fetchQuotes()
+    }, [])
+
+    async function handleAddQuote() {
+        if (!vendor || !memo || !amount) return
         const result = await addQuote(vendor, memo, parseFloat(amount));
 
-        if(result?.error){
+        if (result?.error) {
             setError(result.error);
         }
-        else{
-           await fetchQuotes()
-           setVendor("")
-           setMemo("")
-           setAmount("")
+        else {
+            await fetchQuotes()
+            setVendor("")
+            setMemo("")
+            setAmount("")
         }
     }
 
@@ -95,7 +95,7 @@ export default function QuotesPage() {
                     onChange={(e) => setMemo(e.target.value)}
                     className="border border-gray-300 rounded p-2 text-sm resize-none"
                     rows={3}
-                /> 
+                />
                 <input
                     type="number"
                     placeholder="Amount"
@@ -124,7 +124,7 @@ export default function QuotesPage() {
                     </div>
                     <div className="flex items-center gap-4">
                         <span className="text-sm">${q.amount.toLocaleString()}</span>
-                        
+
                         {/* after the quote is accepted, button changes to a label */}
                         {!q.accepted ? (
                             <button
@@ -162,9 +162,9 @@ export default function QuotesPage() {
                             >
                                 Delete
                             </button>
-                                )}
-                    </div>    
-                </div>     
+                        )}
+                    </div>
+                </div>
             ))}
         </div>
     )
