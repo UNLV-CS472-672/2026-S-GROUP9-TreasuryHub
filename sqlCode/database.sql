@@ -99,7 +99,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     entity_id      UUID NOT NULL, 
     before_data    JSONB,
     after_data     JSONB,
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    type           TEXT NOT NULL CHECK (type IN ('financial', 'account', 'file', 'system'))
 );
 
 -- Roles Table

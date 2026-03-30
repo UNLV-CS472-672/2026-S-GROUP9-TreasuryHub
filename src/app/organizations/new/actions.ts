@@ -4,6 +4,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { logAuditEntry } from "@/app/audit/lib/action";
+import { AuditLogType } from "@/app/audit/lib/data";
 
 //formData : FormData catches the submitted form data on form submission
 export async function createOrganization(formData: FormData){
@@ -46,5 +48,17 @@ export async function createOrganization(formData: FormData){
                     org_id: orgID,
                     role: 'treasurer',
                   })
-    }
+    
+    // Log new organization creation in the audit log
+    await logAuditEntry({
+        orgId: orgID,
+        userId: user.id,
+        action: "CREATE",
+        entity_type: "organization",
+        entity_id: orgID,
+        after_data: { org_name: organizationName },
+        type: AuditLogType.ACCOUNT,
+  
+    });
+  }
 }
