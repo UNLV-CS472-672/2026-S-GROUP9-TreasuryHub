@@ -339,6 +339,9 @@ export default async function DashboardPage({
                 <span className="rounded-full border border-white/[0.2] bg-white/[0.05] px-3 py-1 text-xs uppercase tracking-[0.16em] text-neutral-200">
                   {data.orgName}
                 </span>
+                <Link href="/organizations" className="rounded-full border border-white/[0.2] bg-white/[0.05] px-3 py-1 text-xs uppercase tracking-[0.16em] text-neutral-200 hover:border-white/[0.35] hover:bg-white/[0.08] hover:text-white">
+                  Organization Settings
+              </Link>
               </div>
             </div>
 

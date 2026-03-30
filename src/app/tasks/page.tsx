@@ -7,6 +7,7 @@ import {
   updateTaskAction,
   deleteTaskAction,
 } from "./actions";
+import BackButton from "@/components/BackButton";
 
 /*
   This defines what a Task looks like in our app.
@@ -335,7 +336,10 @@ export default function TasksPage() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Task List</h1>
+      <div className="flex items-center justify-center mb-3">
+        <h1>Task List</h1>
+        <BackButton></BackButton>
+      </div>
 
       {/* showing current user role just for demo/testing */}
       <p>

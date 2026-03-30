@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import BackButton from "@/components/BackButton";
 
 type OrgMembershipRow = {
   org_id: string;
@@ -143,6 +144,7 @@ export default async function Organizations({
                 </div>
               </Link>
             ))}
+            <BackButton></BackButton>
           </div>
         )}
       </div>

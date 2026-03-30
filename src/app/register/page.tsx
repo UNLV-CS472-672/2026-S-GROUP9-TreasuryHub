@@ -28,7 +28,7 @@ export default function RegistrationPage(){
     }
 
     return(
-        <div>
+        <div className="mt-5 flex items-center justify-center gap-4">
             <input 
                 type="text"
                 value={displayName}
@@ -60,7 +60,7 @@ export default function RegistrationPage(){
 
             {error && <p className="text-red-500">{error}</p>}
 
-            <button onClick={handleSubmit}>
+            <button onClick={handleSubmit} className="border border-white rounded p-2 text-white hover:bg-white/[0.1]">
                 SUBMIT!
             </button>
                     

@@ -3,6 +3,7 @@
 
 import Form from 'next/form'
 import { createOrganization } from "./actions";
+import BackButton from '@/components/BackButton';
 
 export default function NewOrganization() {
   return (
@@ -26,6 +27,7 @@ export default function NewOrganization() {
                 >
                     <p>Create new organization </p>
                 </button>
+                <BackButton></BackButton>
             </Form>
         </div>
     </main>
