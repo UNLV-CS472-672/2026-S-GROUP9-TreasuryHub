@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { uploadFile, getTransactions } from '../lib/files'
+import { isValidFileType, isValidFileSize } from '../lib/fileValidation'
 
 // Set the properties the component will use
 type Props = {
@@ -37,27 +38,12 @@ export default function UploadModal({ orgId, transactionId, onSuccess, onClose }
     async function handleUpload() {
         if (!file) return
 
-        // Validate file size (10MB max)
-        if (file.size > 10 * 1024 * 1024) {
+        if (!isValidFileSize(file.size)) {
             setError('File size must be under 10MB')
             return
         }
 
-        // For receipts, accepted filetypes are pdf, jpeg, png
-        const allowedReceipt = ['application/pdf', 'image/jpeg', 'image/png']
-
-        // For documents, accepted filetypes are pdf, jpeg, png, docx, doc, xlsx
-        const allowedDocument = [
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        ]
-
-        const allowed = fileType === 'receipt' ? allowedReceipt : allowedDocument
-        if (!allowed.includes(file.type)) {
+        if (!isValidFileType(file.type, fileType)) {
             setError(
                 fileType === 'receipt'
                     ? 'Receipts must be PDF, JPG, or PNG'
