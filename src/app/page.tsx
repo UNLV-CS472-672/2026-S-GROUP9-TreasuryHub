@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <main className="min-h-screen">
-         <div className="justify-center mx-auto flex max-w-3xl flex-col gap-6 p-6">
+         <div className="item-center justify-center mx-auto flex max-w-3xl flex-col gap-6 p-6">
         <form action="/auth/signout" method="POST">
           <button
             type="submit"
