@@ -129,37 +129,36 @@ ALTER TABLE files ENABLE ROW LEVEL SECURITY;
 -- Enable RLS on audit_logs table
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Drop policies before recreating them
-DROP POLICY IF EXISTS "Treasurer can view files" ON files;
-CREATE POLICY "Treasurer can view files"
+DROP POLICY IF EXISTS "Org members can view files" ON files;
+CREATE POLICY "Org members can view files"
 ON files FOR SELECT
 USING (
     org_id IN (
         SELECT org_id FROM org_members
         WHERE user_id = auth.uid()
-        AND role = 'treasurer'
+        AND role IN ('treasurer', 'treasury_team', 'admin', 'executive', 'advisor')
     )
 );
 
-DROP POLICY IF EXISTS "Treasurer can upload files" ON files;
-CREATE POLICY "Treasurer can upload files"
+DROP POLICY IF EXISTS "Permitted roles can upload files" ON files;
+CREATE POLICY "Permitted roles can upload files"
 ON files FOR INSERT
 WITH CHECK (
     org_id IN (
         SELECT org_id FROM org_members
         WHERE user_id = auth.uid()
-        AND role = 'treasurer'
+        AND role IN ('treasurer', 'treasury_team', 'admin')
     )
 );
 
-DROP POLICY IF EXISTS "Treasurer can delete files" ON files;
-CREATE POLICY "Treasurer can delete files"
+DROP POLICY IF EXISTS "Permitted roles can delete files" ON files;
+CREATE POLICY "Permitted roles can delete files"
 ON files FOR DELETE
 USING (
     org_id IN (
         SELECT org_id FROM org_members
         WHERE user_id = auth.uid()
-        AND role = 'treasurer'
+        AND role IN ('treasurer', 'treasury_team', 'admin')
     )
 );
 

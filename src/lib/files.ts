@@ -3,6 +3,10 @@ import { createClient } from './supabase/client'
 // Uploads a file to the supabase storage, and to the files table
 export async function uploadFile(file: File, orgId: string, fileType: 'receipt' | 'document', transactionId?: string) {
     const supabase = createClient()
+
+    // Get the current user so we can save uploaded_by
+    const { data: { user } } = await supabase.auth.getUser()
+
     // Building a unique storage path for the file
     const filePath = `${orgId}/${Date.now()}_${file.name}`
 
@@ -23,6 +27,7 @@ export async function uploadFile(file: File, orgId: string, fileType: 'receipt' 
             file_name: file.name,
             file_type: fileType,
             mime_type: file.type,
+            uploaded_by: user?.id || null,
         })
         .select()
         .single()
@@ -78,14 +83,14 @@ export async function getSignedUrl(filePath: string) {
 }
 
 // Gets all transactions for a given orgId
-// NOTE: transactions table is not fully fleshed out yet, working with the current state of it.
-// Will add further improvements to implementation later once transactions have been sorted out.
+// Shows description, amount, and date now that the transactions table has been expanded
 export async function getTransactions(orgId: string) {
     const supabase = createClient()
     const { data, error } = await supabase
         .from('transactions')
-        .select('transaction_id')
+        .select('transaction_id, description, amount, date')
         .eq('org_id', orgId)
+        .order('date', { ascending: false })
 
     if (error) throw error
 

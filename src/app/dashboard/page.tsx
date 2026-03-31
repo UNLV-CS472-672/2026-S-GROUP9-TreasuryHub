@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDashboardData } from "@/lib/supabase/dashboard";
+import OrgSwitcher from '@/components/OrgSwitcher';
 
 export const dynamic = "force-dynamic";
 
@@ -118,40 +119,6 @@ function QuotesCard() {
         Review and manage vendor quotes →
       </p>
     </Link>
-  );
-}
-
-function OrgSwitcher({
-  organizations,
-  currentOrgId,
-}: {
-  organizations: {
-    org_id: string;
-    org_name: string;
-    role: string;
-  }[];
-  currentOrgId: string;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {organizations.map((org) => {
-        const isActive = org.org_id === currentOrgId;
-
-        return (
-          <Link
-            key={org.org_id}
-            href={`/dashboard?orgId=${org.org_id}`}
-            className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.16em] transition ${
-              isActive
-                ? "border-white/[0.35] bg-white/[0.12] text-white"
-                : "border-white/[0.2] bg-white/[0.05] text-neutral-300 hover:border-white/[0.35] hover:bg-white/[0.08] hover:text-white"
-            }`}
-          >
-            {org.org_name}
-          </Link>
-        );
-      })}
-    </div>
   );
 }
 
@@ -319,7 +286,9 @@ export default async function DashboardPage({
   const canAccessFiles =
     data.role === "executive" ||
     data.role === "advisor" ||
-    data.role === "treasurer";
+    data.role === "treasurer" ||
+    data.role === "treasury_team" ||
+    data.role === "admin";
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -367,15 +336,15 @@ export default async function DashboardPage({
           <OrgSwitcher
             organizations={data.organizations}
             currentOrgId={data.orgId}
+            basePath="/dashboard"
           />
         </header>
 
         {data.scope === "organization" ? (
           <div className="space-y-8">
             <section
-              className={`grid gap-4 md:grid-cols-2 ${
-                canAccessFiles ? "xl:grid-cols-7" : "xl:grid-cols-6"
-              }`}
+              className={`grid gap-4 md:grid-cols-2 ${canAccessFiles ? "xl:grid-cols-7" : "xl:grid-cols-6"
+                }`}
             >
               <StatCard
                 label="Income"
