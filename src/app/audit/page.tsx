@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { AuditLogType } from "./lib/data";
 import { formatAction } from "./lib/util";
 import { renderAuditDetails, cellStyle, headerStyle, containerStyle, tableStyle} from "./lib/render";
+import BackButton from "@/components/BackButton";
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -153,8 +154,10 @@ export default function AuditPage(){
         <div style={{padding: "20px"}}>
 
             {/* Page Title */}
-            <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
-
+            <div className="flex items-center justify-between mb-3">
+                <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
+                <BackButton></BackButton>
+            </div>
             {/* Container around the table*/}
             <div style={containerStyle}>
                 <table style={tableStyle}>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getOrgMemberships, exportCSV } from "./action";
+import BackButton from "@/components/BackButton";
 
 //Storing membership information
 type Membership = {
@@ -143,11 +144,14 @@ export default function CSVPage( ) {
                     </select>
                 </div>
             )}
+            <div className="flex items-center gap-4">
             <button onClick={handleExport}
                 disabled={!selectedOrgId}
                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 active:scale-95 transition-all">
                 Export Transactions
             </button>
+            <BackButton />
+            </div>
         </div>
     );
 }

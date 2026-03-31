@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { getFiles } from '../../lib/files'
 import UploadModal from '../../components/UploadModal'
 import FileViewer from '../../components/FileViewer'
+import BackButton from '@/components/BackButton'
 
 // Temporary hardcoded org ID for testing, will come from auth context later
 const TEST_ORG_ID = '10148741-4cbb-4d58-977d-13fdd4398eb4'
@@ -75,14 +76,17 @@ export default function FilesPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-semibold text-white">Files</h1>
+                <div className="flex gap-4">
                 <button
                     onClick={() => setShowUpload(true)}
                     className="bg-blue-600 text-white px-4 py-2 rounded"
                 >
                     Upload File
                 </button>
+                <BackButton />
+                </div>
             </div>
-
+            
             {/* Upload modal */}
             {showUpload && (
                 <UploadModal

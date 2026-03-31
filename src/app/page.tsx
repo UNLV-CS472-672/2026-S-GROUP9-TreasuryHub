@@ -4,31 +4,34 @@ import Link from "next/link";
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <div className="flex items-center justify-center">
+         <div className="item-center justify-center mx-auto flex max-w-3xl flex-col gap-6 p-6">
         <form action="/auth/signout" method="POST">
           <button
             type="submit"
-            className="border border-white rounded p-2 text-white"
+            className="border border-white rounded p-2 text-white hover:bg-white/[0.1]"
           >
             Sign Out
           </button>
         </form>
-      </div>
       {/* Section for Organizations */}
-      <div>
+   
         {/* Header */}
         <Link href="/organizations">
-          <h1>
+          <button className="border border-white rounded p-2 text-white hover:bg-white/[0.1]">
             Organizations
-          </h1>
+          </button>
         </Link>
         {/* Display current organizations */}
           {/* FUTURE WORK HERE */}
         {/* Create new organization button */}
           {/* Link is better than a href for performance */}
         <Link href="/organizations/new">
-          <button>Create New Organization </button>
+          <button className="border border-white rounded p-2 text-white hover:bg-white/[0.1]">Create New Organization </button>
         </Link>
+        <Link href="/dashboard">
+          <button className="border border-white rounded p-2 text-white hover:bg-white/[0.1]">Go to Dashboard</button>
+        </Link>
+     
       </div>
     </main>
   );

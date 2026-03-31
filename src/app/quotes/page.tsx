@@ -2,6 +2,7 @@
 
 import { useDebugValue, useEffect, useState } from "react"
 import { addQuote, getQuotes, acceptQuote, deleteQuote } from "./actions"
+import BackButton from "@/components/BackButton"
 
 // The Treasurer/Admin can view and review uploaded quotes for products 
 // or services for a certain event with an established budget. They can 
@@ -109,6 +110,7 @@ export default function QuotesPage() {
                 >
                     Add Quote
                 </button>
+                <BackButton />
             </div>
 
             {/* display the quotes/memos */}
