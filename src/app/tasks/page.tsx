@@ -6,6 +6,7 @@ import {
   addTaskAction,
   updateTaskAction,
   deleteTaskAction,
+  getTaskAssignmentOptions,
 } from "./actions";
 
 /*
@@ -45,19 +46,6 @@ type DatabaseTask = {
   existing roles and members.
   For now they are hardcoded, but later these could come from a database.
 */
-const existingRoles = ["Officer", "Treasurer", "Secretary", "Member"];
-const existingMembers = [
-  "Prabh",
-  "Enrique",
-  "Mathew",
-  "Danilo",
-  "Keith",
-  "Tracy",
-  "Ricardo",
-  "Kaley",
-  "Miguel",
-  "Xae",
-];
 
 /*
   The UC says only officer-level or above can create/edit/delete tasks.
@@ -82,6 +70,10 @@ export default function TasksPage() {
   const [assignType, setAssignType] = useState<"role" | "individual">("role");
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState("");
+
+  // stores real roles and members from the database
+  const [existingRoles, setExistingRoles] = useState<string[]>([]);
+  const [existingMembers, setExistingMembers] = useState<string[]>([]);
 
   /*
     This loads tasks from Supabase when the page first opens.
@@ -108,6 +100,16 @@ export default function TasksPage() {
       );
 
       setTasks(formattedTasks);
+
+      const optionsResult = await getTaskAssignmentOptions();
+
+      if (optionsResult.error) {
+        alert(optionsResult.error);
+        return;
+      }
+
+      setExistingRoles(optionsResult.roles);
+      setExistingMembers(optionsResult.members);
     };
 
     fetchTasks();

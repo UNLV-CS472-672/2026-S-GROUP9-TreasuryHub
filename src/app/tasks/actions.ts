@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { fetchOrgFromCurrentUser } from "@/app/transaction/lib/data";
 
 const validTaskTypes = [
   "TODO",
@@ -11,9 +12,6 @@ const validTaskTypes = [
   "FUNDRAISER",
   "MEETING",
 ] as const;
-
-const validRoles = ["Officer", "Treasurer", "Secretary", "Member"];
-const validMembers = ["Prabh", "Enrique", "Mathew", "Danilo", "Keith", "Tracy", "Ricardo", "Kaley", "Miguel", "Xae"];
 
 // temporary until real auth/roles are connected
 const currentUserRole = "Officer";
@@ -34,12 +32,37 @@ function isValidFutureDate(dateString?: string) {
   return selectedDate > today;
 }
 
-function isValidAssignment(assignType: string, assignedTo: string) {
+async function isValidAssignment(assignType: string, assignedTo: string) {
+  const supabase = await createClient();
+  const orgId = await fetchOrgFromCurrentUser();
+
+  const { data: orgMembers, error: orgMembersError } = await supabase
+    .from("org_members")
+    .select("user_id, role")
+    .eq("org_id", orgId);
+
+  if (orgMembersError || !orgMembers) {
+    return false;
+  }
+
   if (assignType === "role") {
+    const validRoles = [...new Set(orgMembers.map((member) => member.role))];
     return validRoles.includes(assignedTo);
   }
 
   if (assignType === "individual") {
+    const userIds = orgMembers.map((member) => member.user_id);
+
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("user_id, display_name")
+      .in("user_id", userIds);
+
+    if (usersError || !users) {
+      return false;
+    }
+
+    const validMembers = users.map((user) => user.display_name);
     return validMembers.includes(assignedTo);
   }
 
@@ -60,6 +83,65 @@ export async function getTasks() {
   }
 
   return { error: null, data: data ?? [] };
+}
+
+export async function getTaskAssignmentOptions() {
+  const supabase = await createClient();
+  const orgId = await fetchOrgFromCurrentUser();
+  
+
+  const { data: orgMembers, error: orgMembersError } = await supabase
+    .from("org_members")
+    .select("user_id, role")
+    .eq("org_id", orgId);
+
+  if (orgMembersError) {
+    console.error("org_members error:", orgMembersError);
+    return { error: orgMembersError.message, roles: [], members: [] };
+  }
+
+  if (!orgMembers || orgMembers.length === 0) {
+    console.error("No org members found for org:", orgId);
+    return { error: "No org members found for this organization.", roles: [], members: [] };
+  }
+
+  const userIds = orgMembers.map((member) => member.user_id);
+  console.log("org member user ids:", userIds);
+   
+
+
+  const { data: users, error: usersError } = await supabase
+    .from("users")
+    .select("user_id, display_name")
+    .in("user_id", userIds);
+
+  if (usersError) {
+    console.error("users table error:", usersError);
+    return { error: usersError.message, roles: [], members: [] };
+  }
+
+  if (!users || users.length === 0) {
+    console.error("No matching users found in users table for:", userIds);
+    return { error: "No matching users found in users table.", roles: [], members: [] };
+  }
+
+  const roles = [...new Set(orgMembers.map((member) => member.role))];
+  const members = users
+    .map((user) => user.display_name)
+    .filter((name): name is string => Boolean(name));
+
+  console.log("roles found:", roles);
+  console.log("members found:", members);
+
+    //console.log("current orgId:", orgId);
+//console.log("orgMembers for this org:", orgMembers);
+//console.log("users returned:", users);
+
+  return {
+    error: null,
+    roles,
+    members,
+  };
 }
 
 // create task
@@ -89,7 +171,7 @@ export async function addTaskAction(formData: {
     return { error: "Please assign the task to a role or individual." };
   }
 
-  if (!isValidAssignment(assignType, assignedTo)) {
+  if (!(await isValidAssignment(assignType, assignedTo))) {
     return { error: "Task must be assigned to an existing role or member." };
   }
 
@@ -146,7 +228,7 @@ export async function updateTaskAction(
     return { error: "Please assign the task to a role or individual." };
   }
 
-  if (!isValidAssignment(assignType, assignedTo)) {
+  if (!(await isValidAssignment(assignType, assignedTo))) {
     return { error: "Task must be assigned to an existing role or member." };
   }
 
