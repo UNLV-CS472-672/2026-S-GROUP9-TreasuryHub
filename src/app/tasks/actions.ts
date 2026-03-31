@@ -69,6 +69,7 @@ export async function addTaskAction(formData: {
   assignType: "role" | "individual";
   assignedTo: string;
   dueDate?: string;
+  //notify_days_before: 3;
 }) {
   if (!hasOfficerAccess(currentUserRole)) {
     return { error: "Only officer-level users or above can create tasks." };
@@ -105,6 +106,7 @@ export async function addTaskAction(formData: {
       assign_type: assignType,
       assigned_to: assignedTo,
       due_date: dueDate || null,
+      notify_days_before: 3,
     },
   ]);
 
