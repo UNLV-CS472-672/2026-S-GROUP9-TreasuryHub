@@ -1,40 +1,69 @@
 import { fetchTransactions } from "@/app/transaction/lib/data";
 import { DeleteTransaction, UpdateTransaction } from "@/app/transaction/ui/buttons";
+import { textColors, bgColors } from "../lib/styles";
 
 
 export default async function TransactionTable() {
-  // TODO: Add color and formatting
   // TODO: Add confirmation for DeleteTransaction
+  // TODO: Add clsx for Color amount by type
+  const tableFieldSpacing = "px-3 py-1.5"
 
   const transactions = await fetchTransactions();
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Description</th>
-          <th>Category</th>
-          <th>Amount</th>
-          <th>Type</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((transaction) => {
-          return (
-            <tr key={transaction.transaction_id}>
-              <td>{transaction.date}</td>
-              <td>{transaction.description}</td>
-              <td>{transaction.category}</td>
-              <td>{transaction.amount}</td>
-              <td>{transaction.type}</td>
-              <td>{transaction.notes}</td>
-              <td><UpdateTransaction id={transaction.transaction_id} /></td>
-              <td><DeleteTransaction id={transaction.transaction_id} /></td>
+    <div className={`shadow-sm rounded-md ${bgColors.primary}`}>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className={`${bgColors.secondary} border-b-2 border-gray-500`}>
+            <tr className={`text-left text-xs md:text-sm font-semibold uppercase ${textColors.secondary} tracking-wider`}>
+              <th className={tableFieldSpacing}>Date</th>
+              <th className={tableFieldSpacing}>Description</th>
+              <th className={tableFieldSpacing}>Category</th>
+              <th className={tableFieldSpacing}>Amount</th>
+              <th>Actions</th>
             </tr>
-          );
-        })}
-      </tbody>
-    </table>
+          </thead>
+          <tbody className="divide-y divide-gray-500 text-xs md:text-sm whitespace-nowrap">
+            {transactions.map((transaction) => {
+              return (
+                <tr key={transaction.transaction_id} className={`${textColors.primary} odd:bg-white even:bg-gray-100 dark:odd:bg-black dark:even:bg-gray-900`}>
+                  <td className={tableFieldSpacing}>{transaction.date}</td>
+                  <td className={tableFieldSpacing}>
+                    <div>
+                      <p>
+                        {transaction.description}
+                      </p>
+                      <p className={`hidden md:inline md:text-xs ${textColors.secondary}`}>
+                        {transaction.notes}
+                      </p>
+                    </div>
+                  </td>
+                  <td className={tableFieldSpacing}>{transaction.category}</td>
+                  <td className={tableFieldSpacing}>
+                    <p className={transaction.type === "income"
+                      ? `${textColors.green}`
+                      : `${textColors.red}`
+                    }
+                    >
+                    {transaction.type === "income"
+                      ? `+${transaction.amount.toLocaleString("en-US", { style: "currency", currency: "USD" }) }`
+                      : `-${transaction.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
+                    }
+                    {/*  $
+                      {transaction.amount}*/}
+                    </p>
+                  </td>
+                  <td className={tableFieldSpacing}>
+                    <div className="flex space-x-2">
+                      <UpdateTransaction id={transaction.transaction_id} />
+                      <DeleteTransaction id={transaction.transaction_id} />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

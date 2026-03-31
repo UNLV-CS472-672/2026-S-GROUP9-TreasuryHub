@@ -2,36 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { AuditLogType } from "./lib/data";
+import { formatAction } from "./lib/util";
+import { renderAuditDetails, cellStyle, headerStyle, containerStyle, tableStyle} from "./lib/render";
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// getDiff
-// Compares before and after objects and
-// returns only the fields that have changed
-//
-// Responsibilities:
-// - field: property name
-// - oldValue: value from the before object (or "-" if undefined)
-// - newValue: value from the after object (or "-" if undefined) 
-
-function getDiff(before: any, after: any) {
-    const beforeObj = before ?? {};
-    const afterObj = after ?? {};
-
-  const fields = new Set([...Object.keys(beforeObj), ...Object.keys(afterObj)]);
-  const changes = [];
-
-  for (const field of fields) {
-    if (beforeObj[field] !== afterObj[field]) {
-      changes.push({
-        field,
-        oldValue: beforeObj[field] ?? "-",
-        newValue: afterObj[field] ?? "-",
-      });
-    }
-  }
-
-  return changes;
-}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // AuditPage
@@ -46,6 +20,8 @@ export default function AuditPage(){
     const [orgId, setOrgId] = useState<string | null>(null);
     const [logs, setLogs] = useState<any[]>([]);
     const [role, setRole] = useState<string | null>(null);
+    const [roleMap, setRoleMap] = useState<Map<string, string>>(new Map());
+    const canViewAudit = role === "treasurer" || role === "admin";
 
     const supabase = createClient();
 
@@ -60,26 +36,32 @@ export default function AuditPage(){
         }
     };
         getUser();
-    }, []);
+    }, [supabase]);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Fetch the orgId for this user from org_members
+    // Fetch the orgId and role for this user from org_members
     useEffect(() => {
         const fetchOrg = async () => {
             if(!userId) return;
 
             const { data, error} = await supabase
             .from("org_members")
-            .select("org_id")
+            .select("org_id, role")
             .eq("user_id", userId)
             .single();
 
-            if (error) console.error("Error fetching orgId", error);
-            else {
-                console.log("Fetched orgId:", data?.org_id);
-                if (data?.org_id) setOrgId(data.org_id);
-            else console.warn("No org_id found for this user in org_members table");
+            if (error){
+                console.error("Error fetching organizations:", error);
             }
+            
+            if (!data){
+                console.warn("User is not part of any organizations");
+                return;
+            }
+
+            setOrgId(data.org_id);
+            setRole(data.role);
+
         };
         fetchOrg();
     }, [userId, supabase])
@@ -87,96 +69,84 @@ export default function AuditPage(){
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Fetch the latest audit log data
     useEffect(() => {
-        if (!orgId) return;
+        if (!orgId || !role) return;
         const fetchLogs = async () => {
-            const {data, error} = await supabase
+            let query = supabase
             .from("audit_logs")
-            .select("*, users (display_name)")
+            .select(`*, users (display_name)`)
             .eq("org_id", orgId)
-            .eq("entity", "transaction")
-            .order("created_at", {ascending: false})
-            .limit(10);
+            .order("created_at", { ascending: false })
+            .limit(50);
 
-            if (data) {
-                setLogs(data);
+            console.log("Role:", role);
+
+            if (role == 'treasurer') {
+                console.log("Filtering for financial logs only");
+                console.log("AuditLogType.FINANCIAL:", AuditLogType.FINANCIAL);
+                query = query.eq("type", AuditLogType.FINANCIAL);
             }
-            else if (error){ 
+
+            const { data, error } = await query;
+
+            if (error) {
                 console.error("Error fetching audit logs:", error);
+                return;
             }
+
+            setLogs(data || []);
         };
         fetchLogs();
-    }, [orgId, supabase]);
+    }, [orgId, supabase, role]);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Fetch the roles
+    // Fetch the role for each user in the logs for display
     useEffect(() => {
-        const fetchRoles = async () => {
-            if(!orgId || !userId) return;
+        const fetchDisplayRoles = async () => {
+            if(!orgId) return;
 
             const{ data, error} = await supabase
             .from("org_members")
-            .select("role")
+            .select("user_id,role")
             .eq("org_id", orgId)
-            .eq("user_id", userId)
-            .single();
 
-            if(data){
-                setRole(data.role);
-            } else if (error) {
-                console.error("Error fetching role:", error);
-            }
+
+            if (error){
+                console.error("Error fetching display roles:", error);
+                return;
+            } 
+            if (!data) return;
+
+            const map = new Map<string, string>();
+
+            data.forEach((member) => {
+                map.set(member.user_id, member.role);
+            });
+
+            setRoleMap(map);
         };
-        fetchRoles();
-    }, [orgId, userId, supabase])
+        fetchDisplayRoles();
+    }, [orgId])
     
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Display the audit logs in a table format
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Table Styles
-    // - cellStyle: base style for all table cells
-    // - boldCellStyle: same as cellStyle with bold font
-    // - specialCellStyle: style for cell without top border (used for row-spanned cells)
-    // - headerStyle: style applied to table headers
-    // - containerStyle: outer wrapper around the table
-    // - tableStyle: style applied to the table itself
+    if (!role) {
+        return (
+            <div style={{padding: "20px"}}>
+                <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
+                <p>Loading...</p>
+            </div>
+        );
+    }
 
-    const cellStyle: React.CSSProperties = {
-        border: "1px solid #374151",
-        padding: "10px",
-        borderTop: "2px solid #d1d5db",
-    };
-
-    const boldCellStyle: React.CSSProperties = {
-        border: "1px solid #374151",
-        padding: "10px",
-        borderTop: "2px solid #d1d5db",
-        fontWeight: "500",
-    };
-
-    const specialCellStyle: React.CSSProperties = {
-        border: "1px solid #374151",
-        padding: "10px",
-    };
-
-    const headerStyle = {
-        border: "1px solid #e5e7eb",
-        backgroundColor: "#111827",
-        textAlign: "left" as const,
-        padding: "12px",
-        fontWeight: "600",
-    };
-    
-    const containerStyle = {
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        overflow: "hidden",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-    };
-
-    const tabelStyle = {
-        width: "100%",
-        borderCollapse: "collapse" as const,
-        fontSize: "14px",
-    };
+    if (!canViewAudit){
+        return (
+            <div style={{padding: "20px"}}>
+                <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
+                <p>You do not have permission to view audit logs.</p>
+            </div>
+        );
+    }
 
 
     return(
@@ -187,77 +157,59 @@ export default function AuditPage(){
 
             {/* Container around the table*/}
             <div style={containerStyle}>
-                <table style={tabelStyle}>
+                <table style={tableStyle}>
 
                     {/* Table header row */}
                     <thead>
                         <tr>
                             {/* Column headers */}
-                            <th style={headerStyle}>Data</th>
                             <th style={headerStyle}>User</th>
                             <th style={headerStyle}>Role</th>
-                            <th style={headerStyle}>Action</th>
+                            <th style={headerStyle}>Timestamp</th>
+                            <th style={headerStyle}>Action Type</th>
                             <th style={headerStyle}>Item</th>
-                            <th style={headerStyle}>Field</th>
-                            <th style={headerStyle}>Old Value</th>
-                            <th style={headerStyle}>New Value</th>
+                            <th style={headerStyle}>Description</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        {/* Loop through each audit log entry */}
-                        {logs.map((log, logIndex) => {
-                            const diffs = getDiff(log.before_data, log.after_data);
-                            return diffs.map((diff, index) => (
-                                <tr
-                                key={`${log.audit_id}-${index}`}
+                    {logs.map((log) => {
+                        return (
+                            <tr key={log.audit_id}>
 
-                                // Alternate row colors
-                                 style={{backgroundColor: logIndex % 2 === 0 ? "#111827" : "#1f2637",}}>
+                                {/* User Column */}
+                                <td style={cellStyle}>
+                                    {log.users?.display_name || "Unknown User"}
+                                </td>
 
-                                    {/* Renders cell once per log and merges multiple diff rows using rowSpan */}
-                                    {index === 0 && (
-                                        <>
-                                            {/* Date */}
-                                            <td rowSpan={diffs.length} style={boldCellStyle}>
-                                                {new Date(log.created_at).toLocaleDateString()}
-                                            </td>
-                                            
-                                            {/* User */}
-                                            <td rowSpan={diffs.length} style={cellStyle}>
-                                                {log.users?.display_name || "Unknown User"}
-                                            </td>
+                                {/* Role Column */}
+                                <td style={cellStyle}>
+                                    {roleMap.get(log.user_id) || "Unknown Role"}
+                                </td>
 
-                                            {/* Role */}
-                                            <td rowSpan={diffs.length} style={cellStyle}>
-                                                {role}
-                                            </td>
+                                {/* Timestamp Column */}
+                                <td style={cellStyle}>
+                                    {new Date(log.created_at).toLocaleString()}
+                                </td>
 
-                                            {/* Action */}
-                                            <td rowSpan={diffs.length} style={cellStyle}>
-                                                {log.action}
-                                            </td>
+                                {/* Action Type Column */}
+                                <td style={cellStyle}>
+                                    {formatAction(log.action)}
+                                </td>
 
-                                            {/* Item */}
-                                            <td rowSpan={diffs.length} style={cellStyle}>
-                                                {log.entity}-{log.entity_id.slice(0, 8)}
-                                            </td>
-                                        </>
-                                    )}
+                                {/* Item Column */}
+                                <td style={cellStyle}>
+                                    {log.entity}-{log.entity_id?.slice(0, 4) || ""}
+                                </td>
 
-                                    {/* These cells change per diff, they could contain more than one value to display */}
-                                    {/* Field */}
-                                    <td style={specialCellStyle}>{diff.field}</td>
-
-                                    {/* Old Value */}
-                                    <td style={specialCellStyle}>{diff.oldValue === "-" ? "—" : String(diff.oldValue)}</td>
-
-                                    {/* New Value */}
-                                    <td style={specialCellStyle}>{diff.newValue === "-" ? "—" : String(diff.newValue)}</td>
-                                 </tr>
-                            ));
-                        })}
-                    </tbody>
+                                {/* Description Column */}
+                                <td style={cellStyle}>
+                                    {renderAuditDetails(log)}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
                 </table>
             </div>
         </div>

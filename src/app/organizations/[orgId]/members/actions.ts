@@ -10,6 +10,8 @@ import {
   isOrganizationMemberRole,
   normalizeMemberEmail,
 } from "@/lib/organizations";
+import { logAuditEntry } from "@/app/audit/lib/action";
+import { AuditLogType } from "@/app/audit/lib/data";
 
 // Just a small helper so redirects stay consistent and readable.
 function buildMembersPageRedirect(
@@ -113,6 +115,45 @@ export async function addOrganizationMember(orgId: string, formData: FormData) {
     throw new Error(insertResult.error.message);
   }
 
+  // Fetch the organization name for the audit log entry.
+  const { data: orgData, error: orgError } = await supabase
+    .from("organizations")
+    .select("org_name")
+    .eq("org_id", orgId)
+    .maybeSingle();
+
+  if (orgError) {
+    console.error(
+      "Failed to fetch organization data for audit log:",
+      orgError.message
+    );
+  }
+
+  // Fetch the new member's display name for the audit log entry.
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("display_name")
+    .eq("user_id", user.user_id)
+    .maybeSingle();
+
+  if (userError) {
+    console.error(
+      "Failed to fetch user data for audit log:",
+      userError.message
+    );
+  }
+
+  // Log the new member addition in the audit log
+  await logAuditEntry({
+    orgId: orgId,
+    userId: user.user_id,
+    action: "CREATE",
+    entity_type: "organization_member",
+    entity_id: user.user_id,
+    after_data: { "Organization": orgData?.org_name, "User": userData?.display_name, "User ID": user.user_id, "Role": role },
+    type: AuditLogType.ACCOUNT,
+  });
+
   // Refresh the page data after a successful insert.
   revalidatePath(`/organizations/${orgId}/members`);
   revalidatePath("/organizations");
@@ -207,6 +248,36 @@ export async function updateOrganizationMemberRole(
         );
     }
 
+    console.log("User ID being updated:", targetUserId);
+
+    // Fetch the member's display name for the audit log entry
+    const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("display_name")
+        .eq("user_id", targetUserId)
+        .maybeSingle();
+        
+    if (userError) {
+        console.error(
+            "Failed to fetch user data for audit log:",
+            userError.message
+        );
+    }
+
+    console.log("User Display Name:", userData?.display_name);
+
+    // Log the member role update in the audit log
+    await logAuditEntry({
+        orgId: orgId,
+        userId: currentMembership.user_id,
+        action: "UPDATE",
+        entity_type: "organization_member",
+        entity_id: targetUserId,
+        before_data: {  "User": userData?.display_name, "User ID": targetUserId, "Role": existingMembershipResult.data.role },
+        after_data: { "User": userData?.display_name, "User ID": targetUserId, "Role": nextRole },
+        type: AuditLogType.ACCOUNT,
+    });
+
     revalidatePath(`/organizations/${orgId}/members`);
     revalidatePath("/organizations");
 
@@ -277,6 +348,31 @@ export async function removeOrganizationMember(
   if (deleteResult.error) {
     throw new Error(deleteResult.error.message);
   }
+
+  // Fetch the member's display name for the audit log entry
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("display_name")
+    .eq("user_id", targetUserId)
+    .maybeSingle();
+    
+  if (userError) {
+    console.error(
+      "Failed to fetch user data for audit log:",
+      userError.message
+    );
+  }
+
+  // Log the member removal in the audit log
+  await logAuditEntry({
+    orgId: orgId,
+    userId: currentMembership.user_id,
+    action: "DELETE",
+    entity_type: "organization_member",
+    entity_id: targetUserId,
+    before_data: { "User": userData?.display_name, "User ID": targetUserId },
+    type: AuditLogType.ACCOUNT,
+  });
 
   revalidatePath(`/organizations/${orgId}/members`);
   revalidatePath("/organizations");

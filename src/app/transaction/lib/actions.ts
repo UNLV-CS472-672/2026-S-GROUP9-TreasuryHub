@@ -5,6 +5,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { fetchOrgFromCurrentUser, fetchUserId } from "@/app/transaction/lib/data";
 import { z } from "zod";
+import { logAuditEntry } from "@/app/audit/lib/action";
+import { AuditLogType } from "@/app/audit/lib/data";
+// import { after, before } from "node:test";
 
 const TransactionSchema = z.object({
   transaction_id: z.uuid(),
@@ -43,12 +46,16 @@ export async function createTransaction(_prevState: any, formData: FormData) {
   const { orgId, type, description, category, amount, date, notes } = result.data;
 
   // Insert to database
-  const { error } = await supabase
+  // I updated the insertion statement to return the inserted row
+  // This allows us to get the generated transaction_id which is needed for the audit log entry
+  const { data, error } = await supabase
     .from('transactions')
     .insert({
       org_id: orgId, created_by: userId, date: date, description: description, category: category,
       type: type, amount: amount, notes: notes
-    });
+    })
+    .select()
+    .single();
 
   if (error) {
     console.error(error)
@@ -56,6 +63,21 @@ export async function createTransaction(_prevState: any, formData: FormData) {
       message: 'Database Error: Failed to Create Transaction.'
     };
   }
+
+  // Insert audit log entry for transaction creation
+  await logAuditEntry({
+    orgId: orgId,
+    userId: userId,
+    created_at: date,
+    action: "CREATE",
+    entity_type: "transaction",
+    entity_id: data.transaction_id,
+    before_data: null,
+    after_data: {
+      description, category, type, amount, date, notes
+    },
+    type: AuditLogType.FINANCIAL,
+  });
 
   revalidatePath('/transaction')
   revalidatePath("/dashboard");
@@ -89,15 +111,30 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
   const { transaction_id, orgId, type, description, category, amount, date,
     notes } = result.data;
 
+  // Fetch existing transaction data before update for audit log
+  const { data: beforeData, error: beforeDataError } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("transaction_id", transaction_id)
+    .single();
+
+  if (beforeDataError) {
+    console.error(beforeDataError);
+    return {
+      message: 'Database Error: Failed to Fetch Existing Transaction Data.',
+    };
+  }
+
   // Update database
-  const { error } = await supabase
+  const { data: afterData, error } = await supabase
     .from('transactions')
     .update({
       org_id: orgId, date, description,
       category, type, amount, notes
     })
-    .eq("transaction_id", transaction_id);
-
+    .eq("transaction_id", transaction_id)
+    .select()
+    .single();
 
 
   // TODO: Handle error better
@@ -108,12 +145,42 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
     };
   }
 
+  // Insert audit log entry for transaction update
+  // Only log if there are changes to the transaction data
+  if (JSON.stringify(beforeData) !== JSON.stringify(afterData)) {
+    await logAuditEntry({
+      orgId: orgId,
+      userId: beforeData.created_by,
+      created_at: afterData.date,
+      action: "UPDATE",
+      entity_type: "transaction",
+      entity_id: transaction_id,
+      before_data: beforeData,
+      after_data: afterData,
+      type: AuditLogType.FINANCIAL,
+    });
+  }
+
+
   revalidatePath('/transaction')
   redirect('/transaction')
 }
 
 export async function deleteTransaction(transaction_id: string, _formData: FormData) {
   const supabase = await createClient();
+
+  // Fetch existing transaction data before deletion for audit log
+  const { data: beforeData, error: beforeDataError } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('transaction_id', transaction_id)
+    .single();
+
+  if (beforeDataError || !beforeData) {
+    console.error(beforeDataError);
+    return;
+  }
+
   const { error } = await supabase
     .from('transactions')
     .delete()
@@ -121,6 +188,20 @@ export async function deleteTransaction(transaction_id: string, _formData: FormD
   if (error) {
     console.error('Database Error: Failed to Delete Transaction.', error)
   }
+
+  // Insert audit log entry for transaction deletion
+  await logAuditEntry({
+    orgId: beforeData.org_id,
+    userId: beforeData.created_by,
+    created_at: beforeData.date,
+    action: "DELETE",
+    entity_type: "transaction",
+    entity_id: transaction_id,
+    before_data: beforeData,
+    after_data: null,
+    type: AuditLogType.FINANCIAL,
+  });
+
   revalidatePath('/transaction')
 }
 

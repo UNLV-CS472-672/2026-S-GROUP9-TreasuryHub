@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { fetchOrgFromCurrentUser, fetchUserId } from "@/app/transaction/lib/data";
 
 type TransactionRow = {
   transaction_id: string;
@@ -13,9 +12,28 @@ type TransactionRow = {
   notes?: string | null;
 };
 
+type MembershipRow = {
+  org_id: string;
+  role: string;
+};
+
+type OrganizationRow = {
+  org_id: string;
+  org_name: string;
+};
+
+type OrganizationListItem = {
+  org_id: string;
+  org_name: string;
+  role: string;
+};
+
 type OrganizationDashboardData = {
   scope: "organization";
+  orgId: string;
   orgName: string;
+  role: string;
+  organizations: OrganizationListItem[];
   summary: {
     income: number;
     expenses: number;
@@ -29,7 +47,10 @@ type OrganizationDashboardData = {
 
 type PersonalDashboardData = {
   scope: "personal";
+  orgId: string;
   orgName: string;
+  role: string;
+  organizations: OrganizationListItem[];
   summary: {
     reimbursementsTotal: number;
     payablesTotal: number;
@@ -51,42 +72,86 @@ function sumAmounts(
     .reduce((sum, tx) => sum + Number(tx.amount ?? 0), 0);
 }
 
-export async function getDashboardData(): Promise<DashboardData> {
+export async function getDashboardData(
+  selectedOrgId?: string
+): Promise<DashboardData> {
   const supabase = await createClient();
-  const userId = await fetchUserId();
-  const orgId = await fetchOrgFromCurrentUser();
 
-  const [{ data: membership, error: membershipError }, { data: org, error: orgError }] =
-    await Promise.all([
-      supabase
-        .from("org_members")
-        .select("role")
-        .eq("org_id", orgId)
-        .eq("user_id", userId)
-        .single(),
-      supabase
-        .from("organizations")
-        .select("org_name")
-        .eq("org_id", orgId)
-        .single(),
-    ]);
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (membershipError || !membership) {
-    console.error("Dashboard membership error:", membershipError?.message);
-    throw new Error("Failed to fetch user role for dashboard.");
+  if (userError || !user) {
+    throw new Error("Unauthorized");
   }
 
-  if (orgError || !org) {
-    console.error("Dashboard organization error:", orgError?.message);
-    throw new Error("Failed to fetch organization name.");
+  const { data: membershipsRaw, error: membershipsError } = await supabase
+    .from("org_members")
+    .select("org_id, role")
+    .eq("user_id", user.id);
+
+  if (membershipsError) {
+    console.error("Dashboard memberships error:", membershipsError.message);
+    throw new Error("Failed to fetch organizations.");
   }
 
-  const role = membership.role;
+  const memberships = (membershipsRaw ?? []) as MembershipRow[];
+
+  if (memberships.length === 0) {
+    throw new Error("No organization found.");
+  }
+
+  const orgIds = memberships.map((membership) => membership.org_id);
+
+  const { data: orgsRaw, error: orgsError } = await supabase
+    .from("organizations")
+    .select("org_id, org_name")
+    .in("org_id", orgIds);
+
+  if (orgsError) {
+    console.error("Dashboard organizations error:", orgsError.message);
+    throw new Error("Failed to fetch organization names.");
+  }
+
+  const orgs = (orgsRaw ?? []) as OrganizationRow[];
+  const orgMap = new Map(orgs.map((org) => [org.org_id, org.org_name]));
+
+  const organizations: OrganizationListItem[] = memberships
+    .map((membership) => {
+      const orgName = orgMap.get(membership.org_id);
+
+      if (!orgName) {
+        return null;
+      }
+
+      return {
+        org_id: membership.org_id,
+        org_name: orgName,
+        role: membership.role,
+      };
+    })
+    .filter((item): item is OrganizationListItem => item !== null);
+
+  if (organizations.length === 0) {
+    throw new Error("No organization found.");
+  }
+
+  const activeOrganization =
+    organizations.find((org) => org.org_id === selectedOrgId) ??
+    organizations[0];
+
+  const orgId = activeOrganization.org_id;
+  const orgName = activeOrganization.org_name;
+  const role = activeOrganization.role;
+
   const isOrgScope =
     role === "admin" ||
     role === "treasurer" ||
     role === "owner" ||
-    role === "creator";
+    role === "creator" ||
+    role === "executive" ||
+    role === "advisor";
 
   if (isOrgScope) {
     const { data: transactionsRaw, error: transactionsError } = await supabase
@@ -108,17 +173,19 @@ export async function getDashboardData(): Promise<DashboardData> {
     const income = sumAmounts(transactions, "income");
     const expenses = sumAmounts(transactions, "expense");
 
-    const [{ count: fileCount, error: filesError }, { count: auditCount, error: auditError }] =
-      await Promise.all([
-        supabase
-          .from("files")
-          .select("*", { count: "exact", head: true })
-          .eq("org_id", orgId),
-        supabase
-          .from("audit_logs")
-          .select("*", { count: "exact", head: true })
-          .eq("org_id", orgId),
-      ]);
+    const [
+      { count: fileCount, error: filesError },
+      { count: auditCount, error: auditError },
+    ] = await Promise.all([
+      supabase
+        .from("files")
+        .select("*", { count: "exact", head: true })
+        .eq("org_id", orgId),
+      supabase
+        .from("audit_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("org_id", orgId),
+    ]);
 
     if (filesError) {
       console.error("Dashboard files count error:", filesError.message);
@@ -130,7 +197,10 @@ export async function getDashboardData(): Promise<DashboardData> {
 
     return {
       scope: "organization",
-      orgName: org.org_name,
+      orgId,
+      orgName,
+      role,
+      organizations,
       summary: {
         income,
         expenses,
@@ -150,7 +220,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         "transaction_id, org_id, created_by, date, description, category, type, amount, notes"
       )
       .eq("org_id", orgId)
-      .eq("created_by", userId)
+      .eq("created_by", user.id)
       .order("date", { ascending: false })
       .limit(10);
 
@@ -170,7 +240,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     .from("files")
     .select("*", { count: "exact", head: true })
     .eq("org_id", orgId)
-    .eq("uploaded_by", userId);
+    .eq("uploaded_by", user.id);
 
   if (uploadedFilesError) {
     console.error(
@@ -181,7 +251,10 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   return {
     scope: "personal",
-    orgName: org.org_name,
+    orgId,
+    orgName,
+    role,
+    organizations,
     summary: {
       reimbursementsTotal,
       payablesTotal: 0,
