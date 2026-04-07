@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getDashboardData } from "@/lib/supabase/dashboard";
 import OrgSwitcher from '@/components/OrgSwitcher';
+import ExportCSVButton from "@/components/ExportCSVButton";
 
 export const dynamic = "force-dynamic";
 
@@ -171,21 +172,18 @@ function TransactionsTable({
             View Transactions
           </Link>
 
-          <Link
-            href={`/export-csv?orgId=${orgId}`}
+          <ExportCSVButton orgId={orgId} 
             className="
               rounded-xl
               border border-white/[0.2]
-              bg-white/[0.05]
+              bg-blue-500/[0.05]
               px-4 py-2
               text-sm font-medium text-white
               transition
               hover:border-white/[0.35]
-              hover:bg-white/[0.08]
+              hover:bg-blue-100/[0.08]
             "
-          >
-            Export CSV
-          </Link>
+          />
         </div>
       </div>
 
