@@ -6,6 +6,8 @@ import { AuditLogType } from "./lib/data";
 import { formatAction } from "./lib/util";
 import { renderAuditDetails, cellStyle, headerStyle, containerStyle, tableStyle} from "./lib/render";
 import BackButton from "@/components/BackButton";
+import OrgSwitcher from "@/components/OrgSwitcher";
+import { useSearchParams } from "next/navigation";
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -16,56 +18,84 @@ import BackButton from "@/components/BackButton";
 // - Determine each user's role for display
 // - Render the audit data in a structured table
 
+type OrgOption = {
+    org_id: string;
+    org_name: string;
+    role: string;
+}
+
 export default function AuditPage(){
+    const seachParams = useSearchParams();
+    const orgIdFromParams = seachParams.get("orgId");
+
+
     const [userId, setUserId] = useState<string | null>(null);
-    const [orgId, setOrgId] = useState<string | null>(null);
+    const [orgId, setOrgId] = useState<string | null>(orgIdFromParams);
+    const [organizations, setOrganizations] = useState<OrgOption[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
     const [role, setRole] = useState<string | null>(null);
-    const [roleMap, setRoleMap] = useState<Map<string, string>>(new Map());
+    const [orgError, setOrgError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(true)
     const canViewAudit = role === "treasurer" || role === "admin";
 
     const supabase = createClient();
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Fetch the user id
-    useEffect(() => {
-        const getUser = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-        console.log("Current userId from session:", session.user.id);
-        setUserId(session.user.id);
-        }
-    };
-        getUser();
-    }, [supabase]);
+    // Fetch the current user's ID, organizations and role
+      useEffect(() => {
+        const fetchUserandOrgs = async () => {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Fetch the orgId and role for this user from org_members
-    useEffect(() => {
-        const fetchOrg = async () => {
-            if(!userId) return;
-
-            const { data, error} = await supabase
-            .from("org_members")
-            .select("org_id, role")
-            .eq("user_id", userId)
-            .single();
-
-            if (error){
-                console.error("Error fetching organizations:", error);
-            }
-            
-            if (!data){
-                console.warn("User is not part of any organizations");
+            if (userError) {
+                console.error("Error fetching user:", userError);
                 return;
             }
 
-            setOrgId(data.org_id);
-            setRole(data.role);
+            if (!user) {
+                console.warn("No user is currently logged in");
+                return;
+            }
 
-        };
-        fetchOrg();
-    }, [userId, supabase])
+            console.log("User Id: ", user.id);
+
+            // Get all of the organizations this user is a part of
+            const { data: orgMemberships, error: orgError} = await supabase
+            .from("org_members")
+            .select("org_id, role, organizations (org_name)")
+            .eq("user_id", user.id)
+            if (orgError) {
+                console.error("Error fetching organizations:", orgError);
+                return;
+            }
+
+            // Build orgs list for org switcher
+            const orgList: OrgOption[] = orgMemberships.map((m: any) => ({
+                org_id: m.org_id,
+                org_name: m.organizations?.org_name ?? m.org_id,
+                role: m.role,
+            }))
+            setOrganizations(orgList);
+
+            // Find the active org, default to first org in the list
+            let activeOrg = orgList[0];
+
+            if (orgIdFromParams) {
+                const matchingOrg = orgList.find(org => org.org_id === orgIdFromParams);
+                if (!matchingOrg) {
+                    setOrgError('Organization not found or you do not have access to it.');
+                    setLoading(false);
+                    return;
+                }
+                activeOrg = matchingOrg;
+                console.log("Active Organization name: ", activeOrg.org_name);
+            }
+
+            setOrgId(activeOrg.org_id);
+            setRole(activeOrg.role);
+
+        }
+        fetchUserandOrgs();
+    }, [orgIdFromParams])
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Fetch the latest audit log data
@@ -100,38 +130,10 @@ export default function AuditPage(){
     }, [orgId, supabase, role]);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Fetch the role for each user in the logs for display
-    useEffect(() => {
-        const fetchDisplayRoles = async () => {
-            if(!orgId) return;
-
-            const{ data, error} = await supabase
-            .from("org_members")
-            .select("user_id,role")
-            .eq("org_id", orgId)
-
-
-            if (error){
-                console.error("Error fetching display roles:", error);
-                return;
-            } 
-            if (!data) return;
-
-            const map = new Map<string, string>();
-
-            data.forEach((member) => {
-                map.set(member.user_id, member.role);
-            });
-
-            setRoleMap(map);
-        };
-        fetchDisplayRoles();
-    }, [orgId])
-    
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Display the audit logs in a table format
 
-    if (!role) {
+    // loading 
+    if (!orgId) {
         return (
             <div style={{padding: "20px"}}>
                 <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
@@ -139,11 +141,21 @@ export default function AuditPage(){
             </div>
         );
     }
+    
 
     if (!canViewAudit){
         return (
             <div style={{padding: "20px"}}>
                 <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
+                 {organizations.length > 1 && orgId && (
+                            <div className="mb-6">
+                                <OrgSwitcher
+                                    organizations={organizations}
+                                    currentOrgId={orgId}
+                                    basePath="/audit"
+                                />
+                            </div>
+                        )}
                 <p>You do not have permission to view audit logs.</p>
             </div>
         );
@@ -158,6 +170,17 @@ export default function AuditPage(){
                 <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
                 <BackButton></BackButton>
             </div>
+            {organizations.length > 1 && orgId && (
+                            <div className="mb-6">
+                                <OrgSwitcher
+                                    organizations={organizations}
+                                    currentOrgId={orgId}
+                                    basePath="/audit"
+                                />
+                            </div>
+                        )}
+
+
             {/* Container around the table*/}
             <div style={containerStyle}>
                 <table style={tableStyle}>
@@ -187,7 +210,7 @@ export default function AuditPage(){
 
                                 {/* Role Column */}
                                 <td style={cellStyle}>
-                                    {roleMap.get(log.user_id) || "Unknown Role"}
+                                    {log.display_role || "Unknown Role"}
                                 </td>
 
                                 {/* Timestamp Column */}

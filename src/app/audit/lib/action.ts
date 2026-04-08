@@ -13,6 +13,7 @@ export type LogEntry = {
     before_data?: Record<string, any> | null;
     after_data?: Record<string, any> | null;
     type: "financial" | "account" | "file" | "system"; 
+    display_role: string | null;
 }
 
 // Server action to log an audit entry
@@ -31,6 +32,7 @@ export async function logAuditEntry(entry: LogEntry) {
         before_data: entry.before_data ?? null,
         after_data: entry.after_data ?? null,
         type: entry.type,
+        display_role: entry.display_role,
     }
     ]);
 

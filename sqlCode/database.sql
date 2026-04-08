@@ -100,7 +100,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     before_data    JSONB,
     after_data     JSONB,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-    type           TEXT NOT NULL CHECK (type IN ('financial', 'account', 'file', 'system'))
+    type           TEXT NOT NULL CHECK (type IN ('financial', 'account', 'file', 'system')),
+    display_role   TEXT 
 );
 
 -- Roles Table
