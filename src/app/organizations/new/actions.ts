@@ -48,6 +48,19 @@ export async function createOrganization(formData: FormData){
                     org_id: orgID,
                     role: 'treasurer',
                   })
+                  
+    // Fetch the current user's role for audit logs organization creation
+    const { data: roleData, error: roleError } = await supabase
+    .from("org_members")
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('org_id', orgID)
+    .single()
+
+    if(roleError){
+      console.error("Database Error: Failed to fetch current user's role.");
+      return;
+    }
     
     // Log new organization creation in the audit log
     await logAuditEntry({
@@ -58,7 +71,7 @@ export async function createOrganization(formData: FormData){
         entity_id: orgID,
         after_data: { org_name: organizationName },
         type: AuditLogType.ACCOUNT,
-  
+        display_role: roleData?.role,
     });
   }
 }
