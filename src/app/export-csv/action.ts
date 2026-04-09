@@ -54,7 +54,7 @@ export async function exportCSV(orgId: string) {
         .order("date", { ascending: false });
 
     if (error) return { error: error.message, code: "db_error" };
-    if (!data || data.length === 0) return { error: "No transactions found to export.", code: "no_data" };
+    if (!data || data.length === 0) return { error: "Your organization does not have any transactions to export.", code: "no_data" };
 
     return { data, orgName: org?.org_name ?? orgId };
 }
