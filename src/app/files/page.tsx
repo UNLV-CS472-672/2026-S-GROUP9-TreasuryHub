@@ -7,7 +7,8 @@ import { getFiles } from '../../lib/files'
 import UploadModal from '../../components/UploadModal'
 import FileViewer from '../../components/FileViewer'
 import BackButton from '@/components/BackButton'
-import OrgSwitcher from '../../components/OrgSwitcher'
+//import OrgSwitcher from '../../components/OrgSwitcher'
+import OrgDropDown from '@/components/OrgDropDown'
 
 // Roles that have access to files
 const FILE_ACCESS_ROLES = ['treasurer', 'treasury_team', 'admin', 'executive', 'advisor']
@@ -165,11 +166,17 @@ function FilesPageContent() {
                 <h1 className="text-2xl font-semibold text-white mb-4">Files</h1>
                 {organizations.length > 1 && (
                     <div className="mb-6">
-                        <OrgSwitcher
+                        {/*<OrgSwitcher
+                            organizations={organizations}
+                            currentOrgId={orgId}
+                            basePath="/files"
+                        />*/}
+                        <OrgDropDown
                             organizations={organizations}
                             currentOrgId={orgId}
                             basePath="/files"
                         />
+
                     </div>
                 )}
                 <p className="text-red-400">
@@ -203,7 +210,12 @@ function FilesPageContent() {
             {/* Org switcher — only shows if user belongs to multiple orgs */}
             {organizations.length > 1 && (
                 <div className="mb-6">
-                    <OrgSwitcher
+                    {/*<OrgSwitcher
+                        organizations={organizations}
+                        currentOrgId={orgId}
+                        basePath="/files"
+                    />*/}
+                    <OrgDropDown
                         organizations={organizations}
                         currentOrgId={orgId}
                         basePath="/files"
