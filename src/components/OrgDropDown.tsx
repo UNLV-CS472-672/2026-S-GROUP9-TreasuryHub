@@ -16,19 +16,52 @@ export default function OrgDropDown({ organizations, currentOrgId, basePath }: P
     const router = useRouter();
     return (
         <div>
-            <label htmlFor="org-select" className="sr-only">Select Organization</label>
-            <select
-                value={currentOrgId}
-                onChange={(e) => router.push(`${basePath}?orgId=${e.target.value}`)}
-                className="rounded border px-3 py-1 text-sm transition focus:ring focus:ring-blue-300 bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
-                id="org-select"
+      <label htmlFor="org-select" className="sr-only">
+        Change Organization
+      </label>
+
+      <select
+        id="org-select"
+        defaultValue=""
+        onChange={(e) => {
+          const selectedOrgId = e.target.value
+          if (!selectedOrgId) return
+
+          e.target.value = "" // reset to "Change Org"
+          router.push(`${basePath}?orgId=${selectedOrgId}`)
+        }}
+        className="
+          font-[var(--font-geist-sans)]
+          cursor-pointer
+          rounded-lg
+          border border-white/[0.15]
+          bg-white/[0.04]
+          px-3 py-1.5
+          pr-3
+          text-xs font-medium tracking-wide text-neutral-200
+          transition
+          hover:border-white/[0.3]
+          hover:bg-white/[0.07]
+          focus:outline-none
+        "
+      >
+        {/* Placeholder */}
+        <option value="" disabled className="bg-black text-neutral-400">
+          CHANGE ORGANIZATION
+        </option>
+        {/* Other orgs */}
+        {organizations
+          .filter((org) => org.org_id !== currentOrgId)
+          .map((org) => (
+            <option
+              key={org.org_id}
+              value={org.org_id}
+              className="bg-black text-white"
             >
-                {organizations.map((org) => (
-                    <option key={org.org_id} value={org.org_id} className="bg-gray-200 text-black">
-                        {org.org_name}
-                    </option>
-                ))}
-            </select>
-        </div>
+              {org.org_name}
+            </option>
+          ))}
+      </select>
+    </div>
     )
 }
