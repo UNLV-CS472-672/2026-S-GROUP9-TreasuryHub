@@ -1,4 +1,6 @@
 import { createClient } from './supabase/client'
+import { logAuditEntry } from '@/app/audit/lib/action'
+import { AuditLogType } from '@/app/audit/lib/data'
 
 // Uploads a file to the supabase storage, and to the files table
 export async function uploadFile(file: File, orgId: string, fileType: 'receipt' | 'document', transactionId?: string) {
@@ -6,6 +8,11 @@ export async function uploadFile(file: File, orgId: string, fileType: 'receipt' 
 
     // Get the current user so we can save uploaded_by
     const { data: { user } } = await supabase.auth.getUser()
+
+    // This helps resolve the "user could be null" problem
+    if (!user) {
+        throw new Error("User must be authenticated to upload files")
+    }
 
     // Building a unique storage path for the file
     const filePath = `${orgId}/${Date.now()}_${file.name}`
@@ -33,6 +40,38 @@ export async function uploadFile(file: File, orgId: string, fileType: 'receipt' 
         .single()
 
     if (dbError) throw dbError
+
+    // Grab the user's role
+    const { data: roleData, error: roleError } = await supabase
+        .from("org_members")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("org_id", orgId)
+        .select()
+        .single()
+
+    if (roleError) throw roleError
+
+
+    // Insert the data into the audit logs
+    await logAuditEntry ({
+        orgId: orgId,
+        userId: user.id,
+        action: "CREATE",
+        entity_type: "file",
+        entity_id: data.file_id,
+        before_data: null,
+        after_data: {
+            "File Name" : data.file_name,
+            "File Type": data.file_type,
+            "MIME Type" : data.mime_type,
+            "Transaction ID": data.transaction_id
+        ? `#${data.transaction_id.slice(0, 4)}`
+        : "None",
+        },
+        type: AuditLogType.FILE,
+        display_role: roleData.role,
+    })
 
     return data
 }
