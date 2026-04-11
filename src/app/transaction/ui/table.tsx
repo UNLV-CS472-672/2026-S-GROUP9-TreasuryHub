@@ -1,14 +1,11 @@
-import { fetchTransactions } from "@/app/transaction/lib/data";
 import { DeleteTransaction, UpdateTransaction } from "@/app/transaction/ui/buttons";
 import { textColors, bgColors } from "../lib/styles";
 
 
-export default async function TransactionTable() {
+export default async function TransactionTable( { transactions } : { transactions: any[] } ) {
   // TODO: Add confirmation for DeleteTransaction
-  // TODO: Add clsx for Color amount by type
   const tableFieldSpacing = "px-3 py-1.5"
 
-  const transactions = await fetchTransactions();
   return (
     <div className={`shadow-sm rounded-md ${bgColors.primary}`}>
       <div className="overflow-x-auto">
