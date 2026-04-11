@@ -162,14 +162,15 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS "Permitted roles can view audit logs" ON audit_logs;
 DROP POLICY IF EXISTS "Treasurer can view audit logs" ON audit_logs;
-CREATE POLICY "Treasurer can view audit logs"
+CREATE POLICY "Permitted roles can view audit logs"
 ON audit_logs FOR SELECT 
 USING (
     org_id IN (
         SELECT org_id FROM org_members
         WHERE user_id = auth.uid()
-        AND role = 'treasurer'
+        AND role IN ('treasurer', 'admin')
     )
 );
 

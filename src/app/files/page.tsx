@@ -9,9 +9,8 @@ import FileViewer from '../../components/FileViewer'
 import BackButton from '@/components/BackButton'
 //import OrgSwitcher from '../../components/OrgSwitcher'
 import OrgDropDown from '@/components/OrgDropDown'
+import { canUploadFiles, canViewFiles } from '@/lib/roles'
 
-// Roles that have access to files
-const FILE_ACCESS_ROLES = ['treasurer', 'treasury_team', 'admin', 'executive', 'advisor']
 
 type OrgOption = {
     org_id: string
@@ -108,8 +107,8 @@ function FilesPageContent() {
         if (orgId && role) loadFiles()
     }, [orgId, role])
 
-    const canAccessFiles = role !== null && FILE_ACCESS_ROLES.includes(role)
-    const canUpload = role !== null && ['treasurer', 'treasury_team', 'admin'].includes(role)
+    const canAccessFiles = canViewFiles(role)
+    const canUpload = canUploadFiles(role)
 
     const filteredFiles = files.filter((file) => {
         if (typeFilter !== 'all' && file.file_type !== typeFilter) return false

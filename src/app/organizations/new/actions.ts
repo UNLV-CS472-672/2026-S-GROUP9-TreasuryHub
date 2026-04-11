@@ -6,6 +6,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { logAuditEntry } from "@/app/audit/lib/action";
 import { AuditLogType } from "@/app/audit/lib/data";
+import { ORGANIZATION_ROLE } from "@/lib/roles";
 
 //formData : FormData catches the submitted form data on form submission
 export async function createOrganization(formData: FormData){
@@ -46,7 +47,7 @@ export async function createOrganization(formData: FormData){
                   .insert({
                     user_id: user.id,
                     org_id: orgID,
-                    role: 'treasurer',
+                    role: ORGANIZATION_ROLE.TREASURER,
                   })
     
     // Log new organization creation in the audit log

@@ -1,18 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  ORGANIZATION_ROLES,
+  canManageMembers,
+  isOrganizationRole,
+  type OrganizationRole,
+} from "@/lib/roles";
 
-// Keeping the allowed roles in one place so the page + server action
-// are using the same source of truth.
-export const ORGANIZATION_MEMBER_ROLE_OPTIONS = [
-  "member",
-  "executive",
-  "advisor",
-  "treasury_team",
-  "treasurer",
-  "admin",
-] as const;
+// Re-exporting the shared role source keeps older imports working while
+// moving the actual role ownership into src/lib/roles.ts.
+export const ORGANIZATION_MEMBER_ROLE_OPTIONS = ORGANIZATION_ROLES;
 
-export type OrganizationMemberRole =
-  (typeof ORGANIZATION_MEMBER_ROLE_OPTIONS)[number];
+export type OrganizationMemberRole = OrganizationRole;
 
 export type OrganizationMembership = {
   user_id: string;
@@ -40,16 +38,14 @@ export type OrganizationMemberListItem = {
 
 // For UC3, only treasurers and admins are supposed to manage members.
 export function canManageOrganizationMembers(role: string | null | undefined) {
-  return role === "treasurer" || role === "admin";
+  return canManageMembers(role);
 }
 
 // Basic role validation so the server does not trust whatever comes from the form.
 export function isOrganizationMemberRole(
   value: string | null | undefined
 ): value is OrganizationMemberRole {
-  return ORGANIZATION_MEMBER_ROLE_OPTIONS.includes(
-    value as OrganizationMemberRole
-  );
+  return isOrganizationRole(value);
 }
 
 // Normalizing email avoids dumb mismatches like uppercase letters or spaces.

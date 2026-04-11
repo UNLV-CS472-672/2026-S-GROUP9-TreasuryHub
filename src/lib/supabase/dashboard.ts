@@ -1,3 +1,4 @@
+import { canViewOrganizationDashboard } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
 type TransactionRow = {
@@ -145,13 +146,7 @@ export async function getDashboardData(
   const orgName = activeOrganization.org_name;
   const role = activeOrganization.role;
 
-  const isOrgScope =
-    role === "admin" ||
-    role === "treasurer" ||
-    role === "owner" ||
-    role === "creator" ||
-    role === "executive" ||
-    role === "advisor";
+  const isOrgScope = canViewOrganizationDashboard(role);
 
   if (isOrgScope) {
     const { data: transactionsRaw, error: transactionsError } = await supabase
@@ -232,7 +227,8 @@ export async function getDashboardData(
     throw new Error("Failed to fetch personal transactions.");
   }
 
-  const personalTransactions = (personalTransactionsRaw ?? []) as TransactionRow[];
+  const personalTransactions = (personalTransactionsRaw ??
+    []) as TransactionRow[];
 
   const reimbursementsTotal = sumAmounts(personalTransactions);
 

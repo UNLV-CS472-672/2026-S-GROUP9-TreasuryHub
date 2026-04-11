@@ -61,6 +61,10 @@ function hasOfficerAccess(role: string) {
   return role === "Officer" || role === "Treasurer";
 }
 
+/*
+  TODO(issue #59 follow-up): tasks still use placeholder demo roles and are not wired into src/lib/roles.ts yet.
+*/
+
 export default function TasksPage() {
   // stores all tasks from Supabase
   const [tasks, setTasks] = useState<Task[]>([]);

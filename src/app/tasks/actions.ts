@@ -15,6 +15,7 @@ const validTaskTypes = [
 
 // temporary until real auth/roles are connected
 const currentUserRole = "Officer";
+// TODO(issue #59 follow-up): tasks still use placeholder demo roles and are not wired into src/lib/roles.ts yet.
 
 function hasOfficerAccess(role: string) {
   return role === "Officer" || role === "Treasurer";
