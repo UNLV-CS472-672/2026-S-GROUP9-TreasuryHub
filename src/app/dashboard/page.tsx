@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getDashboardData } from "@/lib/supabase/dashboard";
-import OrgSwitcher from '@/components/OrgSwitcher';
 import ExportCSVButton from "@/components/ExportCSVButton";
+import Navbar from "@/components/Navbar";
 
 export const dynamic = "force-dynamic";
 
@@ -275,11 +275,76 @@ function TasksSection({ orgId }: { orgId: string }) {
   );
 }
 
+function NoOrganizationState() {
+  return (
+    <main className="min-h-screen bg-black text-white">
+      <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-6 py-12">
+        <section
+          className="
+            w-full rounded-3xl border border-white/[0.12] bg-white/[0.03]
+            p-10 text-center backdrop-blur-sm
+            shadow-[0_0_20px_rgba(255,255,255,0.05)]
+          "
+        >
+          <p className="text-xs uppercase tracking-[0.22em] text-neutral-400">
+            TreasuryHub
+          </p>
+
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            You are not in an organization yet
+          </h1>
+
+          <p className="mt-4 text-sm text-neutral-300 sm:text-base">
+            Join or create an organization from the home page to start using the dashboard.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/"
+              className="
+                inline-flex items-center rounded-xl
+                border border-white/[0.2] bg-white/[0.05]
+                px-5 py-3 text-sm font-medium text-white transition
+                hover:border-white/[0.35] hover:bg-white/[0.08]
+              "
+            >
+              Go to Home Page
+            </Link>
+
+            <Link
+              href="/organizations"
+              className="
+                inline-flex items-center rounded-xl
+                border border-blue-400/30 bg-blue-500/10
+                px-5 py-3 text-sm font-medium text-white transition
+                hover:border-blue-300/50 hover:bg-blue-500/20
+              "
+            >
+              Join an Organization
+            </Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
   const { orgId } = await searchParams;
-  const data = await getDashboardData(orgId);
+
+  let data: Awaited<ReturnType<typeof getDashboardData>> | null = null;
+
+  try {
+    data = await getDashboardData(orgId);
+  } catch {
+    return <NoOrganizationState />;
+  }
+
+  if (!data || !data.orgId || !data.organizations?.length) {
+    return <NoOrganizationState />;
+  }
 
   const canAccessFiles =
     data.role === "executive" ||
@@ -291,52 +356,16 @@ export default async function DashboardPage({
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        <header className="mb-10 flex flex-col gap-6 border-b border-white/[0.2] pb-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="mb-3 text-xs uppercase tracking-[0.22em] text-neutral-400">
-                TreasuryHub
-              </p>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-                  Dashboard
-                </h1>
-
-                <span className="rounded-full border border-white/[0.2] bg-white/[0.05] px-3 py-1 text-xs uppercase tracking-[0.16em] text-neutral-200">
-                  {data.orgName}
-                </span>
-                <Link href="/organizations" className="rounded-full border border-white/[0.2] bg-white/[0.05] px-3 py-1 text-xs uppercase tracking-[0.16em] text-neutral-200 hover:border-white/[0.35] hover:bg-white/[0.08] hover:text-white">
-                  Organization Settings
-              </Link>
-              </div>
-            </div>
-
-            <form action="/auth/signout" method="POST">
-              <button
-                type="submit"
-                className="
-                  rounded-xl
-                  border border-white/[0.2]
-                  bg-white/[0.05]
-                  px-4 py-2
-                  text-sm font-medium text-white
-                  transition
-                  hover:border-white/[0.35]
-                  hover:bg-white/[0.08]
-                "
-              >
-                Sign Out
-              </button>
-            </form>
-          </div>
-
-          <OrgSwitcher
-            organizations={data.organizations}
-            currentOrgId={data.orgId}
-            basePath="/dashboard"
-          />
-        </header>
+      <Navbar
+        organizations={data.organizations}
+        currentOrgId={data.orgId}
+        currentOrgName={
+          data.organizations.find(org => org.org_id === data.orgId)?.org_name || "Unknown Org"
+        }
+        basePath="/dashboard"
+        logoSrc="/assets/tmp.logo.png"
+        pageTitle="Dashboard"
+      />
 
         {data.scope === "organization" ? (
           <div className="space-y-8">
