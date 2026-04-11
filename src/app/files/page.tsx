@@ -9,6 +9,8 @@ import FileViewer from '../../components/FileViewer'
 import BackButton from '@/components/BackButton'
 //import OrgSwitcher from '../../components/OrgSwitcher'
 import OrgDropDown from '@/components/OrgDropDown'
+import { Skeleton } from '@/components/Skeleton'
+
 
 // Roles that have access to files
 const FILE_ACCESS_ROLES = ['treasurer', 'treasury_team', 'admin', 'executive', 'advisor']
@@ -132,10 +134,50 @@ function FilesPageContent() {
     })
 
     // Loading state
+    // if (loading) {
+    //     return (
+    //         <div className="p-8 max-w-4xl mx-auto">
+    //             <p className="text-white">Loading...</p>
+    //         </div>
+    //     )
+    // }
+
     if (loading) {
         return (
             <div className="p-8 max-w-4xl mx-auto">
-                <p className="text-white">Loading...</p>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                    <Skeleton width={64} height={28} />
+                    <Skeleton width={112} height={38} rounded="sm" />
+                </div>
+ 
+                {/* Filters */}
+                <div className="flex flex-wrap gap-4 mb-6">
+                    <div className="flex gap-2">
+                        <Skeleton width={56} height={38} rounded="sm" />
+                        <Skeleton width={72} height={38} rounded="sm" />
+                        <Skeleton width={88} height={38} rounded="sm" />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                        <Skeleton width={32} height={14} />
+                        <Skeleton width={128} height={38} rounded="sm" />
+                        <Skeleton width={16} height={14} />
+                        <Skeleton width={128} height={38} rounded="sm" />
+                    </div>
+                </div>
+ 
+                {/* File list */}
+                <ul className="divide-y border rounded-lg">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <li key={i} className="flex items-center justify-between p-4">
+                            <div className="flex flex-col gap-2">
+                                <Skeleton width={200} height={16} />
+                                <Skeleton width={140} height={13} />
+                            </div>
+                            <Skeleton width={36} height={14} />
+                        </li>
+                    ))}
+                </ul>
             </div>
         )
     }
@@ -322,12 +364,47 @@ function FilesPageContent() {
     )
 }
 
+// export default function FilesPage() {
+//     return (
+//         <Suspense
+//             fallback={
+//                 <div className="p-8 max-w-4xl mx-auto">
+//                     <p className="text-white">Loading...</p>
+//                 </div>
+//             }
+//         >
+//             <FilesPageContent />
+//         </Suspense>
+//     )
+// }
+
 export default function FilesPage() {
     return (
         <Suspense
             fallback={
                 <div className="p-8 max-w-4xl mx-auto">
-                    <p className="text-white">Loading...</p>
+                    <div className="flex items-center justify-between mb-4">
+                        <Skeleton width={64} height={28} />
+                        <Skeleton width={112} height={38} rounded="sm" />
+                    </div>
+                    <div className="flex flex-wrap gap-4 mb-6">
+                        <div className="flex gap-2">
+                            <Skeleton width={56} height={38} rounded="sm" />
+                            <Skeleton width={72} height={38} rounded="sm" />
+                            <Skeleton width={88} height={38} rounded="sm" />
+                        </div>
+                    </div>
+                    <ul className="divide-y border rounded-lg">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <li key={i} className="flex items-center justify-between p-4">
+                                <div className="flex flex-col gap-2">
+                                    <Skeleton width={200} height={16} />
+                                    <Skeleton width={140} height={13} />
+                                </div>
+                                <Skeleton width={36} height={14} />
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             }
         >
