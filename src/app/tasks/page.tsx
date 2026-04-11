@@ -9,6 +9,7 @@ import {
   getTaskAssignmentOptions,
 } from "./actions";
 import BackButton from "@/components/BackButton";
+import { useSearchParams } from "next/navigation";
 
 /*
   This defines what a Task looks like in our app.
@@ -62,6 +63,13 @@ function hasOfficerAccess(role: string) {
 }
 
 export default function TasksPage() {
+  // Grab the orgId 
+  const orgId = useSearchParams().get('orgId');
+
+  // Ensure the orgId was grabbed
+  if (!orgId) return;
+
+
   // stores all tasks from Supabase
   const [tasks, setTasks] = useState<Task[]>([]);
 
@@ -186,9 +194,10 @@ export default function TasksPage() {
       assignType,
       assignedTo,
       dueDate,
+      orgId,
     });
 
-    if (result.error) {
+    if (result?.error) {
       alert(result.error);
       return;
     }
@@ -281,6 +290,7 @@ export default function TasksPage() {
       assignType: newAssignTypeInput,
       assignedTo: newAssignedTo,
       dueDate: newDueDate || "",
+      orgId,
     });
 
     if (result.error) {
@@ -302,7 +312,7 @@ export default function TasksPage() {
       return;
     }
 
-    const result = await deleteTaskAction(id);
+    const result = await deleteTaskAction(id, orgId);
 
     if (result.error) {
       alert(result.error);

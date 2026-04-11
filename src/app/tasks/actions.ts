@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { fetchOrgFromCurrentUser } from "@/app/transaction/lib/data";
+import { logAuditEntry } from "../audit/lib/action";
+import { AuditLogType, getAuditTaskType } from "../audit/lib/data";
 
 const validTaskTypes = [
   "TODO",
@@ -151,13 +153,14 @@ export async function addTaskAction(formData: {
   assignType: "role" | "individual";
   assignedTo: string;
   dueDate?: string;
+  orgId: string;
   //notify_days_before: 3;
 }) {
   if (!hasOfficerAccess(currentUserRole)) {
     return { error: "Only officer-level users or above can create tasks." };
   }
 
-  const { title, taskType, assignType, assignedTo, dueDate } = formData;
+  const { title, taskType, assignType, assignedTo, dueDate, orgId } = formData;
 
   if (!title.trim()) {
     return { error: "Task title is required." };
@@ -181,20 +184,60 @@ export async function addTaskAction(formData: {
 
   const supabase = await createClient();
 
-  const { error } = await supabase.from("tasks").insert([
+  // Grab user and check if the user was successfully grabbed (used for audit log entries)
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "User not found"};
+  }
+
+  const { data, error } = await supabase.from("tasks").insert([
     {
       title: title.trim(),
       task_type: taskType,
       assign_type: assignType,
       assigned_to: assignedTo,
       due_date: dueDate || null,
+      org_id: orgId,
       notify_days_before: 3,
     },
-  ]);
+  ])
+  .select()
+  .single();
 
   if (error) {
     return { error: error.message };
   }
+
+  // Grabs the snapshot of the current user's role
+  const { data: roleData, error: roleError } = await supabase
+  .from('org_members')
+  .select('role')
+  .eq('user_id', user.id)
+  .eq('org_id', orgId)
+  .single();
+
+  if (roleError) {
+    return { error: roleError.message};
+  }
+
+// Insert new created task entry to audit log
+// getAuditTaskType determines what type of audit entry is being inserted (SYSTEM or FINANCIAL)
+ await logAuditEntry({
+    orgId: orgId,
+    userId: user.id,
+    action: "CREATE",
+    entity_type: "task",
+    entity_id: data.id,
+    before_data: null,
+    after_data: {
+      "Task Name": title.trim(), 
+      "Task Type": taskType,
+      "User Assigned": assignedTo,
+      "Due Date": dueDate, 
+    },
+    type: getAuditTaskType(taskType),
+    display_role: roleData?.role,
+  });
 
   return { error: null };
 }
@@ -208,13 +251,14 @@ export async function updateTaskAction(
     assignType: "role" | "individual";
     assignedTo: string;
     dueDate?: string;
+    orgId: string;
   }
 ) {
   if (!hasOfficerAccess(currentUserRole)) {
     return { error: "Only officer-level users or above can edit tasks." };
   }
 
-  const { title, taskType, assignType, assignedTo, dueDate } = formData;
+  const { title, taskType, assignType, assignedTo, dueDate, orgId } = formData;
 
   if (!title.trim()) {
     return { error: "Task title is required." };
@@ -238,7 +282,24 @@ export async function updateTaskAction(
 
   const supabase = await createClient();
 
-  const { error } = await supabase
+  // Grab user and check if the user was successfully grabbed 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "User not found"};
+  }
+
+  // Grab the current data before the update for audit logging
+  const { data: beforeData, error: beforeError } = await supabase
+  .from("tasks")
+  .select()
+  .eq("id", id)
+  .single();
+
+  if(beforeError){
+    return { error: beforeError.message };
+  }
+
+  const { data, error } = await supabase
     .from("tasks")
     .update({
       title: title.trim(),
@@ -246,29 +307,113 @@ export async function updateTaskAction(
       assign_type: assignType,
       assigned_to: assignedTo,
       due_date: dueDate || null,
+      org_id: orgId
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select()
+    .single();
 
   if (error) {
     return { error: error.message };
   }
 
+  // Grabs the snapshot of the current user's role
+  const { data: roleData, error: roleError } = await supabase
+  .from('org_members')
+  .select('role')
+  .eq('user_id', user.id)
+  .eq('org_id', orgId)
+  .single();
+
+  if (roleError) {
+    return { error: roleError.message};
+  }
+
+  await logAuditEntry({
+    orgId: orgId,
+    userId: user.id,
+    action: "UPDATE",
+    entity_type: "task",
+    entity_id: data.id,
+    before_data: {
+      "Task Name": beforeData.title,
+      "Task Type": beforeData.task_type,
+      "User Assigned": beforeData.assigned_to,
+      "Due Date": beforeData.due_date,
+    },
+    after_data: {
+      "Task Name": title.trim(), 
+      "Task Type": taskType,
+      "User Assigned": assignedTo,
+      "Due Date": dueDate, 
+    },
+    type: getAuditTaskType(taskType),
+    display_role: roleData?.role,
+  });
+
+
   return { error: null };
 }
 
 // delete task
-export async function deleteTaskAction(id: number) {
+export async function deleteTaskAction(id: number, orgId: string) {
   if (!hasOfficerAccess(currentUserRole)) {
     return { error: "Only officer-level users or above can delete tasks." };
   }
 
   const supabase = await createClient();
 
+  // Grab user and check if the user was successfully grabbed (used for audit log entries)
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "User not found"};
+  }
+
+  // Grab the current data before deleting, used for audit logging
+  const { data: beforeData, error: beforeError } = await supabase
+  .from("tasks")
+  .select()
+  .eq("id", id)
+  .single();
+
+  if(beforeError){
+    return { error: beforeError.message };
+  }
+
   const { error } = await supabase.from("tasks").delete().eq("id", id);
 
   if (error) {
     return { error: error.message };
   }
+
+  // Grabs the snapshot of the current user's role
+  const { data: roleData, error: roleError } = await supabase
+  .from('org_members')
+  .select('role')
+  .eq('user_id', user.id)
+  .eq('org_id', orgId)
+  .single();
+
+  if (roleError) {
+    return { error: roleError.message};
+  }
+
+  await logAuditEntry({
+    orgId: orgId,
+    userId: user.id,
+    action: "DELETE",
+    entity_type: "task",
+    entity_id: beforeData.id,
+    before_data: {
+      "Task Name" : beforeData.title,
+      "Task Type": beforeData.task_type,
+      "User Assigned": beforeData.assigned_to,
+      "Due Date" : beforeData.due_date,
+    },
+    after_data: null,
+    type: getAuditTaskType(beforeData.task_type),
+    display_role: roleData?.role,
+  });
 
   return { error: null };
 }
