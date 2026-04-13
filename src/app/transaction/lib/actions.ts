@@ -7,27 +7,17 @@ import { fetchOrgFromCurrentUser, fetchUserId } from "@/app/transaction/lib/data
 import { z } from "zod";
 import { logAuditEntry } from "@/app/audit/lib/action";
 import { AuditLogType } from "@/app/audit/lib/data";
+import { TransactionsSchema, type ActionState } from "@/app/transaction/lib/schemas";
 
-const TransactionSchema = z.object({
-  transaction_id: z.uuid(),
-  orgId: z.uuid(),
-  date: z.coerce.date().max(new Date(), "Date cannot be in future"),
-  description: z.string().nonempty("Please add description"),
-  category: z.string().nonempty("Please add category"),
-  type: z.enum(["income", "expense"]),
-  amount: z.coerce.number().positive("Amount must be greater than $0.00"),
-  notes: z.string().optional()
-})
+const CreateTransactionSchema = TransactionsSchema.omit({ transaction_id: true })
 
-const CreateTransactionSchema = TransactionSchema.omit({ transaction_id: true })
-
-export async function createTransaction(_prevState: any, formData: FormData) {
+export async function createTransaction(_prevState: ActionState, formData: FormData) : Promise<ActionState> {
   const supabase = await createClient();
-  const fetchOrgId = await fetchOrgFromCurrentUser();
+  const fetchOrgId = await fetchOrgFromCurrentUser(); // TODO: Replace
   const userId = await fetchUserId();
 
   const result = CreateTransactionSchema.safeParse({
-    orgId: fetchOrgId,
+    org_id: fetchOrgId,
     type: formData.get("type"),
     description: formData.get("desc"),
     category: formData.get("category"),
@@ -42,7 +32,7 @@ export async function createTransaction(_prevState: any, formData: FormData) {
     };
   }
 
-  const { orgId, type, description, category, amount, date, notes } = result.data;
+  const { org_id, type, description, category, amount, date, notes } = result.data;
 
   // Insert to database
   // I updated the insertion statement to return the inserted row
@@ -50,8 +40,8 @@ export async function createTransaction(_prevState: any, formData: FormData) {
   const { data, error } = await supabase
     .from('transactions')
     .insert({
-      org_id: orgId, created_by: userId, date: date, description: description, category: category,
-      type: type, amount: amount, notes: notes
+      org_id, created_by: userId, date, description, category,
+      type, amount, notes
     })
     .select()
     .single();
@@ -80,7 +70,7 @@ export async function createTransaction(_prevState: any, formData: FormData) {
 
   // Insert audit log entry for transaction creation
   await logAuditEntry({
-    orgId: orgId,
+    orgId: org_id,
     userId: userId,
     action: "CREATE",
     entity_type: "transaction",
@@ -98,11 +88,11 @@ export async function createTransaction(_prevState: any, formData: FormData) {
   redirect('/transaction')
 }
 
-export async function updateTransaction(_prevState: any, formData: FormData) {
+export async function updateTransaction(_prevState: ActionState, formData: FormData) : Promise<ActionState> {
   const supabase = await createClient();
-  const fetchOrgId = await fetchOrgFromCurrentUser();
+  const fetchOrgId = await fetchOrgFromCurrentUser(); // TODO: Replace
 
-  const result = TransactionSchema.safeParse({
+  const result = TransactionsSchema.safeParse({
     transaction_id: formData.get("transId"),
     orgId: fetchOrgId,
     type: formData.get("type"),
@@ -122,7 +112,7 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
   }
 
 
-  const { transaction_id, orgId, type, description, category, amount, date,
+  const { transaction_id, org_id, type, description, category, amount, date,
     notes } = result.data;
 
   // Fetch existing transaction data before update for audit log
@@ -143,7 +133,7 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
   const { data: afterData, error } = await supabase
     .from('transactions')
     .update({
-      org_id: orgId, date, description,
+      org_id, date, description,
       category, type, amount, notes
     })
     .eq("transaction_id", transaction_id)
@@ -151,7 +141,6 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
     .single();
 
 
-  // TODO: Handle error better
   if (error) {
     console.error(error)
     return {
@@ -178,7 +167,7 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
   // Only log if there are changes to the transaction data
   if (JSON.stringify(beforeData) !== JSON.stringify(afterData)) {
     await logAuditEntry({
-      orgId: orgId,
+      orgId: org_id,
       userId: beforeData.created_by,
       action: "UPDATE",
       entity_type: "transaction",
@@ -190,12 +179,11 @@ export async function updateTransaction(_prevState: any, formData: FormData) {
     });
   }
 
-
   revalidatePath('/transaction')
   redirect('/transaction')
 }
 
-export async function deleteTransaction(transaction_id: string, _formData: FormData) {
+export async function deleteTransaction(transaction_id: string, _formData: FormData) : Promise<ActionState> {
   const supabase = await createClient();
 
   // Fetch existing transaction data before deletion for audit log
@@ -207,7 +195,9 @@ export async function deleteTransaction(transaction_id: string, _formData: FormD
 
   if (beforeDataError || !beforeData) {
     console.error(beforeDataError);
-    return;
+    return {
+      message: `Error: ${beforeDataError}`
+    };
   }
 
   const { data: roleData, error: roleError } = await supabase
@@ -245,5 +235,3 @@ export async function deleteTransaction(transaction_id: string, _formData: FormD
 
   revalidatePath('/transaction')
 }
-
-export type Transaction = z.infer<typeof TransactionSchema>;

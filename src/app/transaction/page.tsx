@@ -1,8 +1,9 @@
 import TransactionTable from "@/app/transaction/ui/table";
 import { CreateTransaction } from "@/app/transaction/ui/buttons";
 import { textColors } from "./lib/styles";
-import { fetchOrgTransactions, fetchOrgsFromCurrentUser } from "@/app/transaction/lib/data";
+import { fetchOrgTransactions, fetchOrgsOptionsFromCurrentUser } from "@/app/transaction/lib/data";
 import OrgDropDownWrapper from "@/components/OrgDropDownWrapper";
+import { type OrgOptions } from "./lib/schemas";
 
 export const metadata = { title: "Transactions" };
 
@@ -11,8 +12,9 @@ export default async function Page({
 }: {
   searchParams: Promise<{ orgId?: string }>
 }){
-  const organizations = await fetchOrgsFromCurrentUser();
+  const organizations : OrgOptions[] = await fetchOrgsOptionsFromCurrentUser();
   const params = await searchParams;
+  console.warn("Params", params)
   const orgId = params?.orgId ?? (() => {
     const fallback = organizations[0].org_id;
     console.log("No searchParam 'orgId' found. \nFalling back to: ", fallback)
@@ -20,7 +22,6 @@ export default async function Page({
   })();
   const transactions = await fetchOrgTransactions(orgId);
   
-
   return (
     <main className="max-w-7xl mx-auto px-4 py-8 pb-16">
       <div className="space-y-6">

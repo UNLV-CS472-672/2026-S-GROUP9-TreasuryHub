@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { getToday } from "@/app/transaction/lib/util";
-import { createTransaction, type Transaction, updateTransaction } from "@/app/transaction/lib/actions";
+import { createTransaction, updateTransaction } from "@/app/transaction/lib/actions";
 import { useActionState } from "react";
+import type { Transactions } from "@/app/transaction/lib/schemas";
 
 // TODO: Only remove the field that had an error: keep repsonses for the rest
 
 export function CreateTransactionForm() {
   const today = getToday();
-  const [state, formAction] = useActionState(createTransaction, undefined);
+  const [state, formAction] = useActionState(createTransaction, null);
 
   return (
     <form action={formAction}>
@@ -67,12 +68,11 @@ export function CreateTransactionForm() {
 }
 
 export function UpdateTransactionForm(transaction: {
-  transaction: Transaction;
+  transaction: Transactions;
 }) {
-  const [state, formAction] = useActionState(updateTransaction, undefined);
+  const [state, formAction] = useActionState(updateTransaction, null);
   const transObj = transaction.transaction;
 
-  // TODO: Implement better way to pass transId
   return (
     <form action={formAction}>
       <div>

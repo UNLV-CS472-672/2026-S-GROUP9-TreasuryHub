@@ -1,10 +1,11 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server";
+import { TransactionsSchema, OrgMembersSchema, type Transactions, type OrgMembers, OrgOptionsSchema, OrgOptions } from "@/app/transaction/lib/schemas";
 
 // Fetches all transactions across all orgs.
 // Returns: Transaction[]
-export async function fetchAllTransactions() {
+export async function fetchAllTransactions(): Promise<Transactions[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('transactions')
@@ -15,12 +16,12 @@ export async function fetchAllTransactions() {
     throw new Error('Failed to fetch transaction.');
   }
 
-  return data;
+  return TransactionsSchema.array().parse(data);
 }
 
 // Fetches all transactions belonging to a specific org.
 // Returns: Transaction[]
-export async function fetchOrgTransactions(currentOrgId: string) {
+export async function fetchOrgTransactions(currentOrgId: string): Promise<Transactions[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -33,12 +34,12 @@ export async function fetchOrgTransactions(currentOrgId: string) {
     throw new Error('Failed to fetch transaction.');
   }
 
-  return data;
+  return TransactionsSchema.array().parse(data);
 }
 
 // TODO: Phase out in favor of fetchOrgsFromCurrentUser() or fetchCurrentOrgFromURL() or OrgDropDownWrapper
 // Returns the org_id of the first org found for the current user
-export async function fetchOrgFromCurrentUser() {
+export async function fetchOrgFromCurrentUser() : Promise<OrgMembers> {
     const supabase = await createClient();
     const userId = await fetchUserId();
 
@@ -53,12 +54,12 @@ export async function fetchOrgFromCurrentUser() {
       throw new Error('Failed to fetch org_id from user_id.');
     }
 
-    return data[0].org_id;
+    return OrgMembersSchema.parse(data[0].org_id);
 }
 
 // Fetches all orgs the current user is a member of
 // Returns { org_id }[]
-export async function fetchOrgsFromCurrentUser() {
+export async function fetchOrgsFromCurrentUser() : Promise<OrgMembers[]> {
     const supabase = await createClient();
     const userId = await fetchUserId();
 
@@ -69,15 +70,15 @@ export async function fetchOrgsFromCurrentUser() {
 
     if (error) {
       console.error('Database error:', error.message);
-      throw new Error('Failed to fetch org_id from user_id.');
+      throw new Error('Failed to fetch orgs from user_id.');
     }
 
-    return data;
+    return OrgMembersSchema.array().parse(data);
 }
 
 // Returns the userId of the currently authenticated Supbase user.
 // Throws: If authenticated
-export async function fetchUserId() {
+export async function fetchUserId() : Promise<string>{
   const supabase = await createClient();
   const { data: {user} } = await supabase.auth.getUser();
 
@@ -90,7 +91,7 @@ export async function fetchUserId() {
 
 // Fetches a single transactions by its ID
 // Returns: Transaction or undefined if not found
-export async function fetchTransactionFromId(transactionId: string) {
+export async function fetchTransactionFromId(transactionId: string) : Promise<Transactions> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('transactions')
@@ -101,5 +102,33 @@ export async function fetchTransactionFromId(transactionId: string) {
     console.error('Database error:', error.message);
     throw new Error('Failed to fetch transaction from ID');
   }
-  return data[0];
+  return TransactionsSchema.parse(data[0]);
+}
+
+// Create function for fetching orgOptions
+export async function fetchOrgsOptionsFromCurrentUser() : Promise<OrgOptions[]> {
+    const supabase = await createClient();
+    const userId = await fetchUserId();
+
+    // data OrgOptionsSchema
+    const { data, error } = await supabase
+      .from('organizations')
+      .select(`org_id, 
+              org_name,
+              org_members!inner ( role )`)
+      .eq("org_members.user_id", userId);
+
+    if (error) {
+      console.error('Database error:', error.message);
+      throw new Error('Failed to fetch org options from user_id.');
+    }
+
+    const mappedData = data.map( ({ org_members, ...org }) => ({
+      ...org,
+      role: org_members[0].role,
+    }) )
+
+    console.warn(mappedData)
+
+    return OrgOptionsSchema.array().parse(mappedData);
 }

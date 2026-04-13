@@ -1,8 +1,9 @@
 import { DeleteTransaction, UpdateTransaction } from "@/app/transaction/ui/buttons";
 import { textColors, bgColors } from "../lib/styles";
+import { type Transactions } from "@/app/transaction/lib/schemas";
 
 
-export default async function TransactionTable( { transactions } : { transactions: any[] } ) {
+export default async function TransactionTable( { transactions } : { transactions: Transactions[] } ) {
   // TODO: Add confirmation for DeleteTransaction
   const tableFieldSpacing = "px-3 py-1.5"
 
@@ -23,7 +24,7 @@ export default async function TransactionTable( { transactions } : { transaction
             {transactions.map((transaction) => {
               return (
                 <tr key={transaction.transaction_id} className={`${textColors.primary} odd:bg-white even:bg-gray-100 dark:odd:bg-black dark:even:bg-gray-900`}>
-                  <td className={tableFieldSpacing}>{transaction.date}</td>
+                  <td className={tableFieldSpacing}>{transaction.date.toLocaleDateString("en-US", {dateStyle: "long"})}</td>
                   <td className={tableFieldSpacing}>
                     <div>
                       <p>

@@ -3,16 +3,7 @@
 import OrgDropDown from "@/components/OrgDropDown"
 import { useSearchParams } from "next/navigation";
 import { usePathname } from "next/navigation"
-
-type Org = {
-  org_id: string
-  org_name: string
-  role: string
-}
-
-type Props = {
-  organizations: Org[]
-}
+import { type OrgOptions } from "@/app/transaction/lib/schemas"
 
 // Returns single orgId from URL
 // Default: Returns first orgId if no orgId found in URL
@@ -22,7 +13,7 @@ export function fetchCurrentOrgFromURL(organizations : { org_id: string }[]) {
   return orgIdFromURL ?? organizations[0].org_id;
 }
 
-export default function OrgDropDownWrapper({ organizations }: Props) {
+export default function OrgDropDownWrapper( { organizations } : {organizations : OrgOptions[]}) {
   const currentOrgId = fetchCurrentOrgFromURL(organizations);
   const basePath = usePathname();
 
