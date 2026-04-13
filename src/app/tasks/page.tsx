@@ -9,6 +9,7 @@ import {
   getTaskAssignmentOptions,
 } from "./actions";
 import BackButton from "@/components/BackButton";
+import Skeleton from "@/components/Skeleton";
 
 /*
   This defines what a Task looks like in our app.
@@ -69,6 +70,9 @@ export default function TasksPage() {
   // stores all tasks from Supabase
   const [tasks, setTasks] = useState<Task[]>([]);
 
+  // true while the initial fetch is in flight
+  const [loading, setLoading] = useState(true);
+
   // stores form input values
   const [title, setTitle] = useState("");
   const [taskType, setTaskType] = useState("TODO");
@@ -89,6 +93,7 @@ export default function TasksPage() {
 
       if (result.error) {
         alert(result.error);
+        setLoading(false);
         return;
       }
 
@@ -110,11 +115,13 @@ export default function TasksPage() {
 
       if (optionsResult.error) {
         alert(optionsResult.error);
+        setLoading(false);
         return;
       }
 
       setExistingRoles(optionsResult.roles);
       setExistingMembers(optionsResult.members);
+      setLoading(false);
     };
 
     fetchTasks();
@@ -403,6 +410,16 @@ export default function TasksPage() {
       </p>
 
       {/* INPUT SECTION */}
+      {loading ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "400px" }}>
+          <Skeleton width="100%" height={32} rounded="md" />
+          <Skeleton width="100%" height={32} rounded="md" />
+          <Skeleton width="100%" height={32} rounded="md" />
+          <Skeleton width="100%" height={32} rounded="md" />
+          <Skeleton width="100%" height={32} rounded="md" />
+          <Skeleton width={100} height={32} rounded="md" />
+        </div>
+      ) : (
       <div
         style={{
           display: "flex",
@@ -470,10 +487,32 @@ export default function TasksPage() {
         {/* add task button */}
         <button onClick={addTask}>Add Task</button>
       </div>
+      )}
 
       {/* TASK LIST */}
       <ul style={{ marginTop: "20px" }}>
-        {tasks.map((task) => (
+        {loading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <li
+                key={i}
+                style={{
+                  marginBottom: "12px",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                  borderRadius: "8px",
+                }}
+              >
+                <Skeleton width={180} height={16} />
+                <div style={{ marginTop: "6px" }}><Skeleton width={120} height={14} /></div>
+                <div style={{ marginTop: "6px" }}><Skeleton width={200} height={14} /></div>
+                <div style={{ marginTop: "6px" }}><Skeleton width={100} height={14} /></div>
+                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                  <Skeleton width={58} height={26} rounded="sm" />
+                  <Skeleton width={42} height={26} rounded="sm" />
+                </div>
+              </li>
+            ))
+          : tasks.map((task) => (
           <li
             key={task.id}
             style={{
