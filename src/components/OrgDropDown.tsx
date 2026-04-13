@@ -1,13 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { type OrgOptions } from '@/app/transaction/lib/schemas';
 
 type Props = {
-    organizations: {
-        org_id: string
-        org_name: string
-        role: string
-    }[]
+    organizations: OrgOptions[]
     currentOrgId: string
     basePath: string // e.g. '/dashboard' or '/files'
 }
