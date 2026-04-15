@@ -87,17 +87,13 @@ export default function TasksPage() {
   const [existingRoles, setExistingRoles] = useState<string[]>([]);
   const [existingMembers, setExistingMembers] = useState<string[]>([]);
 
-  // Checks if the orgId was fetched
-  if(!orgId) {
-    console.error("No Organization ID was found.");
-    return;
-  }
-
   /*
     This loads tasks from Supabase when the page first opens.
   */
   useEffect(() => {
     const fetchTasks = async () => {
+      if(!orgId) return;
+
       const result = await getTasks();
 
       if (result.error) {
@@ -134,7 +130,7 @@ export default function TasksPage() {
     };
 
     fetchTasks();
-  }, []);
+  }, [orgId]);
 
   /*
     FUNCTION: isValidFutureDate
@@ -200,6 +196,11 @@ export default function TasksPage() {
       return;
     }
 
+    if(!orgId) {
+      alert("Organization ID was not found.")
+      return;
+    }
+
     const result = await addTaskAction({
       title,
       taskType,
@@ -231,6 +232,11 @@ export default function TasksPage() {
   const editTask = async (id: number) => {
     if (!hasOfficerAccess(currentUserRole)) {
       alert("Only officer-level users or above can edit tasks.");
+      return;
+    }
+
+    if (!orgId) {
+      alert("Organization ID was not found.");
       return;
     }
 
@@ -321,6 +327,10 @@ export default function TasksPage() {
   const deleteTask = async (id: number) => {
     if (!hasOfficerAccess(currentUserRole)) {
       alert("Only officer-level users or above can delete tasks.");
+      return;
+    }
+    if (!orgId) {
+      alert("Organization ID was not found.");
       return;
     }
 
