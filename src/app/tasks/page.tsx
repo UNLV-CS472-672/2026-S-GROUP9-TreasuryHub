@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import {
   getTasks,
   addTaskAction,
@@ -67,7 +67,7 @@ function hasOfficerAccess(role: string) {
   TODO(issue #59 follow-up): tasks still use placeholder demo roles and are not wired into src/lib/roles.ts yet.
 */
 
-export default function TasksPage() {
+function TasksPageContent() {
   // Grab the orgId 
   const orgId = useSearchParams().get('orgId');
   // stores all tasks from Supabase
@@ -574,4 +574,41 @@ export default function TasksPage() {
       </ul>
     </div>
   );
+}
+
+
+// Suspense boundary for useSearchParams()
+export default function TasksPage() {
+        return (
+            <Suspense
+                fallback={
+                    <div className="p-8 max-w-4xl mx-auto">
+                        <div className="flex items-center justify-between mb-4">
+                            <Skeleton width={64} height={28} />
+                            <Skeleton width={112} height={38} rounded="sm" />
+                        </div>
+                        <div className="flex flex-wrap gap-4 mb-6">
+                            <div className="flex gap-2">
+                                <Skeleton width={56} height={38} rounded="sm" />
+                                <Skeleton width={72} height={38} rounded="sm" />
+                                <Skeleton width={88} height={38} rounded="sm" />
+                            </div>
+                        </div>
+                        <ul className="divide-y border rounded-lg">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <li key={i} className="flex items-center justify-between p-4">
+                                    <div className="flex flex-col gap-2">
+                                        <Skeleton width={200} height={16} />
+                                        <Skeleton width={140} height={13} />
+                                    </div>
+                                    <Skeleton width={36} height={14} />
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                }
+            >
+                <TasksPageContent />
+            </Suspense>
+        )
 }
