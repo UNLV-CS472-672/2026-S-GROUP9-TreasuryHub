@@ -10,12 +10,15 @@ type OrgMembershipRow = {
 type OrganizationRow = {
   org_id: string;
   org_name: string;
+  logo_path: string | null;
 };
 
 type OrganizationListItem = {
   org_id: string;
   org_name: string;
   role: string;
+  logo_path: string | null;
+  logo_url: string | null;
 };
 
 type OrganizationsPageProps = {

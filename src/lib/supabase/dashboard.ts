@@ -21,12 +21,15 @@ type MembershipRow = {
 type OrganizationRow = {
   org_id: string;
   org_name: string;
+  logo_path?: string | null;
 };
 
 type OrganizationListItem = {
   org_id: string;
   org_name: string;
   role: string;
+  logo_path: string | null;
+  logo_url: string | null;
 };
 
 type OrganizationDashboardData = {
@@ -107,7 +110,7 @@ export async function getDashboardData(
 
   const { data: orgsRaw, error: orgsError } = await supabase
     .from("organizations")
-    .select("org_id, org_name")
+    .select("org_id, org_name, logo_path")
     .in("org_id", orgIds);
 
   if (orgsError) {
@@ -116,23 +119,38 @@ export async function getDashboardData(
   }
 
   const orgs = (orgsRaw ?? []) as OrganizationRow[];
-  const orgMap = new Map(orgs.map((org) => [org.org_id, org.org_name]));
+  const orgMap = new Map(orgs.map((org) => [org.org_id, org]));
 
-  const organizations: OrganizationListItem[] = memberships
-    .map((membership) => {
-      const orgName = orgMap.get(membership.org_id);
+  const organizations: OrganizationListItem[] = [];
 
-      if (!orgName) {
-        return null;
+  for (const membership of memberships) {
+    const org = orgMap.get(membership.org_id);
+  
+    if (!org) {
+      continue;
+    }
+  
+    let logoUrl: string | null = null;
+  
+    if (org.logo_path) {
+      const { data: signedUrlData, error: signedUrlError } =
+        await supabase.storage
+          .from("organization-logos")
+          .createSignedUrl(org.logo_path, 60 * 60);
+  
+      if (!signedUrlError) {
+        logoUrl = signedUrlData.signedUrl;
       }
-
-      return {
-        org_id: membership.org_id,
-        org_name: orgName,
-        role: membership.role,
-      };
-    })
-    .filter((item): item is OrganizationListItem => item !== null);
+    }
+  
+    organizations.push({
+      org_id: membership.org_id,
+      org_name: org.org_name,
+      role: membership.role,
+      logo_path: org.logo_path ?? null,
+      logo_url: logoUrl,
+    });
+  }
 
   if (organizations.length === 0) {
     throw new Error("No organization found.");

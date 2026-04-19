@@ -7,12 +7,13 @@ type NavbarProps = {
     org_id: string;
     org_name: string;
     role: string;
+    logo_url?: string | null;
   }[];
   currentOrgId: string;
   currentOrgName: string;
   basePath: string;
   pageTitle: string;
-  logoSrc?: string;
+  logoSrc?: string  | null;
   logoAlt?: string;
 };
 
@@ -37,10 +38,17 @@ export default function Navbar({
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-4">
-          <Link href="/dashboard">
+          <Link
+            href={`/organizations/${currentOrgId}/settings`}
+            className="group"
+            title={`Edit ${currentOrgName} logo`}
+          >
             <div
               className="
                 flex h-12 w-12 items-center justify-center overflow-hidden
+                rounded-xl border border-white/[0.12]
+                bg-white/[0.03] transition
+                hover:border-white/[0.25] hover:bg-white/[0.06]
               "
             >
               {logoSrc ? (
@@ -77,12 +85,15 @@ export default function Navbar({
                 basePath={basePath}
               />
             </div>
+            <p className="mt-2 text-xs text-neutral-500">
+              Click the logo to edit this organization’s logo.
+            </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <Link
-            href="/organizations"
+            href={`/organizations/${currentOrgId}/members`}
             className="
               text-sm font-medium text-neutral-300 transition
               hover:text-white

@@ -352,6 +352,9 @@ export default async function DashboardPage({
   if (!data || !data.orgId || !data.organizations?.length) {
     return <NoOrganizationState />;
   }
+  
+  const currentOrg =
+  data.organizations.find((org) => org.org_id === data.orgId) || null;
 
   const canAccessFiles = canViewFiles(data.role);
   const canExport = canExportTransactions(data.role);
@@ -366,7 +369,7 @@ export default async function DashboardPage({
           data.organizations.find(org => org.org_id === data.orgId)?.org_name || "Unknown Org"
         }
         basePath="/dashboard"
-        logoSrc="/assets/tmp.logo.png"
+        logoSrc={currentOrg?.logo_url || null}
         pageTitle="Dashboard"
       />
 
