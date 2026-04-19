@@ -172,6 +172,7 @@ function AuditPageContent(){
                             </div>
                         )}
                 <p>You do not have permission to view audit logs.</p>
+                <BackButton></BackButton>
             </div>
         );
     }
