@@ -15,7 +15,7 @@ type NavbarProps = {
   currentUserRole: string;
   basePath: string;
   pageTitle: string;
-  logoSrc?: string  | null;
+  logoSrc?: string | null;
   logoAlt?: string;
 };
 
@@ -41,6 +41,7 @@ export default function Navbar({
         bg-black/80
         px-5 py-4
         backdrop-blur-md
+        relative z-[9999]
       "
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
