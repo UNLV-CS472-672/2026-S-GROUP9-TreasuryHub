@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server";
-import { TransactionsSchema, OrgMembersSchema, type Transactions, type OrgMembers, OrgOptionsSchema, OrgOptions } from "@/app/transaction/lib/schemas";
+import { TransactionsSchema, OrgMembersSchema, Transactions, OrgMembers, OrgOptionsSchema, OrgOptions, Role, RoleSchema } from "@/app/transaction/lib/schemas";
 
 // Fetches all transactions across all orgs.
 // Returns: Transaction[]
@@ -129,4 +129,27 @@ export async function fetchOrgsOptionsFromCurrentUser() : Promise<OrgOptions[]> 
     }) )
 
     return OrgOptionsSchema.array().parse(mappedData);
+}
+
+// Get role based on userId and orgId
+export async function fetchRoleFromOrgIdAndUser(orgId: string) : Promise<Role> {
+    const supabase = await createClient();
+    const userId = await fetchUserId();
+
+    const { data, error } = await supabase
+      .from('org_members')
+      .select('role')
+      .eq("user_id", userId)
+      .eq("org_id", orgId)
+      .single();
+
+    if (error) {
+      console.error('Database error:', error.message);
+      throw new Error('Failed to fetch role from user_id and org_id.');
+    }
+
+    const { role } = data;
+
+    return RoleSchema.parse(role);
+
 }

@@ -1,7 +1,8 @@
 import { fetchOrgsOptionsFromCurrentUser, fetchTransactionFromId } from "@/app/transaction/lib/data";
 import { UpdateTransactionForm } from "../../ui/form";
+import { Metadata } from "next";
 
-export const metadata = { title: "Edit Transaction" };
+export const metadata : Metadata = { title: "Edit Transaction" };
 
 export default async function Page({
   params,

@@ -12,7 +12,6 @@ export function CreateTransaction({ orgId }: { orgId: string }) {
           <span className="hidden md:inline">Add Transaction</span>
         </button>
       </Link>
-      <BackButton></BackButton>
     </div>
   );
 }
