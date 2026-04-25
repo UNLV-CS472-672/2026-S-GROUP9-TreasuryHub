@@ -1,22 +1,31 @@
-// Handles the OAuth/email confirmation callback from Supabase
-// Exchanges the temporary auth code for a session
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server"
+import { NextResponse, type NextRequest } from "next/server"
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
+// Handles the redirect from Supabase auth emails (signup confirmation,
+// password recovery, magic links). The link in the email contains a `code`
+// query param; we exchange that code for a session, then redirect the user
+// to wherever the `next` param says (or home).
+//
+// Used by:
+//   - UC1 email confirmation (?next=/)
+//   - Password reset (?next=/reset-password)
+export async function GET(request: NextRequest) {
+    const { searchParams, origin } = new URL(request.url)
+    const code = searchParams.get("code")
+    const next = searchParams.get("next") ?? "/"
 
-  if (code) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (!error) {
-      // Auth successful, send user to the main app
-      return NextResponse.redirect(`${origin}/`);
+    if (!code) {
+        // No code = bad link. Send them to login with a generic error
+        // rather than leaking what specifically went wrong.
+        return NextResponse.redirect(`${origin}/login?error=invalid_link`)
     }
-  }
 
-  // Auth failed, send back to login with error indicator
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+    const supabase = await createClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (error) {
+        return NextResponse.redirect(`${origin}/login?error=invalid_link`)
+    }
+
+    return NextResponse.redirect(`${origin}${next}`)
 }
