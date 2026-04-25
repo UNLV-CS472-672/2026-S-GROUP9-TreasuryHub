@@ -10,6 +10,8 @@ type OrgSettingsPageProps = {
   }>;
 };
 
+export const metadata = { title: "Settings" };
+
 export default async function OrgSettingsPage({
   params,
 }: OrgSettingsPageProps) {
@@ -28,11 +30,11 @@ export default async function OrgSettingsPage({
   }
 
   const { data: membership } = await supabase
-  .from("org_members")
-  .select("role")
-  .eq("org_id", orgId)
-  .eq("user_id", user.id)
-  .single();
+    .from("org_members")
+    .select("role")
+    .eq("org_id", orgId)
+    .eq("user_id", user.id)
+    .single();
 
   const allowedRoles = ["treasurer", "advisor"];
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -6,6 +7,11 @@ import ExportCSVButton from "@/components/ExportCSVButton";
 import { canExportTransactions, canViewFiles } from "@/lib/roles";
 import Navbar from "@/components/Navbar";
 
+export const metadata: Metadata = {
+  title: {
+    absolute: "Dashboard | TreasuryHub",
+  },
+};
 
 export const dynamic = "force-dynamic";
 
@@ -96,7 +102,7 @@ function LinkCard({
   );
 }
 
-function QuotesCard({ orgId }: {orgId:string}) {
+function QuotesCard({ orgId }: { orgId: string }) {
   return (
     <Link
       href={`/quotes?orgId=${orgId}`}
@@ -308,19 +314,19 @@ function NoOrganizationState() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <form action="/auth/signout" method="POST">
-        <button
-          type="submit"
-          className="
+            <form action="/auth/signout" method="POST">
+              <button
+                type="submit"
+                className="
             inline-flex items-center rounded-xl
             border border-white/[0.2] bg-white/[0.05]
             px-5 py-3 text-sm font-medium text-white transition
             hover:border-white/[0.35] hover:bg-white/[0.1]
           "
-        >
-          Sign Out
-        </button>
-      </form>
+              >
+                Sign Out
+              </button>
+            </form>
 
             <Link
               href="/organizations"
@@ -356,9 +362,9 @@ export default async function DashboardPage({
   if (!data || !data.orgId || !data.organizations?.length) {
     return <NoOrganizationState />;
   }
-  
+
   const currentOrg =
-  data.organizations.find((org) => org.org_id === data.orgId) || null;
+    data.organizations.find((org) => org.org_id === data.orgId) || null;
 
   const canAccessFiles = canViewFiles(data.role);
   const canExport = canExportTransactions(data.role);
@@ -366,17 +372,17 @@ export default async function DashboardPage({
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-      <Navbar
-        currentUserRole={data.role}
-        organizations={data.organizations}
-        currentOrgId={data.orgId}
-        currentOrgName={
-          data.organizations.find(org => org.org_id === data.orgId)?.org_name || "Unknown Org"
-        }
-        basePath="/"
-        logoSrc={currentOrg?.logo_url || null}
-        pageTitle="Dashboard"
-      />
+        <Navbar
+          currentUserRole={data.role}
+          organizations={data.organizations}
+          currentOrgId={data.orgId}
+          currentOrgName={
+            data.organizations.find(org => org.org_id === data.orgId)?.org_name || "Unknown Org"
+          }
+          basePath="/"
+          logoSrc={currentOrg?.logo_url || null}
+          pageTitle="Dashboard"
+        />
 
         {data.scope === "organization" ? (
           <div className="space-y-8">
@@ -405,7 +411,7 @@ export default async function DashboardPage({
                 description="Review recent audit activity →"
               />
 
-              <QuotesCard orgId = {data.orgId} />
+              <QuotesCard orgId={data.orgId} />
 
               {canAccessFiles && (
                 <LinkCard

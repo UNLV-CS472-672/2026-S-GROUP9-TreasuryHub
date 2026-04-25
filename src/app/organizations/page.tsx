@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import BackButton from "@/components/BackButton";
 
+export const metadata = { title: "Organizations" };
+
 type OrgMembershipRow = {
   org_id: string;
   role: string;
@@ -98,9 +100,9 @@ export default async function Organizations({
               Pick an organization to open its members page.
             </p>
           </div>
-          <div className="flex gap-2"> 
+          <div className="flex gap-2">
             <Link href="/organizations/new">
-              <button className="rounded border border-gray-300 p-2 text-gray-900 dark:border-white/[0.2] dark:text-white">  
+              <button className="rounded border border-gray-300 p-2 text-gray-900 dark:border-white/[0.2] dark:text-white">
                 Create New Organization
               </button>
             </Link>
@@ -149,7 +151,7 @@ export default async function Organizations({
                 </div>
               </Link>
             ))}
-            
+
           </div>
         )}
       </div>

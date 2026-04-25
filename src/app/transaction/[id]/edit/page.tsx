@@ -2,6 +2,8 @@ import { fetchTransactionFromId } from "@/app/transaction/lib/data";
 import { UpdateTransactionForm } from "../../ui/form";
 import { type Transaction } from "../../lib/actions";
 
+export const metadata = { title: "Edit Transaction" };
+
 export default async function Page({
   params,
 }: {

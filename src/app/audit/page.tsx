@@ -6,12 +6,12 @@ import { canViewAudit, getAuditVisibilityScope } from "@/lib/roles";
 import { AuditLogType } from "./lib/data";
 import { formatAction } from "./lib/util";
 import {
-  renderAuditDetails,
-  formatDisplayRole,
-  cellStyle,
-  headerStyle,
-  containerStyle,
-  tableStyle,
+    renderAuditDetails,
+    formatDisplayRole,
+    cellStyle,
+    headerStyle,
+    containerStyle,
+    tableStyle,
 } from "./lib/render";
 import BackButton from "@/components/BackButton";
 import { useSearchParams } from "next/navigation";
@@ -32,7 +32,7 @@ type OrgOption = {
     role: string;
 }
 
-function AuditPageContent(){
+function AuditPageContent() {
     const searchParams = useSearchParams();
     const orgIdFromParams = searchParams.get("orgId");
 
@@ -49,7 +49,8 @@ function AuditPageContent(){
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Fetch the current user's ID, organizations and role
-      useEffect(() => {
+
+    useEffect(() => {
         const fetchUserandOrgs = async () => {
 
             // Fetch the user id
@@ -68,10 +69,10 @@ function AuditPageContent(){
             console.log("User Id: ", user.id);
 
             // Get all of the organizations this user is a part of
-            const { data: orgMemberships, error: orgError} = await supabase
-            .from("org_members")
-            .select("org_id, role, organizations (org_name)")
-            .eq("user_id", user.id)
+            const { data: orgMemberships, error: orgError } = await supabase
+                .from("org_members")
+                .select("org_id, role, organizations (org_name)")
+                .eq("user_id", user.id)
             if (orgError) {
                 console.error("Error fetching organizations:", orgError);
                 return;
@@ -112,11 +113,11 @@ function AuditPageContent(){
         if (!orgId || !role) return;
         const fetchLogs = async () => {
             let query = supabase
-            .from("audit_logs")
-            .select(`*, users (display_name)`)
-            .eq("org_id", orgId)
-            .order("created_at", { ascending: false })
-            .limit(50);
+                .from("audit_logs")
+                .select(`*, users (display_name)`)
+                .eq("org_id", orgId)
+                .order("created_at", { ascending: false })
+                .limit(50);
 
             console.log("Role:", role);
 
@@ -149,28 +150,28 @@ function AuditPageContent(){
     // loading 
     if (!orgId) {
         return (
-            <div style={{padding: "20px"}}>
-                <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
+            <div style={{ padding: "20px" }}>
+                <h2 style={{ marginBottom: "10px" }}>Recent Audit</h2>
                 <p>Loading...</p>
             </div>
         );
     }
-    
 
-    if (!canViewAudit(role)){
+
+    if (!canViewAudit(role)) {
         return (
-            <div style={{padding: "20px"}}>
-                <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
-                 {organizations.length > 1 && orgId && (
-                            <div className="mb-6" style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                                <OrgDropDown
-                                    organizations={organizations}
-                                    currentOrgId={orgId}
-                                    basePath="/audit"
-                                />
-                                <BackButton></BackButton>
-                            </div>
-                        )}
+            <div style={{ padding: "20px" }}>
+                <h2 style={{ marginBottom: "10px" }}>Recent Audit</h2>
+                {organizations.length > 1 && orgId && (
+                    <div className="mb-6" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <OrgDropDown
+                            organizations={organizations}
+                            currentOrgId={orgId}
+                            basePath="/audit"
+                        />
+                        <BackButton></BackButton>
+                    </div>
+                )}
                 <p>You do not have permission to view audit logs.</p>
                 <BackButton></BackButton>
             </div>
@@ -178,23 +179,23 @@ function AuditPageContent(){
     }
 
 
-    return(
-        <div style={{padding: "20px"}}>
+    return (
+        <div style={{ padding: "20px" }}>
 
             {/* Page Title */}
             <div className="flex items-center justify-between mb-3">
-                <h2 style={{marginBottom: "10px"}}>Recent Audit</h2>
+                <h2 style={{ marginBottom: "10px" }}>Recent Audit</h2>
                 <BackButton></BackButton>
             </div>
             {organizations.length > 1 && orgId && (
-                            <div className="mb-6">
-                                <OrgDropDown
-                                    organizations={organizations}
-                                    currentOrgId={orgId}
-                                    basePath="/audit"
-                                />
-                            </div>
-                        )}
+                <div className="mb-6">
+                    <OrgDropDown
+                        organizations={organizations}
+                        currentOrgId={orgId}
+                        basePath="/audit"
+                    />
+                </div>
+            )}
 
 
             {/* Container around the table*/}
@@ -215,43 +216,43 @@ function AuditPageContent(){
                     </thead>
 
                     <tbody>
-                    {logs.map((log) => {
-                        return (
-                            <tr key={log.audit_id}>
+                        {logs.map((log) => {
+                            return (
+                                <tr key={log.audit_id}>
 
-                                {/* User Column */}
-                                <td style={cellStyle}>
-                                    {log.users?.display_name || "Unknown User"}
-                                </td>
+                                    {/* User Column */}
+                                    <td style={cellStyle}>
+                                        {log.users?.display_name || "Unknown User"}
+                                    </td>
 
-                                {/* Role Column */}
-                                <td style={cellStyle}>
-                                    {formatDisplayRole(log.display_role)}
-                                </td>
+                                    {/* Role Column */}
+                                    <td style={cellStyle}>
+                                        {formatDisplayRole(log.display_role)}
+                                    </td>
 
-                                {/* Timestamp Column */}
-                                <td style={cellStyle}>
-                                    {new Date(log.created_at).toLocaleString()}
-                                </td>
+                                    {/* Timestamp Column */}
+                                    <td style={cellStyle}>
+                                        {new Date(log.created_at).toLocaleString()}
+                                    </td>
 
-                                {/* Action Type Column */}
-                                <td style={cellStyle}>
-                                    {formatAction(log.action)}
-                                </td>
+                                    {/* Action Type Column */}
+                                    <td style={cellStyle}>
+                                        {formatAction(log.action)}
+                                    </td>
 
-                                {/* Item Column */}
-                                <td style={cellStyle}>
-                                    {log.entity}-{log.entity_id?.slice(0, 4) || ""}
-                                </td>
+                                    {/* Item Column */}
+                                    <td style={cellStyle}>
+                                        {log.entity}-{log.entity_id?.slice(0, 4) || ""}
+                                    </td>
 
-                                {/* Description Column */}
-                                <td style={cellStyle}>
-                                    {renderAuditDetails(log)}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
+                                    {/* Description Column */}
+                                    <td style={cellStyle}>
+                                        {renderAuditDetails(log)}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -261,36 +262,36 @@ function AuditPageContent(){
 
 
 export default function AuditPage() {
-        return (
-            <Suspense
-                fallback={
-                    <div className="p-8 max-w-4xl mx-auto">
-                        <div className="flex items-center justify-between mb-4">
-                            <Skeleton width={64} height={28} />
-                            <Skeleton width={112} height={38} rounded="sm" />
-                        </div>
-                        <div className="flex flex-wrap gap-4 mb-6">
-                            <div className="flex gap-2">
-                                <Skeleton width={56} height={38} rounded="sm" />
-                                <Skeleton width={72} height={38} rounded="sm" />
-                                <Skeleton width={88} height={38} rounded="sm" />
-                            </div>
-                        </div>
-                        <ul className="divide-y border rounded-lg">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <li key={i} className="flex items-center justify-between p-4">
-                                    <div className="flex flex-col gap-2">
-                                        <Skeleton width={200} height={16} />
-                                        <Skeleton width={140} height={13} />
-                                    </div>
-                                    <Skeleton width={36} height={14} />
-                                </li>
-                            ))}
-                        </ul>
+    return (
+        <Suspense
+            fallback={
+                <div className="p-8 max-w-4xl mx-auto">
+                    <div className="flex items-center justify-between mb-4">
+                        <Skeleton width={64} height={28} />
+                        <Skeleton width={112} height={38} rounded="sm" />
                     </div>
-                }
-            >
-                <AuditPageContent />
-            </Suspense>
-        )
+                    <div className="flex flex-wrap gap-4 mb-6">
+                        <div className="flex gap-2">
+                            <Skeleton width={56} height={38} rounded="sm" />
+                            <Skeleton width={72} height={38} rounded="sm" />
+                            <Skeleton width={88} height={38} rounded="sm" />
+                        </div>
+                    </div>
+                    <ul className="divide-y border rounded-lg">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <li key={i} className="flex items-center justify-between p-4">
+                                <div className="flex flex-col gap-2">
+                                    <Skeleton width={200} height={16} />
+                                    <Skeleton width={140} height={13} />
+                                </div>
+                                <Skeleton width={36} height={14} />
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            }
+        >
+            <AuditPageContent />
+        </Suspense>
+    )
 }
