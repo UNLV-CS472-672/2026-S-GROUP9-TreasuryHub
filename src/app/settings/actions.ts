@@ -8,23 +8,27 @@ import { isValidDisplayName, normalizeDisplayName } from "@/lib/profileValidatio
 // Note: display_name lives on public.users (auto-created by handle_new_user
 // trigger from auth.users metadata at registration time). We update it
 // directly via RLS-protected update on public.users.
-export async function updateDisplayName(formData: FormData) {
+//
+// Returns void to satisfy <form action={}> prop typing in Next.js.
+// Validation failures and DB errors are silently ignored at the moment;
+// follow-up work should add a toast or inline error indicator.
+export async function updateDisplayName(formData: FormData): Promise<void> {
     const raw = formData.get("displayName")
     if (typeof raw !== "string") {
-        return { error: "Invalid input" }
+        return
     }
 
     const displayName = normalizeDisplayName(raw)
 
     if (!isValidDisplayName(displayName)) {
-        return { error: "Display name must be between 1 and 100 characters" }
+        return
     }
 
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-        return { error: "Not signed in" }
+        return
     }
 
     const { error } = await supabase
@@ -36,10 +40,10 @@ export async function updateDisplayName(formData: FormData) {
         .eq("user_id", user.id)
 
     if (error) {
-        return { error: error.message }
+        console.error("updateDisplayName failed:", error.message)
+        return
     }
 
     // Refresh the settings page so the new value shows up
     revalidatePath("/settings")
-    return { ok: true }
 }
