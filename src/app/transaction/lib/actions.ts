@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { fetchOrgFromCurrentUser, fetchUserId } from "@/app/transaction/lib/data";
+import { fetchUserId } from "@/app/transaction/lib/data";
 import { z } from "zod";
 import { logAuditEntry } from "@/app/audit/lib/action";
 import { AuditLogType } from "@/app/audit/lib/data";
@@ -13,11 +13,10 @@ const CreateTransactionSchema = TransactionsSchema.omit({ transaction_id: true }
 
 export async function createTransaction(_prevState: ActionState, formData: FormData) : Promise<ActionState> {
   const supabase = await createClient();
-  const fetchOrgId = await fetchOrgFromCurrentUser(); // TODO: Replace
   const userId = await fetchUserId();
 
   const result = CreateTransactionSchema.safeParse({
-    org_id: fetchOrgId,
+    org_id: formData.get("orgId"),
     type: formData.get("type"),
     description: formData.get("desc"),
     category: formData.get("category"),
@@ -58,7 +57,7 @@ export async function createTransaction(_prevState: ActionState, formData: FormD
   .from("org_members")
   .select("role")
   .eq("user_id", userId)
-  .eq("org_id", orgId)
+  .eq("org_id", org_id)
   .single()
 
   if(roleError) {
@@ -85,16 +84,15 @@ export async function createTransaction(_prevState: ActionState, formData: FormD
 
   revalidatePath('/transaction')
   revalidatePath("/dashboard");
-  redirect('/transaction')
+  redirect(`/transaction?orgId=${org_id}`)
 }
 
 export async function updateTransaction(_prevState: ActionState, formData: FormData) : Promise<ActionState> {
   const supabase = await createClient();
-  const fetchOrgId = await fetchOrgFromCurrentUser(); // TODO: Replace
 
   const result = TransactionsSchema.safeParse({
     transaction_id: formData.get("transId"),
-    orgId: fetchOrgId,
+    org_id: formData.get("orgId"),
     type: formData.get("type"),
     description: formData.get("desc"),
     category: formData.get("category"),
@@ -153,7 +151,7 @@ export async function updateTransaction(_prevState: ActionState, formData: FormD
   .from('org_members')
   .select('role') 
   .eq('user_id', beforeData.created_by)
-  .eq('org_id', orgId)
+  .eq('org_id', org_id)
   .single()
 
   if (roleError){
@@ -180,10 +178,13 @@ export async function updateTransaction(_prevState: ActionState, formData: FormD
   }
 
   revalidatePath('/transaction')
-  redirect('/transaction')
+  redirect(`/transaction?orgId=${org_id}`)
 }
 
-export async function deleteTransaction(transaction_id: string, _formData: FormData) : Promise<ActionState> {
+export async function deleteTransaction(
+  transaction_id: string,
+  _formData: FormData
+): Promise<void> {
   const supabase = await createClient();
 
   // Fetch existing transaction data before deletion for audit log
@@ -195,9 +196,9 @@ export async function deleteTransaction(transaction_id: string, _formData: FormD
 
   if (beforeDataError || !beforeData) {
     console.error(beforeDataError);
-    return {
-      message: `Error: ${beforeDataError}`
-    };
+    // return {
+    //   message: `Error: ${beforeDataError}`
+    // };
   }
 
   const { data: roleData, error: roleError } = await supabase
@@ -218,6 +219,7 @@ export async function deleteTransaction(transaction_id: string, _formData: FormD
     .eq("transaction_id", transaction_id);
   if (error) {
     console.error('Database Error: Failed to Delete Transaction.', error)
+    // return error;
   }
 
   // Insert audit log entry for transaction deletion

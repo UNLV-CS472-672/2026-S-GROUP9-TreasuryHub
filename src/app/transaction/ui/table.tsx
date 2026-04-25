@@ -3,7 +3,7 @@ import { textColors, bgColors } from "../lib/styles";
 import { type Transactions } from "@/app/transaction/lib/schemas";
 
 
-export default async function TransactionTable( { transactions } : { transactions: Transactions[] } ) {
+export default async function TransactionTable( { transactions, orgId } : { transactions: Transactions[], orgId: string } ) {
   // TODO: Add confirmation for DeleteTransaction
   const tableFieldSpacing = "px-3 py-1.5"
 
@@ -52,7 +52,7 @@ export default async function TransactionTable( { transactions } : { transaction
                   </td>
                   <td className={tableFieldSpacing}>
                     <div className="flex space-x-2">
-                      <UpdateTransaction id={transaction.transaction_id} />
+                      <UpdateTransaction id={transaction.transaction_id} orgId={orgId} />
                       <DeleteTransaction id={transaction.transaction_id} />
                     </div>
                   </td>

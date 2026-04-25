@@ -14,7 +14,6 @@ export default async function Page({
 }){
   const organizations : OrgOptions[] = await fetchOrgsOptionsFromCurrentUser();
   const params = await searchParams;
-  console.warn("Params", params)
   const orgId = params?.orgId ?? (() => {
     const fallback = organizations[0].org_id;
     console.log("No searchParam 'orgId' found. \nFalling back to: ", fallback)
@@ -30,14 +29,14 @@ export default async function Page({
             <h1 className={`text-2xl font-semibold ${textColors.primary} mb-1`}>
               Transactions
             </h1>
-            <OrgDropDownWrapper organizations={organizations} />
+            <OrgDropDownWrapper organizations={organizations} orgId={orgId} />
             <p className={`${textColors.secondary}`}>
             </p>
           </div>
-          <CreateTransaction />
+          <CreateTransaction orgId={orgId}/>
         </div>
         <div>
-          <TransactionTable transactions={transactions}/>
+          <TransactionTable transactions={transactions} orgId={orgId}/>
         </div>
       </div>
     </main>

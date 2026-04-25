@@ -128,7 +128,5 @@ export async function fetchOrgsOptionsFromCurrentUser() : Promise<OrgOptions[]> 
       role: org_members[0].role,
     }) )
 
-    console.warn(mappedData)
-
     return OrgOptionsSchema.array().parse(mappedData);
 }
