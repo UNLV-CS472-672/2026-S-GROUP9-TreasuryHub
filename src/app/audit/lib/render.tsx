@@ -53,7 +53,7 @@ export function renderAuditDetails(log: any) {
 }
 
 export function formatDisplayRole(role?: string | null) {
-    return role || "Unknown Role";
+    return role? role.charAt(0).toUpperCase() + role.slice(1) : "Unknown Role";
 }
 
 // formatAction
@@ -67,7 +67,7 @@ export const formatAction = (action: string) => {
         case "DELETE":
             return <span style={{color: "#f87171"}}>{action}</span>;
         default:
-            return action;
+            return "Unknown Action";
     }
 };
 

@@ -73,12 +73,13 @@ async function isValidAssignment(assignType: string, assignedTo: string) {
 }
 
 // get all tasks
-export async function getTasks() {
+export async function getTasks(orgId: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
+    .eq("org_id", orgId)
     .order("created_at", { ascending: false });
 
   if (error) {

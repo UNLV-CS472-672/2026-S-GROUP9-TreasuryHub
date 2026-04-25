@@ -6,12 +6,13 @@ import { logAuditEntry } from "../audit/lib/action";
 import { after, before } from "node:test";
 import { Supermercado_One } from "next/font/google";
 
-export async function getQuotes(){
+export async function getQuotes(orgId: string){
     const supabase = await createClient();
 
     const {data, error} = await supabase
         .from("quotes")
         .select("*")
+        .eq("org_id", orgId)
 
     if(error){
         return { error: error.message };

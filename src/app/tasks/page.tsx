@@ -94,7 +94,7 @@ function TasksPageContent() {
     const fetchTasks = async () => {
       if(!orgId) return;
 
-      const result = await getTasks();
+      const result = await getTasks(orgId);
 
       if (result.error) {
         alert(result.error);
