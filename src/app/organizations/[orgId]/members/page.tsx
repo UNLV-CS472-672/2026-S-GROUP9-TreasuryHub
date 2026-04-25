@@ -21,6 +21,8 @@ type MembersPageProps = {
   }>;
 };
 
+export const metadata = { title: "Members" };
+
 export default async function OrganizationMembersPage({
   params,
   searchParams,

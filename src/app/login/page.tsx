@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signIn } from "./actions";
 import { Skeleton } from "@/components/Skeleton"
+
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -13,7 +14,7 @@ export default function LoginPage() {
     async function handleSubmit() {
         const result = await signIn(email, password);
 
-        if(result?.error) {
+        if (result?.error) {
             setError(result.error);
         }
     }
@@ -33,30 +34,31 @@ export default function LoginPage() {
         );
     }
 
-    return(
-     
+    return (
+
         <div>
+            <title>Login | TreasuryHub</title>
             <div className="mt-5 flex items-center justify-center mb-3 gap-2">
-            <input 
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="border border-gray-300 rounded p-2 text-gray-900 bg-gray-100 focus:border-blue-500 focus:outline-none dark:border-white/[0.2] dark:bg-white/[0.05] dark:text-white"//changed to make it visible for light mode - prabh
-                placeholder="Email"
+                <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="border border-gray-300 rounded p-2 text-gray-900 bg-gray-100 focus:border-blue-500 focus:outline-none dark:border-white/[0.2] dark:bg-white/[0.05] dark:text-white"//changed to make it visible for light mode - prabh
+                    placeholder="Email"
                 />
 
-            <input 
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="border border-gray-300 rounded p-2 text-gray-900 bg-gray-100 focus:border-blue-500 focus:outline-none dark:border-white/[0.2] dark:bg-white/[0.05] dark:text-white" //changed to make it visible for light mode - prabh
-                placeholder="Password"
-            />
-             
-            <button onClick={handleSubmit} className="border border-gray-300 rounded p-2 text-gray-900 hover:bg-gray-100 dark:border-white/[0.2] dark:text-white dark:hover:bg-white/[0.1]" //changed to make it visible for light mode - prabh
-            > 
-                Login
-            </button>
+                <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="border border-gray-300 rounded p-2 text-gray-900 bg-gray-100 focus:border-blue-500 focus:outline-none dark:border-white/[0.2] dark:bg-white/[0.05] dark:text-white" //changed to make it visible for light mode - prabh
+                    placeholder="Password"
+                />
+
+                <button onClick={handleSubmit} className="border border-gray-300 rounded p-2 text-gray-900 hover:bg-gray-100 dark:border-white/[0.2] dark:text-white dark:hover:bg-white/[0.1]" //changed to make it visible for light mode - prabh
+                >
+                    Login
+                </button>
             </div>
             <div className="flex items-center justify-center mb-3 mt-5">
                 <a href="/register" className="text-sm text-blue-500 hover:underline">
@@ -64,10 +66,10 @@ export default function LoginPage() {
                 </a>
             </div>
             <div className="flex items-center justify-center mb-3">
-             {error && <p className="text-red-500">{error}</p>}
+                {error && <p className="text-red-500">{error}</p>}
             </div>
         </div>
-        
+
     );
-    
+
 }
