@@ -12,6 +12,7 @@ import {
   headerStyle,
   containerStyle,
   tableStyle,
+  formatEntity,
 } from "./lib/render";
 import BackButton from "@/components/BackButton";
 import { useSearchParams } from "next/navigation";
@@ -241,7 +242,7 @@ function AuditPageContent(){
 
                                 {/* Item Column */}
                                 <td style={cellStyle}>
-                                    {log.entity}-{log.entity_id?.slice(0, 4) || ""}
+                                    {formatEntity(log.entity, log.entity_id)}
                                 </td>
 
                                 {/* Description Column */}

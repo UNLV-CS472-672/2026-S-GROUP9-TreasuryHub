@@ -1,6 +1,7 @@
 import { stat } from "fs";
 import { getDiff } from "./util";
 import { spawn } from "child_process";
+import { ROLE_LABELS } from "@/lib/roles";
 
 // renderDetails
 // Renders the details of an audit log entry based on the action type
@@ -54,6 +55,10 @@ export function renderAuditDetails(log: any) {
 
 export function formatDisplayRole(role?: string | null) {
     return role? role.charAt(0).toUpperCase() + role.slice(1) : "Unknown Role";
+}
+
+export function formatEntity(entity: string, entityID: string){
+    return `${entity.charAt(0).toUpperCase()+entity.slice(1)}-${entityID?.slice(0, 4) || ""}`;
 }
 
 // formatAction
