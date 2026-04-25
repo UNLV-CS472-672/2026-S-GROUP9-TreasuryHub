@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
+import { type OrgOptions } from '@/app/transaction/lib/schemas';
 
 type Props = {
   organizations: {
@@ -9,8 +10,8 @@ type Props = {
     org_name: string
     role: string
   }[]
-  currentOrgId: string
-  basePath: string
+    currentOrgId: string
+    basePath: string // e.g. '/dashboard' or '/files'
 }
 
 export default function OrgDropDown({ organizations, currentOrgId, basePath }: Props) {

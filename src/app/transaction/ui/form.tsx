@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { getToday } from "@/app/transaction/lib/util";
-import { createTransaction, type Transaction, updateTransaction } from "@/app/transaction/lib/actions";
+import { createTransaction, updateTransaction } from "@/app/transaction/lib/actions";
 import { useActionState } from "react";
+import type { Transactions } from "@/app/transaction/lib/schemas";
 
 // TODO: Only remove the field that had an error: keep repsonses for the rest
 
-export function CreateTransactionForm() {
+export function CreateTransactionForm({ orgId }: { orgId: string }) {
   const today = getToday();
-  const [state, formAction] = useActionState(createTransaction, undefined);
+  const [state, formAction] = useActionState(createTransaction, null);
 
   return (
     <form action={formAction}>
       <div>
+        <input type="hidden" name="orgId" value={orgId} />
         <label>Type</label>
         <select defaultValue="" name="type" required>
           <option value="" disabled>Select a type</option>
@@ -57,7 +59,7 @@ export function CreateTransactionForm() {
         />
         {state?.errors?.notes && <p className={state.errors ? "text-red-500" : "text-green-500"}>{state.errors.notes[0]}</p>}
       </div>
-      <Link href="/transaction/">
+      <Link href={`/transaction?orgId=${orgId}`}>
         <span>Cancel</span>
       </Link>
       <button type="submit">Add Transaction</button>
@@ -66,19 +68,19 @@ export function CreateTransactionForm() {
   );
 }
 
-export function UpdateTransactionForm(transaction: {
-  transaction: Transaction;
+export function UpdateTransactionForm({ transaction, orgId }: {
+  transaction: Transactions;
+  orgId: string;
 }) {
-  const [state, formAction] = useActionState(updateTransaction, undefined);
-  const transObj = transaction.transaction;
+  const [state, formAction] = useActionState(updateTransaction, null);
 
-  // TODO: Implement better way to pass transId
   return (
     <form action={formAction}>
       <div>
-        <input type="hidden" name="transId" value={transObj.transaction_id} />
+        <input type="hidden" name="transId" value={transaction.transaction_id} />
+        <input type="hidden" name="orgId" value={orgId} />
         <label>Type</label>
-        <select defaultValue={transObj.type} name="type" required>
+        <select defaultValue={transaction.type} name="type" required>
           <option value="" disabled>Select a type</option>
           <option value="income">Income</option>
           <option value="expense">Expense</option>
@@ -88,39 +90,40 @@ export function UpdateTransactionForm(transaction: {
       <div>
         <label>Description</label>
         <input
-          type="text" name="desc" placeholder="e.g., Event Catering" defaultValue={transObj.description}
+          type="text" name="desc" placeholder="e.g., Event Catering" defaultValue={transaction.description}
         />
         {state?.errors?.description && <p className={state.errors ? "text-red-500" : "text-green-500"}>{state.errors.description[0]}</p>}
       </div>
       <div>
         <label>Category</label>
         <input
-          type="text" name="category" placeholder="University Grant" defaultValue={transObj.category}
+          type="text" name="category" placeholder="University Grant" defaultValue={transaction.category}
         />
         {state?.errors?.category && <p className={state.errors ? "text-red-500" : "text-green-500"}>{state.errors.category[0]}</p>}
       </div>
       <div>
         <label>Amount</label>
         <input
-          type="number" name="amount" placeholder="0.00" defaultValue={transObj.amount}
+          type="number" name="amount" placeholder="0.00" defaultValue={transaction.amount}
         />
         {state?.errors?.amount && <p className={state.errors ? "text-red-500" : "text-green-500"}>{state.errors.amount[0]}</p>}
       </div>
       <div>
         <label>Date</label>
         <input
-          type="date" name="date" defaultValue={String(transObj.date)} required
+          // TODO: Find a better way of setting date string
+          type="date" name="date" defaultValue={transaction.date.toLocaleDateString('en-CA')} required
         />
         {state?.errors?.date && <p className={state.errors ? "text-red-500" : "text-green-500"}>{state.errors.date[0]}</p>}
       </div>
       <div>
         <label>Notes</label>
         <input
-          type="text" name="notes" placeholder="Additional details..." defaultValue={transObj.notes}
+          type="text" name="notes" placeholder="Additional details..." defaultValue={transaction.notes ?? undefined}
         />
         {state?.errors?.notes && <p className={state.errors ? "text-red-500" : "text-green-500"}>{state.errors.notes[0]}</p>}
       </div>
-      <Link href="/transaction/">
+      <Link href={`/transaction?orgId=${orgId}`}>
         <span>Cancel</span>
       </Link>
       <button type="submit">Update Transaction</button>
