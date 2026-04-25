@@ -39,6 +39,8 @@ export const OrgOptionsSchema = z.object({
   ...OrgMembersSchema.pick({role: true}).shape,
 })
 
+export const RoleSchema = OrgMembersSchema.shape.role.nullish();
+
 // Database
 export type Transactions = z.infer<typeof TransactionsSchema>
 export type Organizations = z.infer<typeof OrganizationsSchema>
@@ -47,3 +49,4 @@ export type OrgMembers = z.infer<typeof OrgMembersSchema>
 // Extra
 export type ActionState = z.infer<typeof ActionStateSchema>
 export type OrgOptions = z.infer<typeof OrgOptionsSchema>
+export type Role = z.infer<typeof RoleSchema>

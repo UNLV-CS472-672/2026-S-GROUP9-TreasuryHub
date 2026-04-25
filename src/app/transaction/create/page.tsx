@@ -1,7 +1,8 @@
 import { CreateTransactionForm } from "@/app/transaction/ui/form";
 import { fetchOrgsOptionsFromCurrentUser } from "../lib/data";
+import { Metadata } from "next";
 
-export const metadata = { title: "New Transaction" };
+export const metadata : Metadata = { title: "New Transaction" };
 
 export default async function Page({
   searchParams,
