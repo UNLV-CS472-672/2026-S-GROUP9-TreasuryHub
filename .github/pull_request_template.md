@@ -3,6 +3,13 @@
 
 ---
 
+## Issues Addressed
+<!-- Closes <Issue number> -->
+<!-- Closes <Issue number 2> -->
+<!-- Partially Addresses <Issue number> -->
+
+---
+
 ## Changes
 - 
 - 
