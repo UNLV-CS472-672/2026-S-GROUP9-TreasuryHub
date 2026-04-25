@@ -2,7 +2,9 @@ import TransactionTable from "@/app/transaction/ui/table";
 import { CreateTransaction } from "@/app/transaction/ui/buttons";
 import { textColors } from "./lib/styles";
 
-export default function page(){
+export const metadata = { title: "Transactions" };
+
+export default function page() {
   // TODO: Restrict display to only user_org
   // TODO: Add layout page
 

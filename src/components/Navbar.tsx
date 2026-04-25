@@ -129,6 +129,16 @@ export default function Navbar({
 
         <div className="flex flex-wrap items-center gap-3">
           <Link
+            href="/settings"
+            className="
+              text-sm font-medium text-neutral-300 transition
+              hover:text-white
+            "
+          >
+            Account Settings
+          </Link>
+
+          <Link
             href={`/organizations/${currentOrgId}/members`}
             className="
               text-sm font-medium text-neutral-300 transition

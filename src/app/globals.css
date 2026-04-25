@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
+/* Tailwind v4 dark mode driven by the .dark class on <html>.
+   The class is applied either by the inline script in layout.tsx
+   (reads localStorage / system pref) or by the ThemeToggle component. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -10,13 +20,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
