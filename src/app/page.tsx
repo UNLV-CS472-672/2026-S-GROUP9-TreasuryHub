@@ -37,11 +37,11 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <div
+    <div //chnaged for layout -prabh
       className="
         rounded-2xl
-        border border-white/[0.12]
-        bg-white/[0.03]
+        border border-gray-200 dark:border-white/[0.12] 
+        bg-white dark:bg-white/[0.03]
         p-5
         backdrop-blur-sm
         transition duration-300
@@ -51,10 +51,10 @@ function StatCard({
         hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
       "
     >
-      <p className="text-xs uppercase tracking-[0.18em] text-neutral-400">
+      <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
         {label}
       </p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
         {value}
       </p>
     </div>
@@ -74,12 +74,12 @@ function LinkCard({
 }) {
   return (
     <Link
-      href={href}
-      className="
+      href={href} //changed for layout -prabh
+      className=" 
         group
         rounded-2xl
-        border border-white/[0.12]
-        bg-white/[0.03]
+        border border-gray-200 dark:border-white/[0.12]
+        bg-white dark:bg-white/[0.03]
         p-5
         backdrop-blur-sm
         transition duration-300
@@ -89,13 +89,13 @@ function LinkCard({
         hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
       "
     >
-      <p className="text-xs uppercase tracking-[0.18em] text-neutral-400">
+      <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
         {label}
       </p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
         {title}
       </p>
-      <p className="mt-2 text-sm text-neutral-300 transition group-hover:text-white">
+      <p className="mt-2 text-sm text-gray-600 dark:text-neutral-300 transition group-hover:text-gray-900 dark:group-hover:text-white">
         {description}
       </p>
     </Link>
@@ -104,13 +104,13 @@ function LinkCard({
 
 function QuotesCard({ orgId }: { orgId: string }) {
   return (
-    <Link
-      href={`/quotes?orgId=${orgId}`}
+    <Link 
+      href={`/quotes?orgId=${orgId}`} //changed for layout- prabh
       className="
         group
         rounded-2xl
-        border border-white/[0.12]
-        bg-white/[0.03]
+        border border-gray-200 dark:border-white/[0.12]
+        bg-white dark:bg-white/[0.03]
         p-5
         backdrop-blur-sm
         transition duration-300
@@ -120,13 +120,13 @@ function QuotesCard({ orgId }: { orgId: string }) {
         hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
       "
     >
-      <p className="text-xs uppercase tracking-[0.18em] text-neutral-400">
+      <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
         Quotes
       </p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
         Open
       </p>
-      <p className="mt-2 text-sm text-neutral-300 transition group-hover:text-white">
+      <p className="mt-2 text-sm text-gray-600 dark:text-neutral-300 transition group-hover:text-gray-900 dark:group-hover:text-white">
         Review and manage vendor quotes →
       </p>
     </Link>
@@ -152,18 +152,18 @@ function TransactionsTable({
   canExport: boolean;
 }) {
   return (
-    <section
+    <section //changed for layout -prabh
       className="
         rounded-2xl
-        border border-white/[0.12]
-        bg-white/[0.03]
+        border border-gray-200 dark:border-white/[0.12]
+        bg-white dark:bg-white/[0.03]
         p-6
         backdrop-blur-sm
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
       "
     >
       <div className="mb-6 flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold tracking-tight text-white">
+        <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
           {title}
         </h2>
 
@@ -175,7 +175,7 @@ function TransactionsTable({
               border border-white/[0.2]
               bg-white/[0.05]
               px-4 py-2
-              text-sm font-medium text-white
+              text-sm font-medium text-gray-900 dark:text-white
               transition
               hover:border-white/[0.35]
               hover:bg-white/[0.08]
@@ -192,7 +192,7 @@ function TransactionsTable({
                 border border-white/[0.2]
                 bg-blue-500/[0.05]
                 px-4 py-2
-                text-sm font-medium text-white
+                text-sm font-medium text-gray-900 dark:text-white
                 transition
                 hover:border-white/[0.35]
                 hover:bg-blue-100/[0.08]
@@ -205,7 +205,7 @@ function TransactionsTable({
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm text-neutral-200">
           <thead>
-            <tr className="border-b border-white/[0.2] text-left text-xs uppercase tracking-[0.16em] text-neutral-400">
+            <tr className="border-b border-white/[0.2] text-left text-xs uppercase tracking-[0.16em] text-gray-500 dark:text-neutral-400">
               <th className="py-3 pr-6 font-medium">Date</th>
               <th className="py-3 pr-6 font-medium">Description</th>
               <th className="py-3 pr-6 font-medium">Category</th>
@@ -224,15 +224,15 @@ function TransactionsTable({
                   hover:bg-white/[0.05]
                 "
               >
-                <td className="py-4 pr-6 text-neutral-400">
+                <td className="py-4 pr-6  text-gray-900 dark:text-white">
                   {new Date(tx.date).toLocaleDateString()}
                 </td>
-                <td className="py-4 pr-6 text-white">{tx.description}</td>
-                <td className="py-4 pr-6 text-neutral-400">{tx.category}</td>
-                <td className="py-4 pr-6 capitalize text-neutral-300">
+                <td className="py-4 pr-6 text-gray-900 dark:text-white">{tx.description}</td>
+                <td className="py-4 pr-6  text-gray-900 dark:text-white">{tx.category}</td>
+                <td className="py-4 pr-6 capitalize  text-gray-900 dark:text-white">
                   {tx.type}
                 </td>
-                <td className="py-4 text-right font-semibold text-white">
+                <td className="py-4 text-right font-semibold text-gray-900 dark:text-white">
                   {formatCurrency(tx.amount)}
                 </td>
               </tr>
@@ -246,11 +246,11 @@ function TransactionsTable({
 
 function TasksSection({ orgId }: { orgId: string }) {
   return (
-    <section
+    <section //changed for layout - prabh
       className="
         rounded-2xl
-        border border-white/[0.12]
-        bg-white/[0.03]
+        border border-gray-200 dark:border-white/[0.12]
+      bg-white dark:bg-white/[0.03]
         p-6
         backdrop-blur-sm
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
@@ -258,10 +258,10 @@ function TasksSection({ orgId }: { orgId: string }) {
     >
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-white">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
             Tasks
           </h2>
-          <p className="mt-1 text-sm text-neutral-400">
+          <p className="mt-1 text-sm text-gray-500 dark:text-neutral-400">
             View and manage organization tasks.
           </p>
         </div>
@@ -273,7 +273,7 @@ function TasksSection({ orgId }: { orgId: string }) {
             border border-white/[0.2]
             bg-white/[0.05]
             px-4 py-2
-            text-sm font-medium text-white
+            text-sm font-medium text-gray-900 dark:text-white
             transition
             hover:border-white/[0.35]
             hover:bg-white/[0.08]
@@ -283,7 +283,7 @@ function TasksSection({ orgId }: { orgId: string }) {
         </Link>
       </div>
 
-      <div className="rounded-xl border border-dashed border-white/[0.12] px-4 py-6 text-sm text-neutral-400">
+      <div className="rounded-xl border border-dashed border-white/[0.12] px-4 py-6 text-sm text-gray-500 dark:text-neutral-400">
         Go to the tasks page to see assignments, deadlines, and updates.
       </div>
     </section>
@@ -291,25 +291,26 @@ function TasksSection({ orgId }: { orgId: string }) {
 }
 
 function NoOrganizationState() {
-  return (
-    <main className="min-h-screen bg-black text-white">
+  return ( //changed for layout - prabh
+    <main className="min-h-screen bg-background text-foreground"> 
       <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-6 py-12">
         <section
           className="
-            w-full rounded-3xl border border-white/[0.12] bg-white/[0.03]
+            w-full rounded-3xl border border-gray-200 dark:border-white/[0.12]
+bg-white dark:bg-white/[0.03]
             p-10 text-center backdrop-blur-sm
             shadow-[0_0_20px_rgba(255,255,255,0.05)]
           "
         >
-          <p className="text-xs uppercase tracking-[0.22em] text-neutral-400">
+          <p className="text-xs uppercase tracking-[0.22em] text-gray-500 dark:text-neutral-400">
             TreasuryHub
           </p>
 
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
             You are not in an organization yet
           </h1>
 
-          <p className="mt-4 text-sm text-neutral-300 sm:text-base">
+          <p className="mt-4 text-sm text-gray-700 dark:text-neutral-300 sm:text-base">
             Join or create an organization from the home page to start using the dashboard.
           </p>
 
@@ -319,9 +320,10 @@ function NoOrganizationState() {
                 type="submit"
                 className="
             inline-flex items-center rounded-xl
-            border border-white/[0.2] bg-white/[0.05]
-            px-5 py-3 text-sm font-medium text-white transition
-            hover:border-white/[0.35] hover:bg-white/[0.1]
+            border border-gray-300 dark:border-white/[0.2]
+           bg-white dark:bg-white/[0.05]
+            px-5 py-3 text-sm font-medium text-gray-900 dark:text-white transition
+           hover:bg-gray-100 dark:hover:bg-white/[0.1]
           "
               >
                 Sign Out
@@ -332,9 +334,11 @@ function NoOrganizationState() {
               href="/organizations"
               className="
                 inline-flex items-center rounded-xl
-                border border-blue-400/30 bg-blue-500/10
+                border border-blue-500
+               bg-blue-500
                 px-5 py-3 text-sm font-medium text-white transition
-                hover:border-blue-300/50 hover:bg-blue-500/20
+               hover:bg-blue-600 hover:border-blue-600
+               dark:border-blue-400/30 dark:bg-blue-500/10 dark:hover:bg-blue-500/20
               "
             >
               Join an Organization
@@ -369,8 +373,8 @@ export default async function DashboardPage({
   const canAccessFiles = canViewFiles(data.role);
   const canExport = canExportTransactions(data.role);
 
-  return (
-    <main className="min-h-screen bg-black text-white">
+  return ( //changed for layout - prabh
+    <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
         <Navbar
           currentUserRole={data.role}
