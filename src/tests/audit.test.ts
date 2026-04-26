@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { getDiff, formatAction } from '../app/audit/lib/util'
-import { formatDisplayRole } from '@/app/audit/lib/render'
+import { getDiff} from '../app/audit/lib/util'
+import { formatDisplayRole, formatAction, formatEntity} from '@/app/audit/lib/render'
 
 // ─────────────────────────────────────────────
 // getDiff
@@ -71,7 +71,7 @@ describe('getDiff', () => {
     })
 
     it('returns the correct display role', () => {
-        expect(formatDisplayRole("admin")).toBe("admin");
+        expect(formatDisplayRole("admin")).toBe("Admin");
     })
 })
 
@@ -80,18 +80,56 @@ describe('getDiff', () => {
 // ─────────────────────────────────────────────
 describe('formatAction', () => {
     it('formats CREATE as Created', () => {
-        expect(formatAction('CREATE')).toBe('Created')
+        const result = formatAction('CREATE');
+
+        expect(result.props.children).toBe('CREATE');
+        expect(result.props.style.color).toBe('#4ade80')
     })
 
     it('formats UPDATE as Updated', () => {
-        expect(formatAction('UPDATE')).toBe('Updated')
+        const result = formatAction('UPDATE');
+
+        expect(result.props.children).toBe('UPDATE');
+        expect(result.props.style.color).toBe('#facc15')
     })
 
     it('formats DELETE as Deleted', () => {
-        expect(formatAction('DELETE')).toBe('Deleted')
+        const result = formatAction('DELETE');
+
+        expect(result.props.children).toBe('DELETE');
+        expect(result.props.style.color).toBe('#f87171')
     })
 
     it('returns unknown actions as-is', () => {
-        expect(formatAction('UNKNOWN')).toBe('UNKNOWN')
+        const result = formatAction('INVALID');
+
+        expect(result.props.children).toBe('UNKNOWN');
     })
 })
+
+
+// ─────────────────────────────────────────────
+// formatEntity
+// ─────────────────────────────────────────────
+describe('formatEntity', () => {
+    it('formats entity with capitalized name and ID slice', () => {
+        expect(formatEntity('user', 'abcd1234')).toBe('User-abcd');
+    });
+
+    it('handles already capitalized entity', () => {
+        expect(formatEntity('Admin', 'xyz9876')).toBe('Admin-xyz9');
+    });
+
+    it('handles short IDs', () => {
+        expect(formatEntity('member', 'ab')).toBe('Member-ab');
+    });
+
+    it('handles empty ID', () => {
+        expect(formatEntity('treasurer', '')).toBe('Treasurer-');
+    });
+
+    it('handles undefined-like ID safely', () => {
+        // simulate bad input (TypeScript wouldn’t allow this normally)
+        expect(formatEntity('user', undefined as any)).toBe('User-');
+    });
+});

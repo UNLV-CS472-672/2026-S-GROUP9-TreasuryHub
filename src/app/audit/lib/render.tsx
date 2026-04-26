@@ -1,4 +1,8 @@
+import { stat } from "fs";
 import { getDiff } from "./util";
+import { spawn } from "child_process";
+import { ROLE_LABELS } from "@/lib/roles";
+import { Span } from "next/dist/trace";
 
 // renderDetails
 // Renders the details of an audit log entry based on the action type
@@ -7,42 +11,72 @@ import { getDiff } from "./util";
 // - For UPDATE actions, it shows a side-by-side comparison of changed fields using getDiff
 export function renderAuditDetails(log: any) {
 
-    if (log.action === "CREATE") {
-        const after = log.after_data ?? {};
+    switch(log.action) {
 
-        return Object.entries(after).map(([field, value]) => (
+        case "CREATE":
+            const after = log.after_data ?? {}
+
+            return Object.entries(after).map(([field, value]) => (
             <div key={field}>
                 <strong>{field}:</strong>: {String(value)}
             </div>
         ));
+    
+
+
+        case "DELETE":
+            const before = log.before_data ?? {};
+
+            return Object.entries(before).map(([field, value]) => (
+                <div key={field}>
+                    <strong>{field}:</strong> {String(value)}
+                </div>
+            ));
+
+        case "UPDATE":
+            const changes = getDiff(log.before_data, log.after_data);
+
+            
+
+            if (changes.length === 0) {
+                return <div>No changes</div>;
+            }
+
+            return changes.map((change: any, index: number) => (
+                    <div key={index}>
+                        <strong>{change.field}:</strong> {change.oldValue} → {change.newValue}
+                    </div>  
+                ));
+
+        default: 
+            console.error("Invalide Action Case.");
+            return null;
     }
-
-    if (log.action === "DELETE") {
-        const before = log.before_data ?? {};
-
-        return Object.entries(before).map(([field, value]) => (
-            <div key={field}>
-                <strong>{field}:</strong> {String(value)}
-            </div>
-        ));
-    }
-
-    const changes = getDiff(log.before_data, log.after_data);
-
-    if (changes.length === 0) {
-        return <div>No changes</div>;
-    }
-
-    return changes.map((change: any, index: number) => (
-            <div key={index}>
-                <strong>{change.field}:</strong> {change.oldValue} → {change.newValue}
-            </div>  
-        ));
 }
 
 export function formatDisplayRole(role?: string | null) {
-    return role || "Unknown Role";
+    return role? role.charAt(0).toUpperCase() + role.slice(1) : "Unknown Role";
 }
+
+export function formatEntity(entity: string, entityID: string){
+    return `${entity.charAt(0).toUpperCase()+entity.slice(1)}-${entityID?.slice(0, 4) || ""}`;
+}
+
+// formatAction
+// Converts action types to more user-friendly text
+export const formatAction = (action: string) => {
+    switch (action) {
+        case "CREATE":
+            return <span style={{color: "#4ade80"}}>{action}</span>;
+        case "UPDATE":
+            return <span style={{color: "#facc15"}}>{action}</span>;
+        case "DELETE":
+            return <span style={{color: "#f87171"}}>{action}</span>;
+        default:
+            return <span>UNKNOWN</span>;
+    }
+};
+
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

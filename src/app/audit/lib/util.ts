@@ -30,18 +30,3 @@ export function getDiff(before: any, after: any) {
 
   return changes;
 }
-
-// formatAction
-// Converts action types to more user-friendly text
-export const formatAction = (action: string) => {
-    switch (action) {
-        case "CREATE":
-            return "Created";
-        case "UPDATE":
-            return "Updated";
-        case "DELETE":
-            return "Deleted";
-        default:
-            return action;
-    }
-};

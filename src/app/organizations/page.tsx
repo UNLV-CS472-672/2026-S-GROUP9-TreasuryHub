@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import BackButton from "@/components/BackButton";
 
+export const metadata = { title: "Organizations" };
+
 type OrgMembershipRow = {
   org_id: string;
   role: string;
@@ -10,12 +12,15 @@ type OrgMembershipRow = {
 type OrganizationRow = {
   org_id: string;
   org_name: string;
+  logo_path: string | null;
 };
 
 type OrganizationListItem = {
   org_id: string;
   org_name: string;
   role: string;
+  logo_path: string | null;
+  logo_url: string | null;
 };
 
 type OrganizationsPageProps = {
@@ -85,7 +90,7 @@ export default async function Organizations({
     }
   }
 
-  return (
+  return ( //changed the create new organizations button to make it visible in the light mode
     <main className="min-h-screen p-6">
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <div className="flex items-center justify-between">
@@ -97,7 +102,7 @@ export default async function Organizations({
           </div>
           <div className="flex gap-2">
             <Link href="/organizations/new">
-              <button className="rounded border border-white p-2 text-white">
+              <button className="rounded border border-gray-300 p-2 text-gray-900 dark:border-white/[0.2] dark:text-white">
                 Create New Organization
               </button>
             </Link>
@@ -146,7 +151,7 @@ export default async function Organizations({
                 </div>
               </Link>
             ))}
-            
+
           </div>
         )}
       </div>

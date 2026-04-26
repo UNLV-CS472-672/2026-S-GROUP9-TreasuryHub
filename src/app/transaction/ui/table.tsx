@@ -1,14 +1,12 @@
-import { fetchTransactions } from "@/app/transaction/lib/data";
 import { DeleteTransaction, UpdateTransaction } from "@/app/transaction/ui/buttons";
 import { textColors, bgColors } from "../lib/styles";
+import { type Transactions } from "@/app/transaction/lib/schemas";
 
 
-export default async function TransactionTable() {
+export default async function TransactionTable( { transactions, orgId } : { transactions: Transactions[], orgId: string } ) {
   // TODO: Add confirmation for DeleteTransaction
-  // TODO: Add clsx for Color amount by type
   const tableFieldSpacing = "px-3 py-1.5"
 
-  const transactions = await fetchTransactions();
   return (
     <div className={`shadow-sm rounded-md ${bgColors.primary}`}>
       <div className="overflow-x-auto">
@@ -26,7 +24,7 @@ export default async function TransactionTable() {
             {transactions.map((transaction) => {
               return (
                 <tr key={transaction.transaction_id} className={`${textColors.primary} odd:bg-white even:bg-gray-100 dark:odd:bg-black dark:even:bg-gray-900`}>
-                  <td className={tableFieldSpacing}>{transaction.date}</td>
+                  <td className={tableFieldSpacing}>{transaction.date.toLocaleDateString("en-US", {dateStyle: "long"})}</td>
                   <td className={tableFieldSpacing}>
                     <div>
                       <p>
@@ -54,7 +52,7 @@ export default async function TransactionTable() {
                   </td>
                   <td className={tableFieldSpacing}>
                     <div className="flex space-x-2">
-                      <UpdateTransaction id={transaction.transaction_id} />
+                      <UpdateTransaction id={transaction.transaction_id} orgId={orgId} />
                       <DeleteTransaction id={transaction.transaction_id} />
                     </div>
                   </td>

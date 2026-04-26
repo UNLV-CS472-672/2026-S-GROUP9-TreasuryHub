@@ -43,7 +43,9 @@ function QuotesPageContent() {
     }
 
     async function fetchQuotes() {
-        const result = await getQuotes()
+        if (!orgID) return;
+
+        const result = await getQuotes(orgID)
         if (result?.error) {
             setError(result.error)
         } else if (result?.data) {
