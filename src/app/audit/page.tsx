@@ -141,6 +141,7 @@ function AuditPageContent() {
             }
 
             setLogs(data || []);
+            setLoading(false);
         };
         fetchLogs();
     }, [orgId, supabase, role]);
@@ -149,7 +150,7 @@ function AuditPageContent() {
     // Display the audit logs in a table format
 
     // loading 
-    if (!orgId) {
+    if (loading) {
         return (
             <div style={{ padding: "20px" }}>
                 <h2 style={{ marginBottom: "10px" }}>Recent Audit</h2>

@@ -29,6 +29,10 @@ body {
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+}
+
+:where(.dark, .dark *) input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
