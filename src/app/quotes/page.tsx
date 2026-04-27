@@ -11,6 +11,14 @@ import { useSearchParams } from "next/navigation"
 // evaluate available options and publish the selected quote to propose 
 // during budget planning and purchasing decisions.  
 
+
+type SkeletonPulseProps = { className?: string }
+function SkeletonPulse({ className = "" }: SkeletonPulseProps) {
+    return (
+        <div className={`animate-pulse rounded bg-gray-200 ${className}`} />
+    )
+}
+
 function QuotesPageContent() {
     const [quotes, setQuotes] = useState<{
         quotes_id: number
@@ -87,55 +95,75 @@ function QuotesPageContent() {
         }
     }
 
-    return (
+        return (
         <div className="max-w-xl mxx-auto p-6">
             <h1 className="text-xl font-medium mb-6">Quotes</h1>
-
-            {/* quote form */}
+ 
+            {/* quote form - shows skeleton blocks while loading */}
             <div className="flex flex-col gap-3 mb-8">
-                <input
-                    type="text"
-                    placeholder="Vendor"
-                    value={vendor}
-                    onChange={(e) => setVendor(e.target.value)}
-                    className="border border-gray-300 rounded p-2 text-sm"
-                />
-                <textarea
-                    placeholder="Memo"
-                    value={memo}
-                    onChange={(e) => setMemo(e.target.value)}
-                    className="border border-gray-300 rounded p-2 text-sm resize-none"
-                    rows={3}
-                />
-                <input
-                    type="number"
-                    placeholder="Amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="border border-gray-300 rounded p-2 text-sm"
-                />
-                <button
-                    onClick={handleAddQuote}
-                    className="bg-black text-white text-sm rounded p-2"
-                >
-                    Add Quote
-                </button>
-                <BackButton />
+                {loading ? (
+                    <>
+                        <SkeletonPulse className="h-9 w-full" />
+                        <SkeletonPulse className="h-20 w-full" />
+                        <SkeletonPulse className="h-9 w-full" />
+                        <SkeletonPulse className="h-9 w-full" />
+                        <SkeletonPulse className="h-9 w-24" />
+                    </>
+                ) : (
+                    <>
+                        <input
+                            type="text"
+                            placeholder="Vendor"
+                            value={vendor}
+                            onChange={(e) => setVendor(e.target.value)}
+                            className="border border-gray-300 rounded p-2 text-sm"
+                        />
+                        <textarea
+                            placeholder="Memo"
+                            value={memo}
+                            onChange={(e) => setMemo(e.target.value)}
+                            className="border border-gray-300 rounded p-2 text-sm resize-none"
+                            rows={3}
+                        />
+                        <input
+                            type="number"
+                            placeholder="Amount"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="border border-gray-300 rounded p-2 text-sm"
+                        />
+                        <button
+                            onClick={handleAddQuote}
+                            className="bg-black text-white text-sm rounded p-2"
+                        >
+                            Add Quote
+                        </button>
+                        <BackButton />
+                    </>
+                )}
             </div>
-
+ 
             {/* display the quotes/memos */}
-            {/* checks for loading and should add a skeleton until loaded */}
+            {/* checks for loading and shows skeleton until loaded */}
             {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex justify-between items-center py-3 border-b border-gray-100">
+                    /* Left - vendor name, memo */
+                    /* Right - amount, accept button, delete button */
+                    <div
+                        key={i}
+                        className="flex justify-between items-center py-3 border-b border-gray-100"
+                    >
+                        {/* Left */}
                         <div className="flex flex-col gap-2">
-                            <Skeleton width={120} height={14} />
-                            <Skeleton width={200} height={12} />
+                            <SkeletonPulse className="h-4 w-28" />
+                            <SkeletonPulse className="h-3 w-48" />
                         </div>
+ 
+                        {/* Right */}
                         <div className="flex items-center gap-4">
-                            <Skeleton width={48} height={14} />
-                            <Skeleton width={60} height={26} rounded="sm" />
-                            <Skeleton width={60} height={26} rounded="sm" />
+                            <SkeletonPulse className="h-4 w-12" />
+                            <SkeletonPulse className="h-7 w-16 rounded" />
+                            <SkeletonPulse className="h-7 w-16 rounded" />
                         </div>
                     </div>
                 ))
@@ -145,56 +173,56 @@ function QuotesPageContent() {
                         <p className="text-sm text-gray-400">No quotes yet.</p>
                     )}
  
-            {quotes.map((q) => (
-                <div key={q.quotes_id} className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <div>
-                        <p className="text-sm font-medium">{q.vendor}</p>
-                        <p className="text-xs text-gray-500">{q.memo}</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm">${q.amount.toLocaleString()}</span>
- 
-                        {/* after the quote is accepted, button changes to a label */}
-                        {!q.accepted ? (
-                            <button
-                                onClick={() => handleAcceptQuote(q.quotes_id)}
-                                className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500"
-                            >
-                                Accept
-                            </button>
-                        ) : (
-                            <span className="text-xs text-green-700">Accepted</span>
-                        )}
- 
-                        {confirmingId === q.quotes_id ? (
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => {
-                                        handleDeleteQuote(q.quotes_id)
-                                        setConfirmingId(null)
-                                    }}
-                                    className="text-xs px-3 py-1 rounded border border-red-400 text-red-500"
-                                >
-                                    Confirm
-                                </button>
-                                <button
-                                    onClick={() => setConfirmingId(null)}
-                                    className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-400"
-                                >
-                                    Cancel
-                                </button>
+                    {quotes.map((q) => (
+                        <div key={q.quotes_id} className="flex justify-between items-center py-3 border-b border-gray-100">
+                            <div>
+                                <p className="text-sm font-medium">{q.vendor}</p>
+                                <p className="text-xs text-gray-500">{q.memo}</p>
                             </div>
-                        ) : (
-                            <button
-                                onClick={() => setConfirmingId(q.quotes_id)}
-                                className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-400"
-                            >
-                                Delete
-                            </button>
-                        )}
-                    </div>
-                </div>
-            ))}
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm">${q.amount.toLocaleString()}</span>
+ 
+                                {/* after the quote is accepted, button changes to a label */}
+                                {!q.accepted ? (
+                                    <button
+                                        onClick={() => handleAcceptQuote(q.quotes_id)}
+                                        className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-500"
+                                    >
+                                        Accept
+                                    </button>
+                                ) : (
+                                    <span className="text-xs text-green-700">Accepted</span>
+                                )}
+ 
+                                {confirmingId === q.quotes_id ? (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => {
+                                                handleDeleteQuote(q.quotes_id)
+                                                setConfirmingId(null)
+                                            }}
+                                            className="text-xs px-3 py-1 rounded border border-red-400 text-red-500"
+                                        >
+                                            Confirm
+                                        </button>
+                                        <button
+                                            onClick={() => setConfirmingId(null)}
+                                            className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-400"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setConfirmingId(q.quotes_id)}
+                                        className="text-xs px-3 py-1 rounded border border-gray-300 text-gray-400"
+                                    >
+                                        Delete
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
                 </>
             )}
         </div>

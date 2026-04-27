@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { signIn } from "./actions";
-import { Skeleton } from "@/components/Skeleton"
+
+type SkeletonPulseProps = { className?: string }
+function SkeletonPulse({ className = "" }: SkeletonPulseProps) {
+    return (
+        <div className={`animate-pulse rounded bg-white/[0.15] ${className}`} />
+    )
+}
 
 
 export default function LoginPage() {
@@ -12,30 +18,35 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
 
     async function handleSubmit() {
-        const result = await signIn(email, password);
-
-        if (result?.error) {
-            setError(result.error);
+    setLoading(true);
+        try {
+            const result = await signIn(email, password);
+            if (result?.error) {
+                setError(result.error);
+            }
+        } finally {
+            setLoading(false);
         }
     }
-    // I don't know if this is working since it loads instantly for me...
-    if (loading) {
+
+        if (loading) {
         return (
             <div>
+                {/* row 1 - email, password, login button */}
                 <div className="mt-5 flex items-center justify-center mb-3 gap-2">
-                    <Skeleton width={180} height={38} rounded="sm" />
-                    <Skeleton width={180} height={38} rounded="sm" />
-                    <Skeleton width={72} height={38} rounded="sm" />
+                    <SkeletonPulse className="h-10 w-44" />
+                    <SkeletonPulse className="h-10 w-44" />
+                    <SkeletonPulse className="h-10 w-20" />
                 </div>
+                {/* row 2 - "Don't have an account? Register" link */}
                 <div className="flex items-center justify-center mb-3 mt-5">
-                    <Skeleton width={180} height={16} rounded="sm" />
+                    <SkeletonPulse className="h-4 w-52" />
                 </div>
             </div>
         );
     }
-
+ 
     return (
-
         <div>
             <title>Login | TreasuryHub</title>
             <div className="mt-5 flex items-center justify-center mb-3 gap-2">
@@ -72,7 +83,5 @@ export default function LoginPage() {
                 {error && <p className="text-red-500">{error}</p>}
             </div>
         </div>
-
     );
-
 }

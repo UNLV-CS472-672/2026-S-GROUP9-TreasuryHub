@@ -3,7 +3,14 @@
 import { useState } from "react"
 import { signUp } from "./actions";
 import BackButton from "@/components/BackButton";
-import { Skeleton } from "@/components/Skeleton";
+
+type SkeletonPulseProps = { className?: string }
+function SkeletonPulse({ className = "" }: SkeletonPulseProps) {
+    return (
+        <div className={`animate-pulse rounded bg-white/[0.15] ${className}`} />
+    )
+}
+
 
 export default function RegistrationPage(){
     const [email, setEmail] = useState("");
@@ -32,62 +39,66 @@ export default function RegistrationPage(){
         }
     }
 
-    // I can't really test this since it loads instantly for me
-    if (loading) {
+        if (loading) {
         return (
             <div>
+                {/* inputs, buttons */}
                 <div className="mt-5 flex items-center justify-center gap-4">
-                    <Skeleton width={150} height={38} rounded="sm" />
-                    <Skeleton width={180} height={38} rounded="sm" />
-                    <Skeleton width={150} height={38} rounded="sm" />
-                    <Skeleton width={150} height={38} rounded="sm" />
-                    <Skeleton width={80} height={38} rounded="sm" />
-                    <Skeleton width={80} height={38} rounded="sm" />
+                    <SkeletonPulse className="h-10 w-36" />
+                    <SkeletonPulse className="h-10 w-44" />
+                    <SkeletonPulse className="h-10 w-36" />
+                    <SkeletonPulse className="h-10 w-44" />
+
+                    <SkeletonPulse className="h-10 w-24" />
+                    <SkeletonPulse className="h-10 w-20" />
                 </div>
             </div>
         );
     }
-
-    return(
+ 
+    return (
         <div>
             <div className="mt-5 flex items-center justify-center gap-4">
-                <input 
+                <input
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     className="border border-white rounded p-2 text-white bg-transparent"
                     placeholder="Display Name"
                 />
-                <input 
+                <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="border border-white rounded p-2 text-white bg-transparent"
                     placeholder="Email"
                 />
-                <input 
+                <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="border border-white rounded p-2 text-white bg-transparent"
                     placeholder="Password"
                 />
-                <input 
+                <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="border border-white rounded p-2 text-white bg-transparent"
                     placeholder="confirmPassword"
                 />
-
-                <button onClick={handleSubmit} className="border border-white rounded p-2 text-white hover:bg-white/[0.1]">
+ 
+                <button
+                    onClick={handleSubmit}
+                    className="border border-white rounded p-2 text-white hover:bg-white/[0.1]"
+                >
                     SUBMIT!
                 </button>
-                
+ 
                 <BackButton />
             </div>
             <div className="flex items-center justify-center mb-3">
-                 {error && <p className="text-red-500">{error}</p>}
+                {error && <p className="text-red-500">{error}</p>}
             </div>
         </div>
     );

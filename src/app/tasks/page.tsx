@@ -67,9 +67,18 @@ function hasOfficerAccess(role: string) {
   TODO(issue #59 follow-up): tasks still use placeholder demo roles and are not wired into src/lib/roles.ts yet.
 */
 
+
+type SkeletonPulseProps = { className?: string; };
+function SkeletonPulse({ className = "" }: SkeletonPulseProps) {
+  return (
+    <div className={`animate-pulse rounded bg-white/[0.08] ${className}`} />
+  );
+}
+
 function TasksPageContent() {
   // Grab the orgId 
   const orgId = useSearchParams().get('orgId');
+
   // stores all tasks from Supabase
   const [tasks, setTasks] = useState<Task[]>([]);
 
@@ -399,118 +408,116 @@ function TasksPageContent() {
     <div style={{ padding: "20px" }}>
       <div className="flex justify-between mb-6">
         <h1>Task List</h1>
-      
-          <BackButton></BackButton>
-        
+        <BackButton></BackButton>
       </div>
-
+ 
       {/* alert banner for tasks that are getting close to due date */}
- {getNotifications(tasks).length > 0 && (
-  <div
-    style={{
-      background: "#e5e7eb",
-      color: "#111827",
-      padding: "10px",
-      border: "1px solid #9ca3af",
-      borderRadius: "6px",
-      marginBottom: "20px",
-    }}
-  >
-    <strong>Upcoming Task Alerts:</strong>
-    {getNotifications(tasks).map((task) => (
-      <div key={task.id} style={{ marginTop: "4px" }}>
-        {task.title} is due on {task.dueDate}
-      </div>
-    ))}
-  </div>
-)}
-
+      {getNotifications(tasks).length > 0 && (
+        <div
+          style={{
+            background: "#e5e7eb",
+            color: "#111827",
+            padding: "10px",
+            border: "1px solid #9ca3af",
+            borderRadius: "6px",
+            marginBottom: "20px",
+          }}
+        >
+          <strong>Upcoming Task Alerts:</strong>
+          {getNotifications(tasks).map((task) => (
+            <div key={task.id} style={{ marginTop: "4px" }}>
+              {task.title} is due on {task.dueDate}
+            </div>
+          ))}
+        </div>
+      )}
+ 
       {/* showing current user role just for demo/testing */}
       <p>
         <strong>Current User Role:</strong> {currentUserRole}
       </p>
-
-      {/* INPUT SECTION */}
+ 
+      {/* input */}
       {loading ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "400px" }}>
-          <Skeleton width="100%" height={32} rounded="md" />
-          <Skeleton width="100%" height={32} rounded="md" />
-          <Skeleton width="100%" height={32} rounded="md" />
-          <Skeleton width="100%" height={32} rounded="md" />
-          <Skeleton width="100%" height={32} rounded="md" />
-          <Skeleton width={100} height={32} rounded="md" />
+          <SkeletonPulse className="h-8 w-full" />
+          <SkeletonPulse className="h-8 w-full" />
+          <SkeletonPulse className="h-8 w-full" />
+          <SkeletonPulse className="h-8 w-full" />
+          <SkeletonPulse className="h-8 w-full" />
+          <SkeletonPulse className="h-8 w-24" />
         </div>
       ) : (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          maxWidth: "400px",
-        }}
-      >
-        {/* task title */}
-        <input
-          placeholder="Task title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-
-        {/* task type dropdown */}
-        <select value={taskType} onChange={(e) => setTaskType(e.target.value)}>
-          <option value="TODO">To-Do</option>
-          <option value="EVENT">Event</option>
-          <option value="INVOICE">Invoice Due Date</option>
-          <option value="PAYROLL">Payroll Deadline</option>
-          <option value="PAYMENT">Scheduled Payment</option>
-          <option value="FUNDRAISER">Fundraiser</option>
-          <option value="MEETING">Meeting</option>
-        </select>
-
-        {/* choose whether assignment is to a role or individual */}
-        <select
-          value={assignType}
-          onChange={(e) =>
-            setAssignType(e.target.value as "role" | "individual")
-          }
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            maxWidth: "400px",
+          }}
         >
-          <option value="role">Assign to Role</option>
-          <option value="individual">Assign to Individual</option>
-        </select>
-
-        {/* assignment dropdown changes depending on assignType */}
-        <select
-          value={assignedTo}
-          onChange={(e) => setAssignedTo(e.target.value)}
-        >
-          <option value="">Select Assignment</option>
-
-          {assignType === "role"
-            ? existingRoles.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))
-            : existingMembers.map((member) => (
-                <option key={member} value={member}>
-                  {member}
-                </option>
-              ))}
-        </select>
-
-        {/* optional due date */}
-        <input
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-        />
-
-        {/* add task button */}
-        <button onClick={addTask}>Add Task</button>
-      </div>
+          {/* task title */}
+          <input
+            placeholder="Task title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+ 
+          {/* task type dropdown */}
+          <select value={taskType} onChange={(e) => setTaskType(e.target.value)}>
+            <option value="TODO">To-Do</option>
+            <option value="EVENT">Event</option>
+            <option value="INVOICE">Invoice Due Date</option>
+            <option value="PAYROLL">Payroll Deadline</option>
+            <option value="PAYMENT">Scheduled Payment</option>
+            <option value="FUNDRAISER">Fundraiser</option>
+            <option value="MEETING">Meeting</option>
+          </select>
+ 
+          {/* choose whether assignment is to a role or individual */}
+          <select
+            value={assignType}
+            onChange={(e) =>
+              setAssignType(e.target.value as "role" | "individual")
+            }
+          >
+            <option value="role">Assign to Role</option>
+            <option value="individual">Assign to Individual</option>
+          </select>
+ 
+          {/* assignment dropdown changes depending on assignType */}
+          <select
+            value={assignedTo}
+            onChange={(e) => setAssignedTo(e.target.value)}
+          >
+            <option value="">Select Assignment</option>
+ 
+            {assignType === "role"
+              ? existingRoles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))
+              : existingMembers.map((member) => (
+                  <option key={member} value={member}>
+                    {member}
+                  </option>
+                ))}
+          </select>
+ 
+          {/* optional due date */}
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+ 
+          {/* add task button */}
+          <button onClick={addTask}>Add Task</button>
+        </div>
       )}
-
-      {/* TASK LIST */}
+ 
+      {/* task list */}
       <ul style={{ marginTop: "20px" }}>
         {loading
           ? Array.from({ length: 3 }).map((_, i) => (
@@ -523,54 +530,60 @@ function TasksPageContent() {
                   borderRadius: "8px",
                 }}
               >
-                <Skeleton width={180} height={16} />
-                <div style={{ marginTop: "6px" }}><Skeleton width={120} height={14} /></div>
-                <div style={{ marginTop: "6px" }}><Skeleton width={200} height={14} /></div>
-                <div style={{ marginTop: "6px" }}><Skeleton width={100} height={14} /></div>
+                <SkeletonPulse className="h-4 w-44" />
+                <div style={{ marginTop: "6px" }}>
+                  <SkeletonPulse className="h-3 w-28" />
+                </div>
+                <div style={{ marginTop: "6px" }}>
+                  <SkeletonPulse className="h-3 w-48" />
+                </div>
+                <div style={{ marginTop: "6px" }}>
+                  <SkeletonPulse className="h-3 w-24" />
+                </div>
                 <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                  <Skeleton width={58} height={26} rounded="sm" />
-                  <Skeleton width={42} height={26} rounded="sm" />
+                  <SkeletonPulse className="h-7 w-14 rounded" />
+                  <SkeletonPulse className="h-7 w-10 rounded" />
                 </div>
               </li>
             ))
           : tasks.map((task) => (
-          <li
-            key={task.id}
-            style={{
-              marginBottom: "12px",
-              padding: "10px",
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-            }}
-          >
-            {/* main task info */}
-            <strong>{task.title}</strong>
-            <div>Type: {task.type}</div>
-            <div>
-              Assigned {task.assignType === "role" ? "Role" : "Individual"}:{" "}
-              {task.assignedTo}
-            </div>
-
-            {task.dueDate && <div>Due: {task.dueDate}</div>}
-
-            <div>{getAlert(task.dueDate)}</div>
-
-            {/* action buttons */}
-            <button
-              onClick={() => deleteTask(task.id)}
-              style={{ marginTop: "8px", marginRight: "8px" }}
-            >
-              Delete
-            </button>
-
-            <button
-              onClick={() => editTask(task.id)}
-              style={{ marginTop: "8px" }}
-            >
-              Edit
-            </button>
-          </li>
-        ))}
+              <li
+                key={task.id}
+                style={{
+                  marginBottom: "12px",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                  borderRadius: "8px",
+                }}
+              >
+                {/* main task info */}
+                <strong>{task.title}</strong>
+                <div>Type: {task.type}</div>
+                <div>
+                  Assigned {task.assignType === "role" ? "Role" : "Individual"}:{" "}
+                  {task.assignedTo}
+                </div>
+ 
+                {task.dueDate && <div>Due: {task.dueDate}</div>}
+ 
+                <div>{getAlert(task.dueDate)}</div>
+ 
+                {/* action buttons */}
+                <button
+                  onClick={() => deleteTask(task.id)}
+                  style={{ marginTop: "8px", marginRight: "8px" }}
+                >
+                  Delete
+                </button>
+ 
+                <button
+                  onClick={() => editTask(task.id)}
+                  style={{ marginTop: "8px" }}
+                >
+                  Edit
+                </button>
+              </li>
+            ))}
       </ul>
     </div>
   );

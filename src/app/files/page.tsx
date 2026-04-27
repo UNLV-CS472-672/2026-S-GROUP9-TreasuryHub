@@ -13,6 +13,59 @@ import { canUploadFiles, canViewFiles } from '@/lib/roles'
 import { getFiles, deleteFile } from '../../lib/files'
 
 
+type SkeletonPulseProps = { className?: string }
+function SkeletonPulse({ className = '' }: SkeletonPulseProps) {
+    return (
+        <div className={`animate-pulse rounded bg-white/[0.08] ${className}`} />
+    )
+}
+
+// FilesPageSkeleton  loading placeholder that mirrors the loaded page layout
+function FilesPageSkeleton() {
+    return (
+        // header, filters, and file list
+        <div className="p-8 max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+                <SkeletonPulse className="h-7 w-16" />
+ 
+                <div className="flex gap-3">
+                    <SkeletonPulse className="h-9 w-28 rounded" />
+                    <SkeletonPulse className="h-9 w-20 rounded" />
+                </div>
+            </div>
+ 
+            {/* Filters */}
+            <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex gap-2">
+                    <SkeletonPulse className="h-10 w-14 rounded border border-white/[0.12]" />
+                    <SkeletonPulse className="h-10 w-20 rounded border border-white/[0.12]" />
+                    <SkeletonPulse className="h-10 w-28 rounded border border-white/[0.12]" />
+                </div>
+ 
+                <div className="flex gap-2 items-center">
+                    <SkeletonPulse className="h-4 w-10" />
+                    <SkeletonPulse className="h-10 w-36 rounded border border-white/[0.12]" />
+                    <SkeletonPulse className="h-4 w-6" />
+                    <SkeletonPulse className="h-10 w-36 rounded border border-white/[0.12]" />
+                </div>
+            </div>
+ 
+            {/* File list */}
+            <ul className="divide-y divide-white/[0.08] border border-white/[0.12] rounded-lg overflow-hidden">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <li key={i} className="flex items-center justify-between p-4">
+                        <div className="flex flex-col gap-2">
+                            <SkeletonPulse className="h-4 w-52" />
+                            <SkeletonPulse className="h-3 w-36" />
+                        </div>
+                        <SkeletonPulse className="h-4 w-9" />
+                    </li>
+                ))}
+            </ul>
+        </div>
+    )
+}
 
 type OrgOption = {
     org_id: string
@@ -142,45 +195,7 @@ function FilesPageContent() {
     //     )
     // }
 
-    if (loading) {
-        return (
-            <div className="p-8 max-w-4xl mx-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                    <Skeleton width={64} height={28} />
-                    <Skeleton width={112} height={38} rounded="sm" />
-                </div>
-
-                {/* Filters */}
-                <div className="flex flex-wrap gap-4 mb-6">
-                    <div className="flex gap-2">
-                        <Skeleton width={56} height={38} rounded="sm" />
-                        <Skeleton width={72} height={38} rounded="sm" />
-                        <Skeleton width={88} height={38} rounded="sm" />
-                    </div>
-                    <div className="flex gap-2 items-center">
-                        <Skeleton width={32} height={14} />
-                        <Skeleton width={128} height={38} rounded="sm" />
-                        <Skeleton width={16} height={14} />
-                        <Skeleton width={128} height={38} rounded="sm" />
-                    </div>
-                </div>
-
-                {/* File list */}
-                <ul className="divide-y border rounded-lg">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <li key={i} className="flex items-center justify-between p-4">
-                            <div className="flex flex-col gap-2">
-                                <Skeleton width={200} height={16} />
-                                <Skeleton width={140} height={13} />
-                            </div>
-                            <Skeleton width={36} height={14} />
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        )
-    }
+    if (loading) { return <FilesPageSkeleton /> }
 
     // Invalid org in URL
     if (orgError) {
@@ -231,11 +246,11 @@ function FilesPageContent() {
 
     return (
         <div className="p-8 max-w-4xl mx-auto">
-
+ 
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <h1 className="text-2xl font-semibold text-white">Files</h1>
-
+ 
                 <div className="flex gap-4">
                     {canUpload && (
                         <button
@@ -248,23 +263,18 @@ function FilesPageContent() {
                     <BackButton />
                 </div>
             </div>
-
+ 
             {/* Org switcher — only shows if user belongs to multiple orgs */}
             {organizations.length > 1 && (
                 <div className="mb-6">
-                    {/*<OrgSwitcher
-                        organizations={organizations}
-                        currentOrgId={orgId}
-                        basePath="/files"
-                    />*/}
                     <OrgDropDown
                         organizations={organizations}
-                        currentOrgId={orgId}
+                        currentOrgId={orgId ?? ''}
                         basePath="/files"
                     />
                 </div>
             )}
-
+ 
             {/* Upload modal */}
             {showUpload && orgId && (
                 <UploadModal
@@ -273,7 +283,7 @@ function FilesPageContent() {
                     onClose={() => setShowUpload(false)}
                 />
             )}
-
+ 
             {/* File viewer modal */}
             {viewingFile && (
                 <FileViewer
@@ -283,7 +293,7 @@ function FilesPageContent() {
                     onClose={() => setViewingFile(null)}
                 />
             )}
-
+ 
             {/* Filters */}
             <div className="flex flex-wrap gap-4 mb-6">
                 <div className="flex gap-2">
@@ -300,7 +310,7 @@ function FilesPageContent() {
                         </button>
                     ))}
                 </div>
-
+ 
                 {/* Date range filter */}
                 {/* NOTE: UI styling should be revisited when the team finalizes the design system */}
                 <div className="flex gap-2 items-center">
@@ -328,13 +338,13 @@ function FilesPageContent() {
                     )}
                 </div>
             </div>
-
+ 
             {/* Page states */}
             {error && <p className="text-red-500">{error}</p>}
             {!error && filteredFiles.length === 0 && (
                 <p className="text-white">No files found.</p>
             )}
-
+ 
             {/* File list */}
             {!error && filteredFiles.length > 0 && (
                 <ul className="divide-y border rounded-lg">
@@ -382,53 +392,9 @@ function FilesPageContent() {
     )
 }
 
-// export default function FilesPage() {
-//     return (
-//         <Suspense
-//             fallback={
-//                 <div className="p-8 max-w-4xl mx-auto">
-//                     <p className="text-white">Loading...</p>
-//                 </div>
-//             }
-//         >
-//             <FilesPageContent />
-//         </Suspense>
-//     )
-// }
-
-// export const metadata = { title: "Files" };
-
-
 export default function FilesPage() {
     return (
-        <Suspense
-            fallback={
-                <div className="p-8 max-w-4xl mx-auto">
-                    <div className="flex items-center justify-between mb-4">
-                        <Skeleton width={64} height={28} />
-                        <Skeleton width={112} height={38} rounded="sm" />
-                    </div>
-                    <div className="flex flex-wrap gap-4 mb-6">
-                        <div className="flex gap-2">
-                            <Skeleton width={56} height={38} rounded="sm" />
-                            <Skeleton width={72} height={38} rounded="sm" />
-                            <Skeleton width={88} height={38} rounded="sm" />
-                        </div>
-                    </div>
-                    <ul className="divide-y border rounded-lg">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <li key={i} className="flex items-center justify-between p-4">
-                                <div className="flex flex-col gap-2">
-                                    <Skeleton width={200} height={16} />
-                                    <Skeleton width={140} height={13} />
-                                </div>
-                                <Skeleton width={36} height={14} />
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            }
-        >
+        <Suspense fallback={<FilesPageSkeleton />}>
             <FilesPageContent />
         </Suspense>
     )
