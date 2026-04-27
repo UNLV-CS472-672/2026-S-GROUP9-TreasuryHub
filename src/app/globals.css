@@ -29,6 +29,10 @@ body {
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+}
+
+:where(.dark, .dark *) input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
@@ -58,4 +62,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s infinite linear;
+}
+
+dialog {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+:where(.dark, .dark *) dialog {
+  background-color: rgba(255, 255, 255, 0);
 }

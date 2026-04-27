@@ -3,7 +3,7 @@ import { textColors, bgColors } from "../lib/styles";
 import { type Transactions } from "@/app/transaction/lib/schemas";
 
 
-export default async function TransactionTable( { transactions, orgId } : { transactions: Transactions[], orgId: string } ) {
+export default async function TransactionTable( { transactions, orgId, interactPrivelege } : { transactions: Transactions[], orgId: string, interactPrivelege: boolean } ) {
   // TODO: Add confirmation for DeleteTransaction
   const tableFieldSpacing = "px-3 py-1.5"
 
@@ -17,7 +17,9 @@ export default async function TransactionTable( { transactions, orgId } : { tran
               <th className={tableFieldSpacing}>Description</th>
               <th className={tableFieldSpacing}>Category</th>
               <th className={tableFieldSpacing}>Amount</th>
-              <th>Actions</th>
+              <th>
+                {interactPrivelege && <div> Actions </div>}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-500 text-xs md:text-sm whitespace-nowrap">
@@ -46,14 +48,12 @@ export default async function TransactionTable( { transactions, orgId } : { tran
                       ? `+${transaction.amount.toLocaleString("en-US", { style: "currency", currency: "USD" }) }`
                       : `-${transaction.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
                     }
-                    {/*  $
-                      {transaction.amount}*/}
                     </p>
                   </td>
                   <td className={tableFieldSpacing}>
                     <div className="flex space-x-2">
-                      <UpdateTransaction id={transaction.transaction_id} orgId={orgId} />
-                      <DeleteTransaction id={transaction.transaction_id} />
+                      {interactPrivelege && <UpdateTransaction id={transaction.transaction_id} orgId={orgId} />}
+                      {interactPrivelege && <DeleteTransaction id={transaction.transaction_id} />}
                     </div>
                   </td>
                 </tr>
