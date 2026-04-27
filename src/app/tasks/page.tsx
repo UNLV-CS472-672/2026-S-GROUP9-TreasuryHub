@@ -357,7 +357,8 @@ const handleEditSubmit = async () => {
   return (
     <div style={{ padding: "20px" }}>
       <div className="flex justify-between mb-6">
-        <h1>Task List</h1>
+        <h1 className={`text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-1`}>
+                              Task List</h1>
       
           <BackButton></BackButton>
         
@@ -400,24 +401,18 @@ const handleEditSubmit = async () => {
           <Skeleton width={100} height={32} rounded="md" />
         </div>
       ) : (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          maxWidth: "400px",
-        }}
-      >
-        {/* task title */}
+      <div className="flex flex-col gap-3" style={{ maxWidth: "400px" }}>
+  
         <input
           placeholder="Task title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
         />
 
-        {/* task type dropdown */}
         <select value={taskType} onChange={(e) => setTaskType(e.target.value)}
-        style={{ backgroundColor: "var(--background)", color: "var(--foreground)",}}>
+          className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
           <option value="TODO">To-Do</option>
           <option value="EVENT">Event</option>
           <option value="INVOICE">Invoice Due Date</option>
@@ -427,49 +422,39 @@ const handleEditSubmit = async () => {
           <option value="MEETING">Meeting</option>
         </select>
 
-        {/* choose whether assignment is to a role or individual */}
-        <select
-          value={assignType}
-          onChange={(e) =>
-            setAssignType(e.target.value as "role" | "individual")}
-          style={{ backgroundColor: "var(--background)", color: "var(--foreground)",}}
-        >
+        <select value={assignType}
+          onChange={(e) => setAssignType(e.target.value as "role" | "individual")}
+          className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
           <option value="role">Assign to Role</option>
           <option value="individual">Assign to Individual</option>
         </select>
 
-        {/* assignment dropdown changes depending on assignType */}
-        <select
-          value={assignedTo}
-          onChange={(e) => setAssignedTo(e.target.value)}
-          style={{ backgroundColor: "var(--background)", color: "var(--foreground)",}}
-        >
+        <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
           <option value="">Select Assignment</option>
-
           {assignType === "role"
             ? existingRoles.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
+                <option key={role} value={role}>{role}</option>
               ))
             : existingMembers.map((member) => (
-                <option key={member} value={member}>
-                  {member}
-                </option>
+                <option key={member} value={member}>{member}</option>
               ))}
         </select>
 
-        {/* optional due date */}
         <input
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
         />
 
-        {/* add task button */}
         <button onClick={addTask}
-          className="px-3 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-            Add Task</button>
+          className="px-3 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-600 transition-colors text-sm">
+          Add Task
+        </button>
+
       </div>
       )}
 
@@ -497,14 +482,17 @@ const handleEditSubmit = async () => {
             className="mb-6 rounded-2xl border border-black/[0.08] bg-black/[0.02] p-6 dark:border-white/[0.12] dark:bg-white/[0.03]"
           >
             {/* main task info */}
-            <strong>{task.title}</strong>
-            <div>Type: {task.type}</div>
-            <div>
-              Assigned {task.assignType === "role" ? "Role" : "Individual"}:{" "}
-              {task.assignedTo}
+            <div className="flex items-center justify-between mb-2">
+              <strong className="text-base">{task.title}</strong>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                {task.type}
+              </span>
             </div>
 
-            {task.dueDate && <div>Due: {task.dueDate}</div>}
+            <div className="text-sm text-gray-500 dark:text-gray-400 flex flex-col gap-1">
+              <div>Assigned {task.assignType === "role" ? "Role" : "Individual"}: <span className="text-gray-700 dark:text-gray-200">{task.assignedTo}</span></div>
+              {task.dueDate && <div>Due: <span className="text-gray-700 dark:text-gray-200">{task.dueDate}</span></div>}
+            </div>
 
             <div>{getAlert(task.dueDate)}</div>
 
@@ -512,7 +500,7 @@ const handleEditSubmit = async () => {
             <div className="flex gap-2 mt-2">
               <button
                 onClick={() => deleteTask(task.id)}
-                className="px-3 py-1 text-sm rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors"
+                className="px-3 py-1 text-sm rounded-md bg-red-700 text-white hover:bg-red-600 transition-colors"
               >
                 Delete
               </button>
@@ -529,26 +517,28 @@ const handleEditSubmit = async () => {
       </ul>
 
        {/* Edit Task Dialog */}
-        <dialog ref={dialogRef} 
+        <dialog ref={dialogRef}
+          className="rounded-2xl border border-black/[0.08] bg-white/[0.98] dark:border-white/[0.12] dark:bg-white/[0.03] p-6 backdrop:bg-black/50"
           style={{ 
-            backgroundColor: "var(--background)",
             color: "var(--foreground)",
-            padding: "20px", 
-            borderRadius: "8px", 
             minWidth: "350px",
-            border: "1px solid #9ca3af"
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
           }}>
-          <h2>Edit Task</h2>
+          <h2 className="text-lg font-semibold mb-4">Edit Task</h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div className="flex flex-col gap-3">
             <input
               placeholder="Task title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
 
             <select value={taskType} onChange={(e) => setTaskType(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
               <option value="TODO">To-Do</option>
               <option value="EVENT">Event</option>
@@ -559,16 +549,16 @@ const handleEditSubmit = async () => {
               <option value="MEETING">Meeting</option>
             </select>
 
-            <select
-              value={assignType}
+            <select value={assignType}
               onChange={(e) => setAssignType(e.target.value as "role" | "individual")}
-              style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
-            >
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
               <option value="role">Assign to Role</option>
               <option value="individual">Assign to Individual</option>
             </select>
 
             <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
               <option value="">Select Assignment</option>
               {assignType === "role"
@@ -584,19 +574,20 @@ const handleEditSubmit = async () => {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
 
             <div className="flex gap-2 mt-2">
               <button
                 onClick={handleEditSubmit}
-                className="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                className="px-3 py-2 text-sm rounded-lg bg-blue-700 text-white hover:bg-blue-600 transition-colors"
               >
                 Save Changes
               </button>
               <button
                 onClick={() => { dialogRef.current?.close(); setEditingTask(null); }}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-black hover:bg-gray-100 dark:border-white/[0.15] dark:bg-white/[0.05] dark:text-white dark:hover:bg-white/[0.08]"              >
+                className="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-white/[0.15] bg-transparent dark:bg-white/[0.05] text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/[0.08] transition-colors"
+              >
                 Cancel
               </button>
             </div>

@@ -186,7 +186,8 @@ function AuditPageContent() {
 
             {/* Page Title */}
             <div className="flex items-center justify-between mb-3">
-                <h2 style={{ marginBottom: "10px" }}>Recent Audit</h2>
+                <h1 className={`text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-1`}>
+                              Audit Logs</h1>
                 <BackButton></BackButton>
             </div>
             {organizations.length > 1 && orgId && (
