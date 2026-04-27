@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { ORGANIZATION_ROLE } from "@/lib/roles";
+import BackButton from "@/components/BackButton";
+import Image from "next/image";
+import { createClient } from "@/lib/supabase/server";
+
 import {
   getOrganizationById,
   getOrganizationMembers,
@@ -30,6 +34,7 @@ export default async function OrganizationMembersPage({
 }: MembersPageProps) {
   const { orgId } = await params;
   const { error, success } = await searchParams;
+  const supabase = await createClient();
 
   // Still protect the page itself, same as PR1.
   const currentMembership =
@@ -40,6 +45,23 @@ export default async function OrganizationMembersPage({
     getOrganizationById(orgId),
     getOrganizationMembers(orgId),
   ]);
+
+  let signedLogoUrl: string | null = null;
+
+  if (organization?.logo_path) {
+    const { data } = await supabase.storage
+      .from("organization-logos")
+      .createSignedUrl(organization.logo_path, 60 * 60);
+
+    signedLogoUrl = data?.signedUrl ?? null;
+  }
+  if (!organization) {
+    return (
+      <main className="min-h-screen bg-black p-6 text-white">
+        <p>Organization not found.</p>
+      </main>
+    );
+  }
 
   // Bind orgId once so the forms can just call the actions directly.
   const addMemberForOrganization = addOrganizationMember.bind(null, orgId);
@@ -61,10 +83,48 @@ export default async function OrganizationMembersPage({
             </p>
           </div>
 
-          <Link href="/organizations" className="underline">
-            Back to Organizations
+          <div className="flex items-center gap-2 mb-4">
+            <Link
+              href={`/?orgId=${orgId}`}
+              className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white hover:bg-white/10 transition"
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              href="/organizations"
+              className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white hover:bg-white/10 transition"
+            >
+              All Organizations
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center gap-3 text-center">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/5 sm:h-28 sm:w-28 md:h-32 md:w-32">
+            {signedLogoUrl ? (
+              <Image
+                src={signedLogoUrl}
+                alt={`${organization.org_name} logo`}
+                width={128}
+                height={128}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-2xl font-semibold text-white md:text-3xl">
+                {organization.org_name.slice(0, 2).toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          <Link
+            href={`/organizations/${organization.org_id}/settings`}
+            className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white transition hover:bg-white/10"
+          >
+            Edit Logo
           </Link>
         </div>
+
 
         {success && (
           <div className="rounded border border-green-500/50 bg-green-500/10 p-3 text-sm text-green-200">

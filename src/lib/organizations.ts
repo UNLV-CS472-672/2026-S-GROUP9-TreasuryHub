@@ -21,6 +21,7 @@ export type OrganizationMembership = {
 export type OrganizationSummary = {
   org_id: string;
   org_name: string;
+  logo_path: string | null; // to show logo
 };
 
 export type OrganizationMemberUser = {
@@ -103,7 +104,7 @@ export async function getOrganizationById(orgId: string) {
 
   const result = await supabase
     .from("organizations")
-    .select("org_id, org_name")
+    .select("org_id, org_name, logo_path")
     .eq("org_id", orgId)
     .maybeSingle();
 
