@@ -1,4 +1,4 @@
-import { canViewOrganizationDashboard } from "@/lib/roles";
+import { canViewAudit, canViewOrganizationDashboard } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
 type TransactionRow = {
@@ -186,26 +186,28 @@ export async function getDashboardData(
     const income = sumAmounts(transactions, "income");
     const expenses = sumAmounts(transactions, "expense");
 
-    const [
-      { count: fileCount, error: filesError },
-      { count: auditCount, error: auditError },
-    ] = await Promise.all([
-      supabase
-        .from("files")
-        .select("*", { count: "exact", head: true })
-        .eq("org_id", orgId),
-      supabase
-        .from("audit_logs")
-        .select("*", { count: "exact", head: true })
-        .eq("org_id", orgId),
-    ]);
+    const { count: fileCount, error: filesError } = await supabase
+      .from("files")
+      .select("*", { count: "exact", head: true })
+      .eq("org_id", orgId);
 
     if (filesError) {
       console.error("Dashboard files count error:", filesError.message);
     }
 
-    if (auditError) {
-      console.error("Dashboard audit count error:", auditError.message);
+    let auditCount = 0;
+
+    if (canViewAudit(role)) {
+      const { count, error: auditError } = await supabase
+        .from("audit_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("org_id", orgId);
+
+      if (auditError) {
+        console.error("Dashboard audit count error:", auditError.message);
+      }
+
+      auditCount = count ?? 0;
     }
 
     return {
@@ -220,7 +222,7 @@ export async function getDashboardData(
         net: income - expenses,
         transactionCount: transactions.length,
         fileCount: fileCount ?? 0,
-        auditCount: auditCount ?? 0,
+        auditCount,
       },
       recentTransactions: transactions,
     };

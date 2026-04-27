@@ -1,9 +1,27 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { fetchOrgFromCurrentUser } from "@/app/transaction/lib/data";
 import { logAuditEntry } from "../audit/lib/action";
-import { AuditLogType, getAuditTaskType } from "../audit/lib/data";
+import { getAuditTaskType } from "../audit/lib/data";
+import {
+  canManageTasks,
+  isOrganizationRole,
+  type OrganizationRole,
+} from "@/lib/roles";
+import { createClient } from "@/lib/supabase/server";
+
+type TaskAssignType = "role" | "individual";
+
+type OrgMembership = {
+  user_id: string;
+  org_id: string;
+  role: string;
+};
+
+type TaskPermissionContext = {
+  userId: string;
+  orgId: string;
+  role: string;
+};
 
 const validTaskTypes = [
   "TODO",
@@ -14,14 +32,6 @@ const validTaskTypes = [
   "FUNDRAISER",
   "MEETING",
 ] as const;
-
-// temporary until real auth/roles are connected
-const currentUserRole = "Officer";
-// TODO(issue #59 follow-up): tasks still use placeholder demo roles and are not wired into src/lib/roles.ts yet.
-
-function hasOfficerAccess(role: string) {
-  return role === "Officer" || role === "Treasurer";
-}
 
 function isValidFutureDate(dateString?: string) {
   if (!dateString) return true;
@@ -35,9 +45,70 @@ function isValidFutureDate(dateString?: string) {
   return selectedDate > today;
 }
 
-async function isValidAssignment(assignType: string, assignedTo: string, orgId: string) {
-  const supabase = await createClient();
+async function getAuthenticatedUserId(
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
+  if (error || !user) {
+    return null;
+  }
+
+  return user.id;
+}
+
+async function getMembershipForOrg(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string
+): Promise<TaskPermissionContext | null> {
+  const userId = await getAuthenticatedUserId(supabase);
+
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("org_members")
+    .select("user_id, org_id, role")
+    .eq("user_id", userId)
+    .eq("org_id", orgId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  const membership = data as OrgMembership;
+
+  return {
+    userId,
+    orgId: membership.org_id,
+    role: membership.role,
+  };
+}
+
+async function requireTaskManagementAccess(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string
+) {
+  const membership = await getMembershipForOrg(supabase, orgId);
+
+  if (!membership || !canManageTasks(membership.role)) {
+    return null;
+  }
+
+  return membership;
+}
+
+async function isValidAssignment(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
+  assignType: TaskAssignType,
+  assignedTo: string
+) {
   const { data: orgMembers, error: orgMembersError } = await supabase
     .from("org_members")
     .select("user_id, role")
@@ -48,12 +119,27 @@ async function isValidAssignment(assignType: string, assignedTo: string, orgId: 
   }
 
   if (assignType === "role") {
-    const validRoles = [...new Set(orgMembers.map((member) => member.role))];
+    if (!isOrganizationRole(assignedTo)) {
+      return false;
+    }
+
+    const validRoles = [
+      ...new Set(
+        orgMembers
+          .map((member) => member.role)
+          .filter((role): role is OrganizationRole => isOrganizationRole(role))
+      ),
+    ];
+
     return validRoles.includes(assignedTo);
   }
 
   if (assignType === "individual") {
     const userIds = orgMembers.map((member) => member.user_id);
+
+    if (userIds.length === 0) {
+      return false;
+    }
 
     const { data: users, error: usersError } = await supabase
       .from("users")
@@ -64,16 +150,25 @@ async function isValidAssignment(assignType: string, assignedTo: string, orgId: 
       return false;
     }
 
-    const validMembers = users.map((user) => user.display_name);
+    const validMembers = users
+      .map((user) => user.display_name)
+      .filter((name): name is string => Boolean(name));
+
     return validMembers.includes(assignedTo);
   }
 
   return false;
 }
 
-// get all tasks
+
+// get all tasks for the active organization
 export async function getTasks(orgId: string) {
   const supabase = await createClient();
+  const membership = await getMembershipForOrg(supabase, orgId);
+
+  if (!membership) {
+    return { error: "You do not have access to this organization.", data: [] };
+  }
 
   const { data, error } = await supabase
     .from("tasks")
@@ -88,9 +183,19 @@ export async function getTasks(orgId: string) {
   return { error: null, data: data ?? [] };
 }
 
-export async function getTaskAssignmentOptions(orgId: string) { 
+export async function getTaskAssignmentOptions(orgId: string) {
   const supabase = await createClient();
- 
+  const membership = await getMembershipForOrg(supabase, orgId);
+
+  if (!membership) {
+    return {
+      error: "You do not have access to this organization.",
+      roles: [],
+      members: [],
+      currentUserRole: null,
+      canManage: false,
+    };
+  }
 
   const { data: orgMembers, error: orgMembersError } = await supabase
     .from("org_members")
@@ -99,18 +204,27 @@ export async function getTaskAssignmentOptions(orgId: string) {
 
   if (orgMembersError) {
     console.error("org_members error:", orgMembersError);
-    return { error: orgMembersError.message, roles: [], members: [] };
+    return {
+      error: orgMembersError.message,
+      roles: [],
+      members: [],
+      currentUserRole: membership.role,
+      canManage: canManageTasks(membership.role),
+    };
   }
 
   if (!orgMembers || orgMembers.length === 0) {
     console.error("No org members found for org:", orgId);
-    return { error: "No org members found for this organization.", roles: [], members: [] };
+    return {
+      error: "No org members found for this organization.",
+      roles: [],
+      members: [],
+      currentUserRole: membership.role,
+      canManage: canManageTasks(membership.role),
+    };
   }
 
   const userIds = orgMembers.map((member) => member.user_id);
-  console.log("org member user ids:", userIds);
-   
-
 
   const { data: users, error: usersError } = await supabase
     .from("users")
@@ -119,30 +233,44 @@ export async function getTaskAssignmentOptions(orgId: string) {
 
   if (usersError) {
     console.error("users table error:", usersError);
-    return { error: usersError.message, roles: [], members: [] };
+    return {
+      error: usersError.message,
+      roles: [],
+      members: [],
+      currentUserRole: membership.role,
+      canManage: canManageTasks(membership.role),
+    };
   }
 
   if (!users || users.length === 0) {
     console.error("No matching users found in users table for:", userIds);
-    return { error: "No matching users found in users table.", roles: [], members: [] };
+    return {
+      error: "No matching users found in users table.",
+      roles: [],
+      members: [],
+      currentUserRole: membership.role,
+      canManage: canManageTasks(membership.role),
+    };
   }
 
-  const roles = [...new Set(orgMembers.map((member) => member.role))];
+  const roles = [
+    ...new Set(
+      orgMembers
+        .map((member) => member.role)
+        .filter((role): role is OrganizationRole => isOrganizationRole(role))
+    ),
+  ];
+
   const members = users
     .map((user) => user.display_name)
     .filter((name): name is string => Boolean(name));
-
-  console.log("roles found:", roles);
-  console.log("members found:", members);
-
-    //console.log("current orgId:", orgId);
-//console.log("orgMembers for this org:", orgMembers);
-//console.log("users returned:", users);
 
   return {
     error: null,
     roles,
     members,
+    currentUserRole: membership.role,
+    canManage: canManageTasks(membership.role),
   };
 }
 
@@ -150,17 +278,18 @@ export async function getTaskAssignmentOptions(orgId: string) {
 export async function addTaskAction(formData: {
   title: string;
   taskType: string;
-  assignType: "role" | "individual";
+  assignType: TaskAssignType;
   assignedTo: string;
   dueDate?: string;
   orgId: string;
-  //notify_days_before: 3;
 }) {
-  if (!hasOfficerAccess(currentUserRole)) {
-    return { error: "Only officer-level users or above can create tasks." };
-  }
-
   const { title, taskType, assignType, assignedTo, dueDate, orgId } = formData;
+  const supabase = await createClient();
+  const membership = await requireTaskManagementAccess(supabase, orgId);
+
+  if (!membership) {
+    return { error: "You do not have permission to create tasks." };
+  }
 
   if (!title.trim()) {
     return { error: "Task title is required." };
@@ -174,7 +303,7 @@ export async function addTaskAction(formData: {
     return { error: "Please assign the task to a role or individual." };
   }
 
-  if (!(await isValidAssignment(assignType, assignedTo, orgId))) {
+  if (!(await isValidAssignment(supabase, orgId, assignType, assignedTo))) {
     return { error: "Task must be assigned to an existing role or member." };
   }
 
@@ -182,61 +311,41 @@ export async function addTaskAction(formData: {
     return { error: "Due date must be a valid future date." };
   }
 
-  const supabase = await createClient();
-
-  // Grab user and check if the user was successfully grabbed (used for audit log entries)
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "User not found"};
-  }
-
-  const { data, error } = await supabase.from("tasks").insert([
-    {
-      title: title.trim(),
-      task_type: taskType,
-      assign_type: assignType,
-      assigned_to: assignedTo,
-      due_date: dueDate || null,
-      org_id: orgId,
-      notify_days_before: 3,
-    },
-  ])
-  .select()
-  .single();
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert([
+      {
+        title: title.trim(),
+        task_type: taskType,
+        assign_type: assignType,
+        assigned_to: assignedTo,
+        due_date: dueDate || null,
+        org_id: orgId,
+        notify_days_before: 3,
+      },
+    ])
+    .select()
+    .single();
 
   if (error) {
     return { error: error.message };
   }
 
-  // Grabs the snapshot of the current user's role
-  const { data: roleData, error: roleError } = await supabase
-  .from('org_members')
-  .select('role')
-  .eq('user_id', user.id)
-  .eq('org_id', orgId)
-  .single();
-
-  if (roleError) {
-    return { error: roleError.message};
-  }
-
-// Insert new created task entry to audit log
-// getAuditTaskType determines what type of audit entry is being inserted (SYSTEM or FINANCIAL)
- await logAuditEntry({
-    orgId: orgId,
-    userId: user.id,
+  await logAuditEntry({
+    orgId,
+    userId: membership.userId,
     action: "CREATE",
     entity_type: "task",
     entity_id: data.id,
     before_data: null,
     after_data: {
-      "Task Name": title.trim(), 
+      "Task Name": title.trim(),
       "Task Type": taskType,
       "User Assigned": assignedTo,
-      "Due Date": dueDate, 
+      "Due Date": dueDate,
     },
     type: getAuditTaskType(taskType),
-    display_role: roleData?.role,
+    display_role: membership.role,
   });
 
   return { error: null };
@@ -248,17 +357,19 @@ export async function updateTaskAction(
   formData: {
     title: string;
     taskType: string;
-    assignType: "role" | "individual";
+    assignType: TaskAssignType;
     assignedTo: string;
     dueDate?: string;
     orgId: string;
   }
 ) {
-  if (!hasOfficerAccess(currentUserRole)) {
-    return { error: "Only officer-level users or above can edit tasks." };
-  }
-
   const { title, taskType, assignType, assignedTo, dueDate, orgId } = formData;
+  const supabase = await createClient();
+  const membership = await requireTaskManagementAccess(supabase, orgId);
+
+  if (!membership) {
+    return { error: "You do not have permission to edit tasks." };
+  }
 
   if (!title.trim()) {
     return { error: "Task title is required." };
@@ -272,7 +383,7 @@ export async function updateTaskAction(
     return { error: "Please assign the task to a role or individual." };
   }
 
-  if (!(await isValidAssignment(assignType, assignedTo, orgId))) {
+  if (!(await isValidAssignment(supabase, orgId, assignType, assignedTo))) {
     return { error: "Task must be assigned to an existing role or member." };
   }
 
@@ -280,23 +391,16 @@ export async function updateTaskAction(
     return { error: "Due date must be a valid future date." };
   }
 
-  const supabase = await createClient();
-
-  // Grab user and check if the user was successfully grabbed 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "User not found"};
-  }
-
-  // Grab the current data before the update for audit logging
+  // Grab the current data before the update for audit logging.
   const { data: beforeData, error: beforeError } = await supabase
-  .from("tasks")
-  .select()
-  .eq("id", id)
-  .single();
+    .from("tasks")
+    .select()
+    .eq("id", id)
+    .eq("org_id", orgId)
+    .single();
 
-  if(beforeError){
-    return { error: beforeError.message };
+  if (beforeError || !beforeData) {
+    return { error: beforeError?.message ?? "Task not found." };
   }
 
   const { data, error } = await supabase
@@ -307,9 +411,10 @@ export async function updateTaskAction(
       assign_type: assignType,
       assigned_to: assignedTo,
       due_date: dueDate || null,
-      org_id: orgId
+      org_id: orgId,
     })
     .eq("id", id)
+    .eq("org_id", orgId)
     .select()
     .single();
 
@@ -317,21 +422,9 @@ export async function updateTaskAction(
     return { error: error.message };
   }
 
-  // Grabs the snapshot of the current user's role
-  const { data: roleData, error: roleError } = await supabase
-  .from('org_members')
-  .select('role')
-  .eq('user_id', user.id)
-  .eq('org_id', orgId)
-  .single();
-
-  if (roleError) {
-    return { error: roleError.message};
-  }
-
   await logAuditEntry({
-    orgId: orgId,
-    userId: user.id,
+    orgId,
+    userId: membership.userId,
     action: "UPDATE",
     entity_type: "task",
     entity_id: data.id,
@@ -342,77 +435,64 @@ export async function updateTaskAction(
       "Due Date": beforeData.due_date,
     },
     after_data: {
-      "Task Name": title.trim(), 
+      "Task Name": title.trim(),
       "Task Type": taskType,
       "User Assigned": assignedTo,
-      "Due Date": dueDate, 
+      "Due Date": dueDate,
     },
     type: getAuditTaskType(taskType),
-    display_role: roleData?.role,
+    display_role: membership.role,
   });
-
 
   return { error: null };
 }
 
 // delete task
 export async function deleteTaskAction(id: number, orgId: string) {
-  if (!hasOfficerAccess(currentUserRole)) {
-    return { error: "Only officer-level users or above can delete tasks." };
-  }
-
   const supabase = await createClient();
+  const membership = await requireTaskManagementAccess(supabase, orgId);
 
-  // Grab user and check if the user was successfully grabbed (used for audit log entries)
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "User not found"};
+  if (!membership) {
+    return { error: "You do not have permission to delete tasks." };
   }
 
-  // Grab the current data before deleting, used for audit logging
+  // Grab the current data before deleting, used for audit logging.
   const { data: beforeData, error: beforeError } = await supabase
-  .from("tasks")
-  .select()
-  .eq("id", id)
-  .single();
+    .from("tasks")
+    .select()
+    .eq("id", id)
+    .eq("org_id", orgId)
+    .single();
 
-  if(beforeError){
-    return { error: beforeError.message };
+  if (beforeError || !beforeData) {
+    return { error: beforeError?.message ?? "Task not found." };
   }
 
-  const { error } = await supabase.from("tasks").delete().eq("id", id);
+  const { error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", id)
+    .eq("org_id", orgId);
 
   if (error) {
     return { error: error.message };
   }
 
-  // Grabs the snapshot of the current user's role
-  const { data: roleData, error: roleError } = await supabase
-  .from('org_members')
-  .select('role')
-  .eq('user_id', user.id)
-  .eq('org_id', orgId)
-  .single();
-
-  if (roleError) {
-    return { error: roleError.message};
-  }
-
   await logAuditEntry({
-    orgId: orgId,
-    userId: user.id,
+    orgId,
+    userId: membership.userId,
     action: "DELETE",
     entity_type: "task",
     entity_id: beforeData.id,
     before_data: {
-      "Task Name" : beforeData.title,
+      "Task Name": beforeData.title,
       "Task Type": beforeData.task_type,
       "User Assigned": beforeData.assigned_to,
-      "Due Date" : beforeData.due_date,
+      "Due Date": beforeData.due_date,
     },
     after_data: null,
     type: getAuditTaskType(beforeData.task_type),
-    display_role: roleData?.role,
+    display_role: membership.role,
   });
 
   return { error: null };

@@ -58,6 +58,20 @@ export const TRANSACTION_EXPORT_ROLES = [
   ORGANIZATION_ROLE.TREASURER,
 ] as const;
 
+export const TASK_MANAGEMENT_ROLES = [
+  ORGANIZATION_ROLE.TREASURY_TEAM,
+  ORGANIZATION_ROLE.TREASURER,
+  ORGANIZATION_ROLE.ADMIN,
+] as const;
+
+export const TRANSACTION_VIEW_ROLES = [...ORG_DASHBOARD_ROLES] as const;
+
+export const TRANSACTION_MANAGEMENT_ROLES = [
+  ORGANIZATION_ROLE.TREASURY_TEAM,
+  ORGANIZATION_ROLE.TREASURER,
+  ORGANIZATION_ROLE.ADMIN,
+] as const;
+
 type RoleValue = string | null | undefined;
 
 type PermissionRoleGroup = readonly OrganizationRole[];
@@ -105,6 +119,18 @@ export function canViewAudit(role: RoleValue) {
 
 export function canExportTransactions(role: RoleValue) {
   return hasRole(TRANSACTION_EXPORT_ROLES, role);
+}
+
+export function canManageTasks(role: RoleValue) {
+  return hasRole(TASK_MANAGEMENT_ROLES, role);
+}
+
+export function canViewTransactions(role: RoleValue) {
+  return hasRole(TRANSACTION_VIEW_ROLES, role);
+}
+
+export function canManageTransactions(role: RoleValue) {
+  return hasRole(TRANSACTION_MANAGEMENT_ROLES, role);
 }
 
 export function getAuditVisibilityScope(

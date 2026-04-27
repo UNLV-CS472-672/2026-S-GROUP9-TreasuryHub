@@ -6,14 +6,20 @@ import {
   MEMBER_MANAGEMENT_ROLES,
   ORGANIZATION_ROLE,
   ORGANIZATION_ROLES,
+  TASK_MANAGEMENT_ROLES,
   TRANSACTION_EXPORT_ROLES,
+  TRANSACTION_MANAGEMENT_ROLES,
+  TRANSACTION_VIEW_ROLES,
   canDeleteFiles,
   canExportTransactions,
   canManageMembers,
+  canManageTasks,
+  canManageTransactions,
   canUploadFiles,
   canViewAudit,
   canViewFiles,
   canViewOrganizationDashboard,
+  canViewTransactions,
   getAuditVisibilityScope,
   isOrganizationRole,
 } from "../lib/roles";
@@ -90,10 +96,41 @@ describe("roles", () => {
   });
 
   it("keeps transaction export restricted to treasurer", () => {
-    expect(TRANSACTION_EXPORT_ROLES).toEqual([
-      ORGANIZATION_ROLE.TREASURER,
-    ]);
+    expect(TRANSACTION_EXPORT_ROLES).toEqual([ORGANIZATION_ROLE.TREASURER]);
     expect(canExportTransactions(ORGANIZATION_ROLE.TREASURER)).toBe(true);
     expect(canExportTransactions(ORGANIZATION_ROLE.ADMIN)).toBe(false);
+  });
+
+  it("allows task management only for treasury team, treasurer, and admin", () => {
+    expect(TASK_MANAGEMENT_ROLES).toEqual([
+      ORGANIZATION_ROLE.TREASURY_TEAM,
+      ORGANIZATION_ROLE.TREASURER,
+      ORGANIZATION_ROLE.ADMIN,
+    ]);
+    expect(canManageTasks(ORGANIZATION_ROLE.TREASURY_TEAM)).toBe(true);
+    expect(canManageTasks(ORGANIZATION_ROLE.TREASURER)).toBe(true);
+    expect(canManageTasks(ORGANIZATION_ROLE.ADMIN)).toBe(true);
+    expect(canManageTasks(ORGANIZATION_ROLE.EXECUTIVE)).toBe(false);
+    expect(canManageTasks("Officer")).toBe(false);
+    expect(canManageTasks("Treasurer")).toBe(false);
+  });
+
+  it("separates transaction viewing from transaction management", () => {
+    expect(TRANSACTION_VIEW_ROLES).toEqual([
+      ORGANIZATION_ROLE.EXECUTIVE,
+      ORGANIZATION_ROLE.ADVISOR,
+      ORGANIZATION_ROLE.TREASURY_TEAM,
+      ORGANIZATION_ROLE.TREASURER,
+      ORGANIZATION_ROLE.ADMIN,
+    ]);
+    expect(TRANSACTION_MANAGEMENT_ROLES).toEqual([
+      ORGANIZATION_ROLE.TREASURY_TEAM,
+      ORGANIZATION_ROLE.TREASURER,
+      ORGANIZATION_ROLE.ADMIN,
+    ]);
+    expect(canViewTransactions(ORGANIZATION_ROLE.ADVISOR)).toBe(true);
+    expect(canViewTransactions(ORGANIZATION_ROLE.MEMBER)).toBe(false);
+    expect(canManageTransactions(ORGANIZATION_ROLE.ADVISOR)).toBe(false);
+    expect(canManageTransactions(ORGANIZATION_ROLE.TREASURER)).toBe(true);
   });
 });

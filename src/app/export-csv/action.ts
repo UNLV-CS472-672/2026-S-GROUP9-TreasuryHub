@@ -1,6 +1,6 @@
 "use server";
 
-import { ORGANIZATION_ROLE, canExportTransactions } from "@/lib/roles";
+import { TRANSACTION_EXPORT_ROLES, canExportTransactions } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
 //Grabbing membership info
@@ -19,7 +19,7 @@ export async function getOrgMemberships() {
     .from("org_members")
     .select("org_id, role, organizations(org_name)")
     .eq("user_id", user.id)
-    .eq("role", ORGANIZATION_ROLE.TREASURER);
+    .in("role", TRANSACTION_EXPORT_ROLES);
 
   if (memberError) return { error: memberError.message, code: "db_error" };
 

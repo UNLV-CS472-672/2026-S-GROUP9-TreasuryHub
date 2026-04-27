@@ -165,13 +165,27 @@ USING (
 
 DROP POLICY IF EXISTS "Permitted roles can view audit logs" ON audit_logs;
 DROP POLICY IF EXISTS "Treasurer can view audit logs" ON audit_logs;
-CREATE POLICY "Permitted roles can view audit logs"
-ON audit_logs FOR SELECT 
+DROP POLICY IF EXISTS "Admins can view all audit logs" ON audit_logs;
+DROP POLICY IF EXISTS "Treasurers can view financial audit logs" ON audit_logs;
+
+CREATE POLICY "Admins can view all audit logs"
+ON audit_logs FOR SELECT
 USING (
     org_id IN (
         SELECT org_id FROM org_members
         WHERE user_id = auth.uid()
-        AND role IN ('treasurer', 'admin')
+        AND role = 'admin'
+    )
+);
+
+CREATE POLICY "Treasurers can view financial audit logs"
+ON audit_logs FOR SELECT
+USING (
+    type = 'financial'
+    AND org_id IN (
+        SELECT org_id FROM org_members
+        WHERE user_id = auth.uid()
+        AND role = 'treasurer'
     )
 );
 

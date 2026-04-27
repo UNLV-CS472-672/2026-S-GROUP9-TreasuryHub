@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ORGANIZATION_ROLE } from "@/lib/roles";
 import BackButton from "@/components/BackButton";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
@@ -164,7 +165,7 @@ export default async function OrganizationMembersPage({
               <span>Role</span>
               <select
                 name="role"
-                defaultValue="member"
+                defaultValue={ORGANIZATION_ROLE.MEMBER}
                 className="rounded border bg-transparent px-3 py-2"
               >
                 {ORGANIZATION_MEMBER_ROLE_OPTIONS.map((role) => (
