@@ -6,6 +6,7 @@ import { getDashboardData } from "@/lib/supabase/dashboard";
 import ExportCSVButton from "@/components/ExportCSVButton";
 import { canExportTransactions, canViewFiles } from "@/lib/roles";
 import Navbar from "@/components/Navbar";
+import { getTasks } from "@/app/tasks/actions";
 
 export const metadata: Metadata = {
   title: {
@@ -21,6 +22,26 @@ type DashboardPageProps = {
   }>;
 };
 
+type DashboardTask = {
+  id: number;
+  title: string;
+  task_type: string;
+  assign_type: "role" | "individual";
+  assigned_to: string;
+  due_date: string | null;
+};
+
+function formatDateOnly(dateString: string | null) {
+  if (!dateString) return "No due date";
+
+  const [year, month, day] = dateString.split("-").map(Number);
+
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -244,7 +265,13 @@ function TransactionsTable({
   );
 }
 
-function TasksSection({ orgId }: { orgId: string }) {
+function TasksSection({
+  orgId,
+  tasks,
+}: {
+  orgId: string;
+  tasks: DashboardTask[];
+}) {
   return (
     <section //changed for layout - prabh
       className="
@@ -283,8 +310,37 @@ function TasksSection({ orgId }: { orgId: string }) {
         </Link>
       </div>
 
-      <div className="rounded-xl border border-dashed border-white/[0.12] px-4 py-6 text-sm text-gray-500 dark:text-neutral-400">
-        Go to the tasks page to see assignments, deadlines, and updates.
+      <div className="space-y-3">
+        {tasks.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 dark:border-white/[0.12] dark:text-neutral-400">
+            No upcoming tasks due within the next two weeks.
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <div
+              key={task.id}
+              className="
+                rounded-xl border border-gray-200 bg-gray-50 px-4 py-3
+                dark:border-white/[0.12] dark:bg-white/[0.03]
+              "
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {task.title}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-neutral-400">
+                    Assigned to {task.assigned_to} • {task.task_type}
+                  </p>
+                </div>
+
+                <p className="text-sm text-gray-600 dark:text-neutral-300">
+                  Due {formatDateOnly(task.due_date)}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </section>
   );
@@ -369,14 +425,38 @@ export default async function DashboardPage({
 
   const currentOrg =
     data.organizations.find((org) => org.org_id === data.orgId) || null;
+    const tasksResult = await getTasks(data.orgId);
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const twoWeeksFromNow = new Date(today);
+    twoWeeksFromNow.setDate(today.getDate() + 14);
+    
+    const upcomingTasks = ((tasksResult.data ?? []) as DashboardTask[])
+      .filter((task) => {
+        if (!task.due_date) return false;
+    
+        const [year, month, day] = task.due_date.split("-").map(Number);
+        const dueDate = new Date(year, month - 1, day);
+    
+        return dueDate >= today && dueDate <= twoWeeksFromNow;
+      })
+      .sort((a, b) => {
+        const [ay, am, ad] = (a.due_date as string).split("-").map(Number);
+        const [by, bm, bd] = (b.due_date as string).split("-").map(Number);
+      
+        return (
+          new Date(ay, am - 1, ad).getTime() -
+          new Date(by, bm - 1, bd).getTime()
+        );
+      });
   const canAccessFiles = canViewFiles(data.role);
   const canExport = canExportTransactions(data.role);
 
   return ( //changed for layout - prabh
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        <Navbar
+      <Navbar
           currentUserRole={data.role}
           organizations={data.organizations}
           currentOrgId={data.orgId}
@@ -387,6 +467,7 @@ export default async function DashboardPage({
           logoSrc={currentOrg?.logo_url || null}
           pageTitle="Dashboard"
         />
+      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
 
         {data.scope === "organization" ? (
           <div className="space-y-8">
@@ -433,8 +514,8 @@ export default async function DashboardPage({
               orgId={data.orgId}
               canExport={canExport}
             />
-
-            <TasksSection orgId={data.orgId} />
+            
+            <TasksSection orgId={data.orgId} tasks={upcomingTasks} />
           </div>
         ) : (
           <div className="space-y-8">
@@ -468,7 +549,7 @@ export default async function DashboardPage({
               canExport={canExport}
             />
 
-            <TasksSection orgId={data.orgId} />
+            <TasksSection orgId={data.orgId} tasks={upcomingTasks} />
           </div>
         )}
       </div>

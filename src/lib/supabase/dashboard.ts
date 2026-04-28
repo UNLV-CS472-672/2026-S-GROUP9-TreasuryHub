@@ -1,5 +1,7 @@
 import { canViewAudit, canViewOrganizationDashboard } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
+import { getAuditVisibilityScope } from "@/lib/roles";
+import { AuditLogType } from "@/app/audit/lib/data";
 
 type TransactionRow = {
   transaction_id: string;
@@ -198,15 +200,23 @@ export async function getDashboardData(
     let auditCount = 0;
 
     if (canViewAudit(role)) {
-      const { count, error: auditError } = await supabase
+      let auditQuery = supabase
         .from("audit_logs")
         .select("*", { count: "exact", head: true })
         .eq("org_id", orgId);
-
+    
+      const auditVisibilityScope = getAuditVisibilityScope(role);
+    
+      if (auditVisibilityScope === "financial_only") {
+        auditQuery = auditQuery.eq("type", AuditLogType.FINANCIAL);
+      }
+    
+      const { count, error: auditError } = await auditQuery;
+    
       if (auditError) {
         console.error("Dashboard audit count error:", auditError.message);
       }
-
+    
       auditCount = count ?? 0;
     }
 
