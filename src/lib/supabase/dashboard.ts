@@ -40,6 +40,7 @@ type OrganizationDashboardData = {
   orgName: string;
   role: string;
   organizations: OrganizationListItem[];
+  roleOptions: string[];
   summary: {
     income: number;
     expenses: number;
@@ -57,6 +58,7 @@ type PersonalDashboardData = {
   orgName: string;
   role: string;
   organizations: OrganizationListItem[];
+  roleOptions: string[];
   summary: {
     reimbursementsTotal: number;
     payablesTotal: number;
@@ -92,6 +94,7 @@ export async function getDashboardData(
     throw new Error("Unauthorized");
   }
 
+  
   const { data: membershipsRaw, error: membershipsError } = await supabase
     .from("org_members")
     .select("org_id, role")
@@ -110,6 +113,7 @@ export async function getDashboardData(
 
   const orgIds = memberships.map((membership) => membership.org_id);
 
+    
   const { data: orgsRaw, error: orgsError } = await supabase
     .from("organizations")
     .select("org_id, org_name, logo_path")
@@ -120,6 +124,14 @@ export async function getDashboardData(
     throw new Error("Failed to fetch organization names.");
   }
 
+  const { data: orgRoles } = await supabase
+  .from("org_members")
+  .select("role")
+  .eq("org_id", orgIds);
+
+const roleOptions = Array.from(
+  new Set((orgRoles ?? []).map((member) => member.role))
+);
   const orgs = (orgsRaw ?? []) as OrganizationRow[];
   const orgMap = new Map(orgs.map((org) => [org.org_id, org]));
 
@@ -226,6 +238,7 @@ export async function getDashboardData(
       orgName,
       role,
       organizations,
+      roleOptions,
       summary: {
         income,
         expenses,
@@ -281,6 +294,7 @@ export async function getDashboardData(
     orgName,
     role,
     organizations,
+    roleOptions,
     summary: {
       reimbursementsTotal,
       payablesTotal: 0,

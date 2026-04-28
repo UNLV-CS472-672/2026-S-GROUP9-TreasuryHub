@@ -7,6 +7,7 @@ import ExportCSVButton from "@/components/ExportCSVButton";
 import { canExportTransactions, canViewFiles } from "@/lib/roles";
 import Navbar from "@/components/Navbar";
 import { getTasks } from "@/app/tasks/actions";
+import TaskRoleFilter from "@/components/TaskRoleFilter";
 
 export const metadata: Metadata = {
   title: {
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
 type DashboardPageProps = {
   searchParams: Promise<{
     orgId?: string;
+    taskRole?: string;
   }>;
 };
 
@@ -268,9 +270,15 @@ function TransactionsTable({
 function TasksSection({
   orgId,
   tasks,
+  canSeeAllTasks,
+  roleOptions,
+  selectedRole,
 }: {
   orgId: string;
   tasks: DashboardTask[];
+  canSeeAllTasks: boolean;
+  roleOptions: string[];
+  selectedRole: string;
 }) {
   return (
     <section //changed for layout - prabh
@@ -292,22 +300,32 @@ function TasksSection({
            Upcoming tasks due soon. View and manage assignments.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+  {canSeeAllTasks && roleOptions.length > 0 && (
+    <TaskRoleFilter
+      orgId={orgId}
+      roleOptions={roleOptions}
+      selectedRole={selectedRole}
+    />
 
-        <Link
-          href={`/tasks?orgId=${orgId}`}
-          className="
-            rounded-xl
-            border border-white/[0.2]
-            bg-white/[0.05]
-            px-4 py-2
-            text-sm font-medium text-gray-900 dark:text-white
-            transition
-            hover:border-white/[0.35]
-            hover:bg-white/[0.08]
-          "
-        >
-          Open Tasks
-        </Link>
+  )}
+
+  <Link
+    href={`/tasks?orgId=${orgId}`}
+    className="
+      rounded-xl
+      border border-white/[0.2]
+      bg-white/[0.05]
+      px-4 py-2
+      text-sm font-medium text-gray-900 dark:text-white
+      transition
+      hover:border-white/[0.35]
+      hover:bg-white/[0.08]
+    "
+  >
+    Open Tasks
+  </Link>
+</div>
       </div>
 
       <div className="space-y-3">
@@ -409,7 +427,7 @@ bg-white dark:bg-white/[0.03]
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
-  const { orgId } = await searchParams;
+  const { orgId, taskRole = "all"} = await searchParams;
 
   let data: Awaited<ReturnType<typeof getDashboardData>> | null = null;
 
@@ -432,6 +450,18 @@ export default async function DashboardPage({
     
     const twoWeeksFromNow = new Date(today);
     twoWeeksFromNow.setDate(today.getDate() + 14);
+
+    const canSeeAllTasks = ["treasurer", "advisor", "executive", "admin"].includes(
+      data.role.toLowerCase()
+    );
+    
+    const roleOptions = Array.from(
+      new Set(
+        ((tasksResult.data ?? []) as DashboardTask[])
+          .filter((task) => task.assign_type === "role")
+          .map((task) => task.assigned_to)
+      )
+    );
     
     const upcomingTasks = ((tasksResult.data ?? []) as DashboardTask[])
       .filter((task) => {
@@ -440,7 +470,20 @@ export default async function DashboardPage({
         const [year, month, day] = task.due_date.split("-").map(Number);
         const dueDate = new Date(year, month - 1, day);
     
-        return dueDate >= today && dueDate <= twoWeeksFromNow;
+        const isDueSoon = dueDate >= today && dueDate <= twoWeeksFromNow;
+
+        const matchesSelectedRole =
+          taskRole === "all" ||
+          task.assigned_to.toLowerCase() === taskRole.toLowerCase();
+
+        const memberCanSeeTask =
+          task.assign_type === "role" &&
+          task.assigned_to.toLowerCase() === data.role.toLowerCase();
+
+        return (
+          isDueSoon &&
+          (canSeeAllTasks ? matchesSelectedRole : memberCanSeeTask)
+        );
       })
       .sort((a, b) => {
         const [ay, am, ad] = (a.due_date as string).split("-").map(Number);
@@ -484,9 +527,12 @@ export default async function DashboardPage({
                 value={formatCurrency(data.summary.expenses)}
               />
               <StatCard label="Net" value={formatCurrency(data.summary.net)} />
-              <StatCard
+
+              <LinkCard
+                href={`/transaction?orgId=${data.orgId}`}
                 label="Transactions"
-                value={data.summary.transactionCount}
+                title={String(data.summary.transactionCount)}
+                description="View recent transactions →"
               />
 
               <LinkCard
@@ -508,7 +554,13 @@ export default async function DashboardPage({
               )}
             </section>
             
-            <TasksSection orgId={data.orgId} tasks={upcomingTasks} />
+            <TasksSection
+              orgId={data.orgId}
+              tasks={upcomingTasks}
+              canSeeAllTasks={canSeeAllTasks}
+              roleOptions={data.roleOptions}
+              selectedRole={taskRole}
+              />
             <TransactionsTable
               title="Recent Organization Transactions"
               transactions={data.recentTransactions}
@@ -541,7 +593,13 @@ export default async function DashboardPage({
               />
             </section>
 
-            <TasksSection orgId={data.orgId} tasks={upcomingTasks} />
+            <TasksSection
+              orgId={data.orgId}
+              tasks={upcomingTasks} 
+              canSeeAllTasks={canSeeAllTasks}
+              roleOptions={data.roleOptions}
+              selectedRole={taskRole}
+              />
             <TransactionsTable
               title="My Recent Transactions"
               transactions={data.recentTransactions}
