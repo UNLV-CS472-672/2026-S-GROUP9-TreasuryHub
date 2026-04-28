@@ -289,7 +289,7 @@ function TasksSection({
             Tasks
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-neutral-400">
-            View and manage organization tasks.
+           Upcoming tasks due soon. View and manage assignments.
           </p>
         </div>
 
@@ -507,15 +507,14 @@ export default async function DashboardPage({
                 />
               )}
             </section>
-
+            
+            <TasksSection orgId={data.orgId} tasks={upcomingTasks} />
             <TransactionsTable
               title="Recent Organization Transactions"
               transactions={data.recentTransactions}
               orgId={data.orgId}
               canExport={canExport}
             />
-            
-            <TasksSection orgId={data.orgId} tasks={upcomingTasks} />
           </div>
         ) : (
           <div className="space-y-8">
@@ -542,14 +541,13 @@ export default async function DashboardPage({
               />
             </section>
 
+            <TasksSection orgId={data.orgId} tasks={upcomingTasks} />
             <TransactionsTable
               title="My Recent Transactions"
               transactions={data.recentTransactions}
               orgId={data.orgId}
               canExport={canExport}
             />
-
-            <TasksSection orgId={data.orgId} tasks={upcomingTasks} />
           </div>
         )}
       </div>
