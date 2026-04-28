@@ -34,7 +34,8 @@ export async function uploadFile(file: File, orgId: string, fileType: 'receipt' 
             file_name: file.name,
             file_type: fileType,
             mime_type: file.type,
-            uploaded_by: user?.id || null,
+            //Edited 4/27/2026 -- It is impossible for user to be null at this point, as the check is already performed above.
+            uploaded_by: user.id,
         })
         .select()
         .single()
