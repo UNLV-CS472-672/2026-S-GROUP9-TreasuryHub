@@ -17,9 +17,5 @@ export default async function Page({
     return fallback;
   })();
 
-  return (
-    <main>
-      <CreateTransactionForm orgId={orgId} />
-    </main>
-  );
+  return <CreateTransactionForm orgId={orgId} />;
 }

@@ -50,7 +50,10 @@ export default function LoginPage() {
                         <SkeletonPulse className="h-10 w-full" />
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-3">
+                    <form
+                        onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
+                        className="flex flex-col gap-3"
+                    >
                         <input
                             type="email"
                             value={email}
@@ -66,12 +69,12 @@ export default function LoginPage() {
                             placeholder="Password"
                         />
                         <button
-                            onClick={handleSubmit}
+                            type="submit"
                             className="w-full rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition hover:bg-blue-500/20"
                         >
                             Login
                         </button>
-                    </div>
+                    </form>
                 )}
 
                 {error && (
