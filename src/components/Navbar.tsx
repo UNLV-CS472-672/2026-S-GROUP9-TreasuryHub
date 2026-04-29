@@ -37,14 +37,15 @@ export default function Navbar({
     <nav
       className="
         font-[var(--font-geist-sans)]
-        border-b border-white/[0.08]
-        bg-black/80
+        w-full
+        border-b border-gray-200 dark:border-white/[0.08]
+        bg-background text-foreground
         px-5 py-4
         backdrop-blur-md
         relative z-[9999]
       "
     >
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="mx-auto flex w-full max-w-[90rem] px-6 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-4">
           {canEditLogo ? (
             <Link
@@ -55,9 +56,11 @@ export default function Navbar({
               <div
                 className="
                   flex h-12 w-12 items-center justify-center overflow-hidden
-                  rounded-xl border border-white/[0.12]
-                  bg-white/[0.03] transition
-                  hover:border-white/[0.25] hover:bg-white/[0.06]
+                  rounded-xl border border-gray-300 dark:border-white/[0.12]
+                  bg-white dark:bg-white/[0.03]
+                  transition
+                  hover:border-gray-400 dark:hover:border-white/[0.25]
+                  hover:bg-gray-100 dark:hover:bg-white/[0.06]
                 "
               >
                 {logoSrc ? (
@@ -69,7 +72,7 @@ export default function Navbar({
                     className="h-full w-full object-contain"
                   />
                 ) : (
-                  <span className="text-sm font-semibold text-white">TH</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">TH</span>
                 )}
               </div>
             </Link>
@@ -82,9 +85,11 @@ export default function Navbar({
               title="You do not have permission to edit the logo"
               className="
                 flex h-12 w-12 items-center justify-center overflow-hidden
-                rounded-xl border border-white/[0.12]
-                bg-white/[0.03] transition
-                hover:border-white/[0.25] hover:bg-white/[0.06]
+                rounded-xl border border-gray-300 dark:border-white/[0.12]
+                bg-white dark:bg-white/[0.03]
+                transition
+                hover:border-gray-400 dark:hover:border-white/[0.25]
+                hover:bg-gray-100 dark:hover:bg-white/[0.06]
               "
             >
               {logoSrc ? (
@@ -96,20 +101,20 @@ export default function Navbar({
                   className="h-full w-full object-contain"
                 />
               ) : (
-                <span className="text-sm font-semibold text-white">TH</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">TH</span>
               )}
             </button>
           )}
 
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="text-lg font-semibold tracking-tight text-white">
+              <span className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
                 {currentOrgName}
               </span>
 
-              <span className="text-neutral-500">•</span>
+              <span className="text-neutral-400 dark:text-neutral-500">•</span>
 
-              <span className="text-lg font-medium tracking-tight text-neutral-400">
+              <span className="text-lg font-medium tracking-tight text-gray-600 dark:text-neutral-400">
                 {pageTitle}
               </span>
             </div>
@@ -121,9 +126,6 @@ export default function Navbar({
                 basePath={basePath}
               />
             </div>
-            <p className="mt-2 text-xs text-neutral-500">
-              Click the logo to edit this organization’s logo.
-            </p>
           </div>
         </div>
 
@@ -131,8 +133,9 @@ export default function Navbar({
           <Link
             href="/settings"
             className="
-              text-sm font-medium text-neutral-300 transition
-              hover:text-white
+              text-sm font-medium text-gray-700 transition
+              hover:text-gray-950
+              dark:text-neutral-300 dark:hover:text-white
             "
           >
             Account Settings
@@ -141,8 +144,9 @@ export default function Navbar({
           <Link
             href={`/organizations/${currentOrgId}/members`}
             className="
-              text-sm font-medium text-neutral-300 transition
-              hover:text-white
+              text-sm font-medium text-gray-700 transition
+              hover:text-gray-950
+              dark:text-neutral-300 dark:hover:text-white
             "
           >
             Organization Settings
@@ -152,8 +156,9 @@ export default function Navbar({
             <button
               type="submit"
               className="
-                text-sm font-medium text-neutral-300 transition
-                hover:text-white
+                text-sm font-medium text-gray-700 transition
+                hover:text-gray-950
+                dark:text-neutral-300 dark:hover:text-white
               "
             >
               Sign Out

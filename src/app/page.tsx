@@ -6,6 +6,8 @@ import { getDashboardData } from "@/lib/supabase/dashboard";
 import ExportCSVButton from "@/components/ExportCSVButton";
 import { canExportTransactions, canViewFiles } from "@/lib/roles";
 import Navbar from "@/components/Navbar";
+import { getTasks } from "@/app/tasks/actions";
+import TaskRoleFilter from "@/components/TaskRoleFilter";
 
 export const metadata: Metadata = {
   title: {
@@ -18,9 +20,30 @@ export const dynamic = "force-dynamic";
 type DashboardPageProps = {
   searchParams: Promise<{
     orgId?: string;
+    taskRole?: string;
   }>;
 };
 
+type DashboardTask = {
+  id: number;
+  title: string;
+  task_type: string;
+  assign_type: "role" | "individual";
+  assigned_to: string;
+  due_date: string | null;
+};
+
+function formatDateOnly(dateString: string | null) {
+  if (!dateString) return "No due date";
+
+  const [year, month, day] = dateString.split("-").map(Number);
+
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -244,7 +267,19 @@ function TransactionsTable({
   );
 }
 
-function TasksSection({ orgId }: { orgId: string }) {
+function TasksSection({
+  orgId,
+  tasks,
+  canSeeAllTasks,
+  roleOptions,
+  selectedRole,
+}: {
+  orgId: string;
+  tasks: DashboardTask[];
+  canSeeAllTasks: boolean;
+  roleOptions: string[];
+  selectedRole: string;
+}) {
   return (
     <section //changed for layout - prabh
       className="
@@ -262,29 +297,68 @@ function TasksSection({ orgId }: { orgId: string }) {
             Tasks
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-neutral-400">
-            View and manage organization tasks.
+           Upcoming tasks due soon. View and manage assignments.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+  {canSeeAllTasks && roleOptions.length > 0 && (
+    <TaskRoleFilter
+      orgId={orgId}
+      roleOptions={roleOptions}
+      selectedRole={selectedRole}
+    />
 
-        <Link
-          href={`/tasks?orgId=${orgId}`}
-          className="
-            rounded-xl
-            border border-white/[0.2]
-            bg-white/[0.05]
-            px-4 py-2
-            text-sm font-medium text-gray-900 dark:text-white
-            transition
-            hover:border-white/[0.35]
-            hover:bg-white/[0.08]
-          "
-        >
-          Open Tasks
-        </Link>
+  )}
+
+  <Link
+    href={`/tasks?orgId=${orgId}`}
+    className="
+      rounded-xl
+      border border-white/[0.2]
+      bg-white/[0.05]
+      px-4 py-2
+      text-sm font-medium text-gray-900 dark:text-white
+      transition
+      hover:border-white/[0.35]
+      hover:bg-white/[0.08]
+    "
+  >
+    Open Tasks
+  </Link>
+</div>
       </div>
 
-      <div className="rounded-xl border border-dashed border-white/[0.12] px-4 py-6 text-sm text-gray-500 dark:text-neutral-400">
-        Go to the tasks page to see assignments, deadlines, and updates.
+      <div className="space-y-3">
+        {tasks.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 dark:border-white/[0.12] dark:text-neutral-400">
+            No upcoming tasks due within the next two weeks.
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <div
+              key={task.id}
+              className="
+                rounded-xl border border-gray-200 bg-gray-50 px-4 py-3
+                dark:border-white/[0.12] dark:bg-white/[0.03]
+              "
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {task.title}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-neutral-400">
+                    Assigned to {task.assigned_to} • {task.task_type}
+                  </p>
+                </div>
+
+                <p className="text-sm text-gray-600 dark:text-neutral-300">
+                  Due {formatDateOnly(task.due_date)}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </section>
   );
@@ -353,7 +427,7 @@ bg-white dark:bg-white/[0.03]
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
-  const { orgId } = await searchParams;
+  const { orgId, taskRole = "all"} = await searchParams;
 
   let data: Awaited<ReturnType<typeof getDashboardData>> | null = null;
 
@@ -369,14 +443,63 @@ export default async function DashboardPage({
 
   const currentOrg =
     data.organizations.find((org) => org.org_id === data.orgId) || null;
+    const tasksResult = await getTasks(data.orgId);
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const twoWeeksFromNow = new Date(today);
+    twoWeeksFromNow.setDate(today.getDate() + 14);
+
+    const canSeeAllTasks = ["treasurer", "advisor", "executive", "admin"].includes(
+      data.role.toLowerCase()
+    );
+    
+    const roleOptions = Array.from(
+      new Set(
+        ((tasksResult.data ?? []) as DashboardTask[])
+          .filter((task) => task.assign_type === "role")
+          .map((task) => task.assigned_to)
+      )
+    );
+    
+    const upcomingTasks = ((tasksResult.data ?? []) as DashboardTask[])
+      .filter((task) => {
+        if (!task.due_date) return false;
+    
+        const [year, month, day] = task.due_date.split("-").map(Number);
+        const dueDate = new Date(year, month - 1, day);
+    
+        const isDueSoon = dueDate >= today && dueDate <= twoWeeksFromNow;
+
+        const matchesSelectedRole =
+          taskRole === "all" ||
+          task.assigned_to.toLowerCase() === taskRole.toLowerCase();
+
+        const memberCanSeeTask =
+          task.assign_type === "role" &&
+          task.assigned_to.toLowerCase() === data.role.toLowerCase();
+
+        return (
+          isDueSoon &&
+          (canSeeAllTasks ? matchesSelectedRole : memberCanSeeTask)
+        );
+      })
+      .sort((a, b) => {
+        const [ay, am, ad] = (a.due_date as string).split("-").map(Number);
+        const [by, bm, bd] = (b.due_date as string).split("-").map(Number);
+      
+        return (
+          new Date(ay, am - 1, ad).getTime() -
+          new Date(by, bm - 1, bd).getTime()
+        );
+      });
   const canAccessFiles = canViewFiles(data.role);
   const canExport = canExportTransactions(data.role);
 
   return ( //changed for layout - prabh
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        <Navbar
+      <Navbar
           currentUserRole={data.role}
           organizations={data.organizations}
           currentOrgId={data.orgId}
@@ -387,6 +510,7 @@ export default async function DashboardPage({
           logoSrc={currentOrg?.logo_url || null}
           pageTitle="Dashboard"
         />
+      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
 
         {data.scope === "organization" ? (
           <div className="space-y-8">
@@ -403,9 +527,12 @@ export default async function DashboardPage({
                 value={formatCurrency(data.summary.expenses)}
               />
               <StatCard label="Net" value={formatCurrency(data.summary.net)} />
-              <StatCard
+
+              <LinkCard
+                href={`/transaction?orgId=${data.orgId}`}
                 label="Transactions"
-                value={data.summary.transactionCount}
+                title={String(data.summary.transactionCount)}
+                description="View recent transactions →"
               />
 
               <LinkCard
@@ -426,15 +553,20 @@ export default async function DashboardPage({
                 />
               )}
             </section>
-
+            
+            <TasksSection
+              orgId={data.orgId}
+              tasks={upcomingTasks}
+              canSeeAllTasks={canSeeAllTasks}
+              roleOptions={data.roleOptions}
+              selectedRole={taskRole}
+              />
             <TransactionsTable
               title="Recent Organization Transactions"
               transactions={data.recentTransactions}
               orgId={data.orgId}
               canExport={canExport}
             />
-
-            <TasksSection orgId={data.orgId} />
           </div>
         ) : (
           <div className="space-y-8">
@@ -461,14 +593,19 @@ export default async function DashboardPage({
               />
             </section>
 
+            <TasksSection
+              orgId={data.orgId}
+              tasks={upcomingTasks} 
+              canSeeAllTasks={canSeeAllTasks}
+              roleOptions={data.roleOptions}
+              selectedRole={taskRole}
+              />
             <TransactionsTable
               title="My Recent Transactions"
               transactions={data.recentTransactions}
               orgId={data.orgId}
               canExport={canExport}
             />
-
-            <TasksSection orgId={data.orgId} />
           </div>
         )}
       </div>
