@@ -1,8 +1,4 @@
-import { stat } from "fs";
 import { getDiff } from "./util";
-import { spawn } from "child_process";
-import { ROLE_LABELS } from "@/lib/roles";
-import { Span } from "next/dist/trace";
 
 // renderDetails
 // Renders the details of an audit log entry based on the action type
@@ -67,13 +63,13 @@ export function formatEntity(entity: string, entityID: string){
 export const formatAction = (action: string) => {
     switch (action) {
         case "CREATE":
-            return <span style={{color: "#4ade80"}}>{action}</span>;
+            return <span className="font-medium text-green-600 dark:text-green-400">{action}</span>;
         case "UPDATE":
-            return <span style={{color: "#facc15"}}>{action}</span>;
+            return <span className="font-medium text-yellow-600 dark:text-yellow-400">{action}</span>;
         case "DELETE":
-            return <span style={{color: "#f87171"}}>{action}</span>;
+            return <span className="font-medium text-red-600 dark:text-red-400">{action}</span>;
         default:
-            return <span>UNKNOWN</span>;
+            return <span className="text-gray-500 dark:text-neutral-400">UNKNOWN</span>;
     }
 };
 
@@ -88,29 +84,13 @@ export const formatAction = (action: string) => {
 // - containerStyle: outer wrapper around the table
 // - tableStyle: style applied to the table itself
 
-export const cellStyle: React.CSSProperties = {
-    border: "1px solid #374151",
-    padding: "10px",
-    borderTop: "2px solid #d1d5db",
-};
+export const cellClass =
+    "py-4 px-3 text-sm text-gray-900 dark:text-white border-b border-gray-100 dark:border-white/[0.08] align-top";
 
-export const headerStyle = {
-    border: "1px solid #e5e7eb",
-    backgroundColor: "#111827",
-    textAlign: "left" as const,
-    padding: "12px",
-    fontWeight: "600",
-};
-    
-export const containerStyle = {
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    overflow: "hidden",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-};
+export const headerClass =
+    "py-3 px-3 text-xs uppercase tracking-[0.16em] font-medium text-gray-500 dark:text-neutral-400 text-left border-b border-gray-200 dark:border-white/[0.12] bg-gray-50 dark:bg-white/[0.02]";
 
-export const tableStyle = {
-    width: "100%",
-    borderCollapse: "collapse" as const,
-    fontSize: "14px",
-};
+export const containerClass =
+    "rounded-2xl border border-gray-200 dark:border-white/[0.12] overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.05)] bg-white dark:bg-white/[0.03]";
+
+export const tableClass = "w-full text-sm border-collapse";
