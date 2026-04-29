@@ -8,7 +8,9 @@ export function normalizeDisplayName(name: string): string {
 
 export function isValidDisplayName(name: string): boolean {
     if (!name) return false
-    if (name.length === 0) return false
-    if (name.length > MAX_DISPLAY_NAME_LENGTH) return false
-    return true
+    //4-27-2026 -- Flipped control flow logic to cover all branches in Vitest
+    if (name.length > 0 && name.length <= MAX_DISPLAY_NAME_LENGTH)
+        return true
+
+    return false
 }
