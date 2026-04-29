@@ -83,21 +83,21 @@ describe('formatAction', () => {
         const result = formatAction('CREATE');
 
         expect(result.props.children).toBe('CREATE');
-        expect(result.props.style.color).toBe('#4ade80')
+        expect(result.props.className).toContain('text-green-600')
     })
 
     it('formats UPDATE as Updated', () => {
         const result = formatAction('UPDATE');
 
         expect(result.props.children).toBe('UPDATE');
-        expect(result.props.style.color).toBe('#facc15')
+        expect(result.props.className).toContain('text-yellow-600')
     })
 
     it('formats DELETE as Deleted', () => {
         const result = formatAction('DELETE');
 
         expect(result.props.children).toBe('DELETE');
-        expect(result.props.style.color).toBe('#f87171')
+        expect(result.props.className).toContain('text-red-600')
     })
 
     it('returns unknown actions as-is', () => {

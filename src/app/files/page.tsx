@@ -6,12 +6,9 @@ import { createClient } from '../../lib/supabase/client'
 import UploadModal from '../../components/UploadModal'
 import FileViewer from '../../components/FileViewer'
 import BackButton from '@/components/BackButton'
-//import OrgSwitcher from '../../components/OrgSwitcher'
 import OrgDropDown from '@/components/OrgDropDown'
-import { Skeleton } from '@/components/Skeleton'
 import { canUploadFiles, canViewFiles } from '@/lib/roles'
 import { getFiles, deleteFile } from '../../lib/files'
-
 
 type SkeletonPulseProps = { className?: string }
 function SkeletonPulse({ className = '' }: SkeletonPulseProps) {
@@ -20,50 +17,43 @@ function SkeletonPulse({ className = '' }: SkeletonPulseProps) {
     )
 }
 
-// FilesPageSkeleton  loading placeholder that mirrors the loaded page layout
 function FilesPageSkeleton() {
     return (
-        // header, filters, and file list
-        <div className="p-8 max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <SkeletonPulse className="h-7 w-16" />
- 
-                <div className="flex gap-3">
-                    <SkeletonPulse className="h-9 w-28 rounded" />
-                    <SkeletonPulse className="h-9 w-20 rounded" />
+        <main className="min-h-screen bg-background text-foreground">
+            <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                <div className="flex items-center justify-between mb-6">
+                    <SkeletonPulse className="h-7 w-32" />
+                    <div className="flex gap-3">
+                        <SkeletonPulse className="h-9 w-28 rounded" />
+                        <SkeletonPulse className="h-9 w-20 rounded" />
+                    </div>
                 </div>
+                <div className="flex flex-wrap gap-4 mb-6">
+                    <div className="flex gap-2">
+                        <SkeletonPulse className="h-10 w-14 rounded border border-white/[0.12]" />
+                        <SkeletonPulse className="h-10 w-20 rounded border border-white/[0.12]" />
+                        <SkeletonPulse className="h-10 w-28 rounded border border-white/[0.12]" />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                        <SkeletonPulse className="h-4 w-10" />
+                        <SkeletonPulse className="h-10 w-36 rounded border border-white/[0.12]" />
+                        <SkeletonPulse className="h-4 w-6" />
+                        <SkeletonPulse className="h-10 w-36 rounded border border-white/[0.12]" />
+                    </div>
+                </div>
+                <ul className="divide-y divide-gray-100 dark:divide-white/[0.08] border border-gray-200 dark:border-white/[0.12] rounded-2xl overflow-hidden">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <li key={i} className="flex items-center justify-between p-4">
+                            <div className="flex flex-col gap-2">
+                                <SkeletonPulse className="h-4 w-52" />
+                                <SkeletonPulse className="h-3 w-36" />
+                            </div>
+                            <SkeletonPulse className="h-4 w-9" />
+                        </li>
+                    ))}
+                </ul>
             </div>
- 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex gap-2">
-                    <SkeletonPulse className="h-10 w-14 rounded border border-white/[0.12]" />
-                    <SkeletonPulse className="h-10 w-20 rounded border border-white/[0.12]" />
-                    <SkeletonPulse className="h-10 w-28 rounded border border-white/[0.12]" />
-                </div>
- 
-                <div className="flex gap-2 items-center">
-                    <SkeletonPulse className="h-4 w-10" />
-                    <SkeletonPulse className="h-10 w-36 rounded border border-white/[0.12]" />
-                    <SkeletonPulse className="h-4 w-6" />
-                    <SkeletonPulse className="h-10 w-36 rounded border border-white/[0.12]" />
-                </div>
-            </div>
- 
-            {/* File list */}
-            <ul className="divide-y divide-white/[0.08] border border-white/[0.12] rounded-lg overflow-hidden">
-                {Array.from({ length: 5 }).map((_, i) => (
-                    <li key={i} className="flex items-center justify-between p-4">
-                        <div className="flex flex-col gap-2">
-                            <SkeletonPulse className="h-4 w-52" />
-                            <SkeletonPulse className="h-3 w-36" />
-                        </div>
-                        <SkeletonPulse className="h-4 w-9" />
-                    </li>
-                ))}
-            </ul>
-        </div>
+        </main>
     )
 }
 
@@ -72,6 +62,7 @@ type OrgOption = {
     org_name: string
     role: string
 }
+
 function FilesPageContent() {
     const searchParams = useSearchParams()
     const orgIdFromParams = searchParams.get('orgId')
@@ -95,7 +86,6 @@ function FilesPageContent() {
     const [dateFrom, setDateFrom] = useState<string>('')
     const [dateTo, setDateTo] = useState<string>('')
 
-    // Fetch all orgs the user belongs to, and determine the active org + role
     useEffect(() => {
         async function fetchOrgsAndRole() {
             const supabase = createClient()
@@ -105,7 +95,6 @@ function FilesPageContent() {
                 return
             }
 
-            // Get all org memberships with org names
             const { data: memberships, error: membershipsError } = await supabase
                 .from('org_members')
                 .select('org_id, role, organizations(org_name)')
@@ -116,7 +105,6 @@ function FilesPageContent() {
                 return
             }
 
-            // Build the org list for the switcher
             const orgList: OrgOption[] = memberships.map((m: any) => ({
                 org_id: m.org_id,
                 org_name: m.organizations?.org_name ?? m.org_id,
@@ -124,13 +112,11 @@ function FilesPageContent() {
             }))
             setOrganizations(orgList)
 
-            // Find the active org — either from URL params or default to first
             let activeOrg = orgList[0]
 
             if (orgIdFromParams) {
                 const match = orgList.find(o => o.org_id === orgIdFromParams)
                 if (!match) {
-                    // User passed an orgId they don't belong to
                     setOrgError('Organization not found or you do not have access to it.')
                     setLoading(false)
                     return
@@ -151,7 +137,7 @@ function FilesPageContent() {
             setLoading(true)
             const data = await getFiles(orgId)
             setFiles(data || [])
-        } catch (err) {
+        } catch {
             setError('Failed to load files')
         } finally {
             setLoading(false)
@@ -168,227 +154,200 @@ function FilesPageContent() {
 
     const filteredFiles = files.filter((file) => {
         if (typeFilter !== 'all' && file.file_type !== typeFilter) return false
-
         const uploadedAt = new Date(file.uploaded_at)
-
         if (dateFrom) {
             const [year, month, day] = dateFrom.split('-').map(Number)
-            const fromDate = new Date(year, month - 1, day, 0, 0, 0)
-            if (uploadedAt < fromDate) return false
+            if (uploadedAt < new Date(year, month - 1, day, 0, 0, 0)) return false
         }
-
         if (dateTo) {
             const [year, month, day] = dateTo.split('-').map(Number)
-            const toDate = new Date(year, month - 1, day, 23, 59, 59)
-            if (uploadedAt > toDate) return false
+            if (uploadedAt > new Date(year, month - 1, day, 23, 59, 59)) return false
         }
-
         return true
     })
 
-    // Loading state
-    // if (loading) {
-    //     return (
-    //         <div className="p-8 max-w-4xl mx-auto">
-    //             <p className="text-white">Loading...</p>
-    //         </div>
-    //     )
-    // }
+    if (loading) return <FilesPageSkeleton />
 
-    if (loading) { return <FilesPageSkeleton /> }
-
-    // Invalid org in URL
     if (orgError) {
         return (
-            <div className="p-8 max-w-4xl mx-auto">
-                <h1 className="text-2xl font-semibold text-white mb-4">Files</h1>
-                <p className="text-red-400">{orgError}</p>
-            </div>
+            <main className="min-h-screen bg-background text-foreground">
+                <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                    <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white mb-4">Files</h1>
+                    <p className="text-sm text-red-500 dark:text-red-400">{orgError}</p>
+                </div>
+            </main>
         )
     }
 
-    // No org membership
     if (!orgId) {
         return (
-            <div className="p-8 max-w-4xl mx-auto">
-                <p className="text-white">You are not a member of any organization.</p>
-            </div>
+            <main className="min-h-screen bg-background text-foreground">
+                <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                    <p className="text-sm text-gray-500 dark:text-neutral-400">You are not a member of any organization.</p>
+                </div>
+            </main>
         )
     }
 
-    // No permission
     if (!canAccessFiles) {
         return (
-            <div className="p-8 max-w-4xl mx-auto">
-                <h1 className="text-2xl font-semibold text-white mb-4">Files</h1>
-                {organizations.length > 1 && (
-                    <div className="mb-6">
-                        {/*<OrgSwitcher
-                            organizations={organizations}
-                            currentOrgId={orgId}
-                            basePath="/files"
-                        />*/}
-                        <OrgDropDown
-                            organizations={organizations}
-                            currentOrgId={orgId}
-                            basePath="/files"
-                        />
-
+            <main className="min-h-screen bg-background text-foreground">
+                <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Files</h1>
+                        <BackButton />
                     </div>
-                )}
-                <p className="text-red-400">
-                    You do not have permission to access files in this organization.
-                    Only treasurers, treasury team members, admins, executives, and advisors can access files.
-                </p>
-            </div>
+                    {organizations.length > 1 && (
+                        <div className="mb-6">
+                            <OrgDropDown organizations={organizations} currentOrgId={orgId} basePath="/files" />
+                        </div>
+                    )}
+                    <p className="text-sm text-red-500 dark:text-red-400">
+                        You do not have permission to access files in this organization.
+                        Only treasurers, treasury team members, admins, executives, and advisors can access files.
+                    </p>
+                </div>
+            </main>
         )
     }
 
     return (
-        <div className="p-8 max-w-4xl mx-auto">
- 
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-semibold text-white">Files</h1>
- 
-                <div className="flex gap-4">
-                    {canUpload && (
-                        <button
-                            onClick={() => setShowUpload(true)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded"
-                        >
-                            Upload File
-                        </button>
-                    )}
-                    <BackButton />
+        <main className="min-h-screen bg-background text-foreground">
+            <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Files</h1>
+                    <div className="flex gap-3">
+                        {canUpload && (
+                            <button
+                                onClick={() => setShowUpload(true)}
+                                className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition hover:bg-blue-500/20"
+                            >
+                                Upload File
+                            </button>
+                        )}
+                        <BackButton />
+                    </div>
                 </div>
-            </div>
- 
-            {/* Org switcher — only shows if user belongs to multiple orgs */}
-            {organizations.length > 1 && (
-                <div className="mb-6">
-                    <OrgDropDown
-                        organizations={organizations}
-                        currentOrgId={orgId ?? ''}
-                        basePath="/files"
+
+                {organizations.length > 1 && (
+                    <div className="mb-6">
+                        <OrgDropDown organizations={organizations} currentOrgId={orgId ?? ''} basePath="/files" />
+                    </div>
+                )}
+
+                {showUpload && orgId && (
+                    <UploadModal orgId={orgId} onSuccess={loadFiles} onClose={() => setShowUpload(false)} />
+                )}
+
+                {viewingFile && (
+                    <FileViewer
+                        filePath={viewingFile.filePath}
+                        fileName={viewingFile.fileName}
+                        mimeType={viewingFile.mimeType}
+                        onClose={() => setViewingFile(null)}
                     />
-                </div>
-            )}
- 
-            {/* Upload modal */}
-            {showUpload && orgId && (
-                <UploadModal
-                    orgId={orgId}
-                    onSuccess={loadFiles}
-                    onClose={() => setShowUpload(false)}
-                />
-            )}
- 
-            {/* File viewer modal */}
-            {viewingFile && (
-                <FileViewer
-                    filePath={viewingFile.filePath}
-                    fileName={viewingFile.fileName}
-                    mimeType={viewingFile.mimeType}
-                    onClose={() => setViewingFile(null)}
-                />
-            )}
- 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex gap-2">
-                    {(['all', 'receipt', 'document'] as const).map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => setTypeFilter(type)}
-                            className={`px-4 py-2 rounded border capitalize ${typeFilter === type
-                                ? 'bg-blue-600 text-white'
-                                : 'border-gray-300 text-white'
+                )}
+
+                {/* Filters */}
+                <div className="flex flex-wrap gap-4 mb-6">
+                    <div className="flex gap-2">
+                        {(['all', 'receipt', 'document'] as const).map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setTypeFilter(type)}
+                                className={`px-4 py-2 rounded-xl border text-sm font-medium capitalize transition ${
+                                    typeFilter === type
+                                        ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                                        : 'border-gray-200 dark:border-white/[0.12] text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-white/[0.05]'
                                 }`}
-                        >
-                            {type}
-                        </button>
-                    ))}
+                            >
+                                {type}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2 items-center">
+                        <label className="text-sm text-gray-500 dark:text-neutral-400">From</label>
+                        <input
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            className="rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <label className="text-sm text-gray-500 dark:text-neutral-400">To</label>
+                        <input
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            className="rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        {(dateFrom || dateTo) && (
+                            <button
+                                onClick={() => { setDateFrom(''); setDateTo('') }}
+                                className="text-sm text-red-500 dark:text-red-400 hover:underline"
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
                 </div>
- 
-                {/* Date range filter */}
-                {/* NOTE: UI styling should be revisited when the team finalizes the design system */}
-                <div className="flex gap-2 items-center">
-                    <label className="text-sm text-white">From</label>
-                    <input
-                        type="date"
-                        value={dateFrom}
-                        onChange={(e) => setDateFrom(e.target.value)}
-                        className="border border-gray-300 rounded p-2 text-white text-sm"
-                    />
-                    <label className="text-sm text-white">To</label>
-                    <input
-                        type="date"
-                        value={dateTo}
-                        onChange={(e) => setDateTo(e.target.value)}
-                        className="border border-gray-300 rounded p-2 text-white text-sm"
-                    />
-                    {(dateFrom || dateTo) && (
-                        <button
-                            onClick={() => { setDateFrom(''); setDateTo('') }}
-                            className="text-sm text-red-500"
-                        >
-                            Clear
-                        </button>
-                    )}
-                </div>
+
+                {error && <p className="text-sm text-red-500 dark:text-red-400 mb-4">{error}</p>}
+
+                {!error && filteredFiles.length === 0 && (
+                    <div className="rounded-2xl border border-dashed border-gray-200 dark:border-white/[0.12] px-4 py-10 text-center text-sm text-gray-500 dark:text-neutral-400">
+                        No files found.
+                    </div>
+                )}
+
+                {!error && filteredFiles.length > 0 && (
+                    <section className="rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+                        <ul className="divide-y divide-gray-100 dark:divide-white/[0.08]">
+                            {filteredFiles.map((file) => (
+                                <li key={file.file_id} className="flex items-center justify-between px-5 py-4 transition hover:bg-gray-50 dark:hover:bg-white/[0.03]">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{file.file_name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-neutral-400 capitalize mt-0.5">
+                                            {file.file_type} · {new Date(file.uploaded_at).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => setViewingFile({
+                                                filePath: file.file_path,
+                                                fileName: file.file_name,
+                                                mimeType: file.mime_type,
+                                            })}
+                                            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition"
+                                        >
+                                            View
+                                        </button>
+                                        {canDelete && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm(`Delete "${file.file_name}"?`)) return
+                                                    try {
+                                                        await deleteFile(file.file_id, file.file_path)
+                                                        await loadFiles()
+                                                    } catch {
+                                                        setError('Failed to delete file')
+                                                    }
+                                                }}
+                                                className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition"
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
             </div>
- 
-            {/* Page states */}
-            {error && <p className="text-red-500">{error}</p>}
-            {!error && filteredFiles.length === 0 && (
-                <p className="text-white">No files found.</p>
-            )}
- 
-            {/* File list */}
-            {!error && filteredFiles.length > 0 && (
-                <ul className="divide-y border rounded-lg">
-                    {filteredFiles.map((file) => (
-                        <li key={file.file_id} className="flex items-center justify-between p-4">
-                            <div>
-                                <p className="font-medium text-white">{file.file_name}</p>
-                                <p className="text-sm text-white capitalize">
-                                    {file.file_type} · {new Date(file.uploaded_at).toLocaleDateString()}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => setViewingFile({
-                                        filePath: file.file_path,
-                                        fileName: file.file_name,
-                                        mimeType: file.mime_type,
-                                    })}
-                                    className="text-blue-400 text-sm hover:text-blue-300 transition"
-                                >
-                                    View
-                                </button>
-                                {canDelete && (
-                                    <button
-                                        onClick={async () => {
-                                            if (!confirm(`Delete "${file.file_name}"?`)) return
-                                            try {
-                                                await deleteFile(file.file_id, file.file_path)
-                                                await loadFiles()
-                                            } catch {
-                                                setError('Failed to delete file')
-                                            }
-                                        }}
-                                        className="text-red-400 text-sm hover:text-red-300 transition"
-                                    >
-                                        Delete
-                                    </button>
-                                )}
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
+        </main>
     )
 }
 

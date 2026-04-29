@@ -42,7 +42,6 @@ export default async function Organizations({
   let loadError = "";
 
   if (user != null) {
-    // First get the org memberships for this user.
     const membershipResult = await supabase
       .from("org_members")
       .select("org_id, role")
@@ -56,7 +55,6 @@ export default async function Organizations({
       if (memberships.length > 0) {
         const orgIds = memberships.map((membership) => membership.org_id);
 
-        // Then get the actual org names for those ids.
         const organizationResult = await supabase
           .from("organizations")
           .select("org_id, org_name")
@@ -73,11 +71,7 @@ export default async function Organizations({
           organizations = memberships
             .map((membership) => {
               const organization = orgMap.get(membership.org_id);
-
-              if (!organization) {
-                return null;
-              }
-
+              if (!organization) return null;
               return {
                 org_id: membership.org_id,
                 org_name: organization.org_name,
@@ -90,42 +84,49 @@ export default async function Organizations({
     }
   }
 
-  return ( //changed the create new organizations button to make it visible in the light mode
-    <main className="min-h-screen p-6">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
-        <div className="flex items-center justify-between">
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-3xl px-6 py-8 lg:px-8">
+
+        {/* Header */}
+        <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-semibold">Your Organizations</h1>
-            <p className="text-sm text-gray-300">
+            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
+              TreasuryHub
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+              Your Organizations
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-neutral-400">
               Pick an organization to open its members page.
             </p>
           </div>
           <div className="flex gap-2">
-            <Link href="/organizations/new">
-              <button className="rounded border border-gray-300 p-2 text-gray-900 dark:border-white/[0.2] dark:text-white">
-                Create New Organization
-              </button>
+            <Link
+              href="/organizations/new"
+              className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition hover:bg-blue-500/20"
+            >
+              New Organization
             </Link>
-            <BackButton></BackButton>
+            <BackButton />
           </div>
         </div>
 
-        {/* This lets redirects from the protected members page show an actual message */}
         {error && (
-          <p className="rounded border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-200">
+          <div className="mb-6 rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
             {error}
-          </p>
+          </div>
         )}
 
         {loadError && (
-          <p className="text-red-500">
+          <div className="mb-6 rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
             Failed to load organizations: {loadError}
-          </p>
+          </div>
         )}
 
         {!loadError && organizations.length === 0 && (
-          <div className="rounded border border-white p-4">
-            <p className="text-white">You are not in any organizations yet.</p>
+          <div className="rounded-2xl border border-dashed border-gray-200 dark:border-white/[0.12] px-4 py-10 text-center text-sm text-gray-500 dark:text-neutral-400">
+            You are not in any organizations yet.
           </div>
         )}
 
@@ -135,23 +136,23 @@ export default async function Organizations({
               <Link
                 key={organization.org_id}
                 href={`/organizations/${organization.org_id}/members`}
-                className="rounded border border-white p-4 hover:bg-white/5"
+                className="group rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] p-5 backdrop-blur-sm shadow-[0_0_20px_rgba(255,255,255,0.05)] transition hover:border-gray-300 dark:hover:border-white/[0.25] hover:bg-gray-50 dark:hover:bg-white/[0.06]"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-medium">
+                    <h2 className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">
                       {organization.org_name}
                     </h2>
-                    <p className="text-sm text-gray-300">
+                    <p className="mt-1 text-sm text-gray-500 dark:text-neutral-400">
                       Role: {organization.role.replaceAll("_", " ")}
                     </p>
                   </div>
-
-                  <p className="text-sm underline">Open</p>
+                  <span className="text-sm text-gray-400 dark:text-neutral-500 group-hover:text-gray-600 dark:group-hover:text-white transition">
+                    Open →
+                  </span>
                 </div>
               </Link>
             ))}
-
           </div>
         )}
       </div>
