@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   canManageOrganizationMembers,
   getCurrentUserWithOrganizationMembership,
-  getUserByEmail,
+  getUserByEmailForOrg,
   isOrganizationMemberRole,
   normalizeMemberEmail,
 } from "@/lib/organizations";
@@ -68,7 +68,8 @@ export async function addOrganizationMember(orgId: string, formData: FormData) {
   }
 
   // PR2 only adds users that already exist in public.users.
-  const user = await getUserByEmail(email);
+  const user = await getUserByEmailForOrg(email, orgId);
+
 
   if (user === null) {
     redirect(
@@ -144,20 +145,20 @@ export async function addOrganizationMember(orgId: string, formData: FormData) {
   }
 
   // Fetch current user ID
-  const { data: userID  } = await supabase.auth.getUser()
+  const { data: userID } = await supabase.auth.getUser()
 
-   if (!userID.user) {
+  if (!userID.user) {
     console.error("Failed to fetch current user ID.");
     return;
   }
 
   // Fetch the current user's role
   const { data: roleData, error: roleError } = await supabase
-  .from('org_members')
-  .select('role')
-  .eq('user_id', userID.user.id)
-  .eq('org_id', orgId)
-  .maybeSingle()
+    .from('org_members')
+    .select('role')
+    .eq('user_id', userID.user.id)
+    .eq('org_id', orgId)
+    .maybeSingle()
 
   if (roleError) {
     console.error(
@@ -194,125 +195,125 @@ export async function addOrganizationMember(orgId: string, formData: FormData) {
 // Updates an existing member role inside the org.
 // The authorization check is server-side so the UI is not trusted.
 export async function updateOrganizationMemberRole(
-    orgId: string,
-    formData: FormData
+  orgId: string,
+  formData: FormData
 ) {
-    const currentMembership =
-        await requireOrganizationMemberManagementAccess(orgId);
+  const currentMembership =
+    await requireOrganizationMemberManagementAccess(orgId);
 
-    const targetUserId = String(formData.get("userId") ?? "").trim();
-    const nextRole = String(formData.get("role") ?? "");
+  const targetUserId = String(formData.get("userId") ?? "").trim();
+  const nextRole = String(formData.get("role") ?? "");
 
-    if (!targetUserId) {
-        redirect(buildMembersPageRedirect(orgId, "error", "Missing member id."));
-    }
+  if (!targetUserId) {
+    redirect(buildMembersPageRedirect(orgId, "error", "Missing member id."));
+  }
 
-    if (!isOrganizationMemberRole(nextRole)) {
-        redirect(buildMembersPageRedirect(orgId, "error", "Invalid role."));
-    }
+  if (!isOrganizationMemberRole(nextRole)) {
+    redirect(buildMembersPageRedirect(orgId, "error", "Invalid role."));
+  }
 
-    // Keeping this simple/safe for PR3: do not let managers accidentally
-    // remove their own management access from the same page.
-    if (targetUserId === currentMembership.user_id) {
-        redirect(
-            buildMembersPageRedirect(
-                orgId,
-                "error",
-                "You cannot change your own role from this page."
-            )
-        );
-    }
-
-    const supabase = await createClient();
-
-    const existingMembershipResult = await supabase
-        .from("org_members")
-        .select("user_id, role")
-        .eq("org_id", orgId)
-        .eq("user_id", targetUserId)
-        .maybeSingle();
-
-    if (existingMembershipResult.error) {
-        throw new Error(existingMembershipResult.error.message);
-    }
-
-    if (existingMembershipResult.data === null) {
-        redirect(
-            buildMembersPageRedirect(
-                orgId,
-                "error",
-                "That member no longer belongs to this organization."
-            )
-        );
-    }
-
-    if (existingMembershipResult.data.role === nextRole) {
-        redirect(
-            buildMembersPageRedirect(
-                orgId,
-                "success",
-                `No change was needed. Role is already ${nextRole.replaceAll("_", " ")}.`
-            )
-        );
-    }
-
-    const updateResult = await supabase
-        .from("org_members")
-        .update({ role: nextRole })
-        .eq("org_id", orgId)
-        .eq("user_id", targetUserId);
-
-    if (updateResult.error) {
-        redirect(
-            buildMembersPageRedirect(
-                orgId,
-                "error",
-                `Failed to update member role: ${updateResult.error.message}`
-            )
-        );
-    }
-
-    console.log("User ID being updated:", targetUserId);
-
-    // Fetch the member's display name for the audit log entry
-    const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("display_name")
-        .eq("user_id", targetUserId)
-        .maybeSingle();
-        
-    if (userError) {
-        console.error(
-            "Failed to fetch user data for audit log:",
-            userError.message
-        );
-    }
-
-    console.log("User Display Name:", userData?.display_name);
-
-    // Log the member role update in the audit log
-    await logAuditEntry({
-        orgId: orgId,
-        userId: currentMembership.user_id,
-        action: "UPDATE",
-        entity_type: "organization_member",
-        entity_id: targetUserId,
-        before_data: {  "User": userData?.display_name, "User ID": targetUserId, "Role": existingMembershipResult.data.role },
-        after_data: { "User": userData?.display_name, "User ID": targetUserId, "Role": nextRole },
-        type: AuditLogType.ACCOUNT,
-        display_role: currentMembership.role,
-    });
-
-    revalidatePath(`/organizations/${orgId}/members`);
-    revalidatePath("/organizations");
-
+  // Keeping this simple/safe for PR3: do not let managers accidentally
+  // remove their own management access from the same page.
+  if (targetUserId === currentMembership.user_id) {
     redirect(
-        buildMembersPageRedirect(
-            orgId,
-            "success",
-            `Member role updated to ${nextRole.replaceAll("_", " ")}.`
-        )
+      buildMembersPageRedirect(
+        orgId,
+        "error",
+        "You cannot change your own role from this page."
+      )
     );
+  }
+
+  const supabase = await createClient();
+
+  const existingMembershipResult = await supabase
+    .from("org_members")
+    .select("user_id, role")
+    .eq("org_id", orgId)
+    .eq("user_id", targetUserId)
+    .maybeSingle();
+
+  if (existingMembershipResult.error) {
+    throw new Error(existingMembershipResult.error.message);
+  }
+
+  if (existingMembershipResult.data === null) {
+    redirect(
+      buildMembersPageRedirect(
+        orgId,
+        "error",
+        "That member no longer belongs to this organization."
+      )
+    );
+  }
+
+  if (existingMembershipResult.data.role === nextRole) {
+    redirect(
+      buildMembersPageRedirect(
+        orgId,
+        "success",
+        `No change was needed. Role is already ${nextRole.replaceAll("_", " ")}.`
+      )
+    );
+  }
+
+  const updateResult = await supabase
+    .from("org_members")
+    .update({ role: nextRole })
+    .eq("org_id", orgId)
+    .eq("user_id", targetUserId);
+
+  if (updateResult.error) {
+    redirect(
+      buildMembersPageRedirect(
+        orgId,
+        "error",
+        `Failed to update member role: ${updateResult.error.message}`
+      )
+    );
+  }
+
+  console.log("User ID being updated:", targetUserId);
+
+  // Fetch the member's display name for the audit log entry
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("display_name")
+    .eq("user_id", targetUserId)
+    .maybeSingle();
+
+  if (userError) {
+    console.error(
+      "Failed to fetch user data for audit log:",
+      userError.message
+    );
+  }
+
+  console.log("User Display Name:", userData?.display_name);
+
+  // Log the member role update in the audit log
+  await logAuditEntry({
+    orgId: orgId,
+    userId: currentMembership.user_id,
+    action: "UPDATE",
+    entity_type: "organization_member",
+    entity_id: targetUserId,
+    before_data: { "User": userData?.display_name, "User ID": targetUserId, "Role": existingMembershipResult.data.role },
+    after_data: { "User": userData?.display_name, "User ID": targetUserId, "Role": nextRole },
+    type: AuditLogType.ACCOUNT,
+    display_role: currentMembership.role,
+  });
+
+  revalidatePath(`/organizations/${orgId}/members`);
+  revalidatePath("/organizations");
+
+  redirect(
+    buildMembersPageRedirect(
+      orgId,
+      "success",
+      `Member role updated to ${nextRole.replaceAll("_", " ")}.`
+    )
+  );
 }
 
 // Removes a member from the organization.
@@ -380,7 +381,7 @@ export async function removeOrganizationMember(
     .select("display_name")
     .eq("user_id", targetUserId)
     .maybeSingle();
-    
+
   if (userError) {
     console.error(
       "Failed to fetch user data for audit log:",

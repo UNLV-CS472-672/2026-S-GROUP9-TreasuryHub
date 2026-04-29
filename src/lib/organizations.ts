@@ -97,7 +97,7 @@ export async function getCurrentUserWithOrganizationMembership(orgId: string) {
     membership: membershipResult.data as OrganizationMembership | null,
   };
 }
- 
+
 // Small helper for getting the org name/header info.
 export async function getOrganizationById(orgId: string) {
   const supabase = await createClient();
@@ -115,22 +115,28 @@ export async function getOrganizationById(orgId: string) {
   return result.data as OrganizationSummary | null;
 }
 
-// Looks up an already-existing app user by email.
-// PR2 is NOT doing invitations, so the user has to already exist.
-export async function getUserByEmail(email: string) {
+// Looks up an existing app user by email, scoped to a specific organization.
+// Uses the find_user_by_email_for_org RPC which runs as SECURITY DEFINER
+// to bypass RLS on the users table — required because the caller may not
+// share an org with the target user yet (e.g. when re-adding a removed member).
+// The RPC itself enforces that only treasurer/admin of the target org can
+// perform the lookup.
+export async function getUserByEmailForOrg(email: string, orgId: string) {
   const supabase = await createClient();
 
   const result = await supabase
-    .from("users")
-    .select("user_id, email, display_name")
-    .eq("email", email)
-    .maybeSingle();
+    .rpc("find_user_by_email_for_org", {
+      target_email: email,
+      target_org: orgId,
+    });
 
   if (result.error) {
     throw new Error(result.error.message);
   }
 
-  return result.data as OrganizationMemberUser | null;
+  // RPC returns an array; we want the first match or null.
+  const rows = (result.data as OrganizationMemberUser[] | null) ?? [];
+  return rows[0] ?? null;
 }
 
 // Gets all org_members rows for this org, then separately loads the users.
