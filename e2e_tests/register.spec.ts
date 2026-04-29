@@ -13,8 +13,8 @@ test.describe('Registration', () => {
         await page.getByPlaceholder('Display Name').fill('Test User');
         await page.getByPlaceholder('Email').fill('test@register.playwright');
         await page.getByPlaceholder('Password', { exact: true }).fill('password123');
-        await page.getByPlaceholder('confirmPassword').fill('differentpassword');
-        await page.getByRole('button', { name: 'SUBMIT!' }).click();
+        await page.getByPlaceholder('Confirm Password').fill('differentpassword');
+        await page.getByRole('button', { name: 'Register' }).click();
 
         await expect(page.getByText('Passwords do not match')).toBeVisible();
     });
@@ -32,8 +32,8 @@ test.describe('Registration', () => {
         // and all trying to create the same user, causing tests to fail
         await page.getByPlaceholder('Email').fill(`test.${browserName}@register.playwright`);
         await page.getByPlaceholder('Password', { exact: true }).fill('123456');
-        await page.getByPlaceholder('confirmPassword').fill('123456');
-        await page.getByRole('button', { name: 'SUBMIT!' }).click();
+        await page.getByPlaceholder('Confirm Password').fill('123456');
+        await page.getByRole('button', { name: 'Register' }).click();
 
         await page.waitForURL('/');
         await expect(page).toHaveURL('/');
