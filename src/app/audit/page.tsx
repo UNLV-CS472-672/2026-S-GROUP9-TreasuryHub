@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { canViewAudit, getAuditVisibilityScope } from "@/lib/roles";
 import { AuditLogType } from "./lib/data";
@@ -8,10 +8,10 @@ import { formatAction } from "./lib/render";
 import {
   renderAuditDetails,
   formatDisplayRole,
-  cellStyle,
-  headerStyle,
-  containerStyle,
-  tableStyle,
+  cellClass,
+  headerClass,
+  containerClass,
+  tableClass,
   formatEntity,
 } from "./lib/render";
 import BackButton from "@/components/BackButton";
@@ -38,12 +38,10 @@ function AuditPageContent() {
     const orgIdFromParams = searchParams.get("orgId");
 
 
-    const [userId, setUserId] = useState<string | null>(null);
     const [orgId, setOrgId] = useState<string | null>(orgIdFromParams);
     const [organizations, setOrganizations] = useState<OrgOption[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
     const [role, setRole] = useState<string | null>(null);
-    const [orgError, setOrgError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const supabase = createClient();
@@ -93,7 +91,7 @@ function AuditPageContent() {
             if (orgIdFromParams) {
                 const matchingOrg = orgList.find(org => org.org_id === orgIdFromParams);
                 if (!matchingOrg) {
-                    setOrgError('Organization not found or you do not have access to it.');
+                    console.error('Organization not found or you do not have access to it.');
                     setLoading(false);
                     return;
                 }
@@ -149,116 +147,80 @@ function AuditPageContent() {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Display the audit logs in a table format
 
-    // loading 
     if (loading) {
         return (
-            <div style={{ padding: "20px" }}>
-                <h2 style={{ marginBottom: "10px" }}>Recent Audit</h2>
-                <p>Loading...</p>
-            </div>
+            <main className="min-h-screen bg-background text-foreground">
+                <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Audit Logs</h1>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-neutral-400">Loading...</p>
+                </div>
+            </main>
         );
     }
-
 
     if (!canViewAudit(role)) {
         return (
-            <div style={{ padding: "20px" }}>
-                <h2 style={{ marginBottom: "10px" }}>Recent Audit</h2>
-                {organizations.length > 1 && orgId && (
-                    <div className="mb-6" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <OrgDropDown
-                            organizations={organizations}
-                            currentOrgId={orgId}
-                            basePath="/audit"
-                        />
-                        <BackButton></BackButton>
+            <main className="min-h-screen bg-background text-foreground">
+                <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Audit Logs</h1>
+                        <BackButton />
                     </div>
-                )}
-                <p>You do not have permission to view audit logs.</p>
-                <BackButton></BackButton>
-            </div>
+                    {organizations.length > 1 && orgId && (
+                        <div className="mb-6">
+                            <OrgDropDown organizations={organizations} currentOrgId={orgId} basePath="/audit" />
+                        </div>
+                    )}
+                    <p className="text-sm text-red-500 dark:text-red-400">You do not have permission to view audit logs.</p>
+                </div>
+            </main>
         );
     }
 
-
     return (
-        <div style={{ padding: "20px" }}>
-
-            {/* Page Title */}
-            <div className="flex items-center justify-between mb-3">
-                <h1 className={`text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-1`}>
-                              Audit Logs</h1>
-                <BackButton></BackButton>
-            </div>
-            {organizations.length > 1 && orgId && (
-                <div className="mb-6">
-                    <OrgDropDown
-                        organizations={organizations}
-                        currentOrgId={orgId}
-                        basePath="/audit"
-                    />
+        <main className="min-h-screen bg-background text-foreground">
+            <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Audit Logs</h1>
+                    <BackButton />
                 </div>
-            )}
 
+                {organizations.length > 1 && orgId && (
+                    <div className="mb-6">
+                        <OrgDropDown organizations={organizations} currentOrgId={orgId} basePath="/audit" />
+                    </div>
+                )}
 
-            {/* Container around the table*/}
-            <div style={containerStyle}>
-                <table style={tableStyle}>
-
-                    {/* Table header row */}
-                    <thead>
-                        <tr>
-                            {/* Column headers */}
-                            <th style={headerStyle}>User</th>
-                            <th style={headerStyle}>Role</th>
-                            <th style={headerStyle}>Timestamp</th>
-                            <th style={headerStyle}>Action Type</th>
-                            <th style={headerStyle}>Item</th>
-                            <th style={headerStyle}>Description</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                    {logs.map((log) => {
-                        return (
-                            <tr key={log.audit_id}>
-
-                                {/* User Column */}
-                                <td style={cellStyle}>
-                                    {log.users?.display_name || "Unknown User"}
-                                </td>
-
-                                {/* Role Column */}
-                                <td style={cellStyle}>
-                                    {formatDisplayRole(log.display_role)}
-                                </td>
-
-                                {/* Timestamp Column */}
-                                <td style={cellStyle}>
-                                    {new Date(log.created_at).toLocaleString()}
-                                </td>
-
-                                {/* Action Type Column */}
-                                <td style={cellStyle}>
-                                    {formatAction(log.action)}
-                                </td>
-
-                                {/* Item Column */}
-                                <td style={cellStyle}>
-                                    {formatEntity(log.entity, log.entity_id)}
-                                </td>
-
-                                {/* Description Column */}
-                                <td style={cellStyle}>
-                                    {renderAuditDetails(log)}
-                                </td>
+                <div className={containerClass}>
+                    <table className={tableClass}>
+                        <thead>
+                            <tr>
+                                <th className={headerClass}>User</th>
+                                <th className={headerClass}>Role</th>
+                                <th className={headerClass}>Timestamp</th>
+                                <th className={headerClass}>Action Type</th>
+                                <th className={headerClass}>Item</th>
+                                <th className={headerClass}>Description</th>
                             </tr>
-                        );
-                    })}
-                </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {logs.map((log) => (
+                                <tr key={log.audit_id} className="transition hover:bg-gray-50 dark:hover:bg-white/[0.03]">
+                                    <td className={cellClass}>{log.users?.display_name || "Unknown User"}</td>
+                                    <td className={cellClass}>{formatDisplayRole(log.display_role)}</td>
+                                    <td className={cellClass}>{new Date(log.created_at).toLocaleString()}</td>
+                                    <td className={cellClass}>{formatAction(log.action)}</td>
+                                    <td className={cellClass}>{formatEntity(log.entity, log.entity_id)}</td>
+                                    <td className={cellClass}>{renderAuditDetails(log)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </main>
     );
 
 }

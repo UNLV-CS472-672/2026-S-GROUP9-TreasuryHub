@@ -34,7 +34,7 @@ export default async function SettingsPage() {
         .maybeSingle()
 
     return (
-        <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
+        <main className="min-h-screen bg-background text-foreground">
             <div className="mx-auto max-w-2xl px-6 py-10">
                 <div className="mb-8">
                     <p className="text-xs uppercase tracking-[0.18em] text-neutral-500 dark:text-neutral-400">
@@ -49,7 +49,7 @@ export default async function SettingsPage() {
                 </div>
 
                 {/* Profile info */}
-                <section className="mb-6 rounded-2xl border border-black/[0.08] bg-black/[0.02] p-6 dark:border-white/[0.12] dark:bg-white/[0.03]">
+                <section className="mb-6 rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] p-6">
                     <h2 className="mb-4 text-lg font-semibold">Profile</h2>
 
                     <div className="mb-5">
@@ -86,7 +86,7 @@ export default async function SettingsPage() {
                 </section>
 
                 {/* Appearance */}
-                <section className="mb-6 rounded-2xl border border-black/[0.08] bg-black/[0.02] p-6 dark:border-white/[0.12] dark:bg-white/[0.03]">
+                <section className="mb-6 rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] p-6">
                     <h2 className="mb-4 text-lg font-semibold">Appearance</h2>
                     <div className="flex items-center justify-between">
                         <div>
@@ -100,7 +100,7 @@ export default async function SettingsPage() {
                 </section>
 
                 {/* Security */}
-                <section className="mb-6 rounded-2xl border border-black/[0.08] bg-black/[0.02] p-6 dark:border-white/[0.12] dark:bg-white/[0.03]">
+                <section className="mb-6 rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] p-6">
                     <h2 className="mb-4 text-lg font-semibold">Security</h2>
                     <div className="flex items-center justify-between">
                         <div>

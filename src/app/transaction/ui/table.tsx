@@ -1,67 +1,71 @@
 import { DeleteTransaction, UpdateTransaction } from "@/app/transaction/ui/buttons";
-import { textColors, bgColors } from "../lib/styles";
+import { textColors } from "../lib/styles";
 import { type Transactions } from "@/app/transaction/lib/schemas";
 
-
-export default async function TransactionTable( { transactions, orgId, interactPrivelege } : { transactions: Transactions[], orgId: string, interactPrivelege: boolean } ) {
-  // TODO: Add confirmation for DeleteTransaction
-  const tableFieldSpacing = "px-3 py-1.5"
-
+export default async function TransactionTable({
+  transactions,
+  orgId,
+  interactPrivelege,
+}: {
+  transactions: Transactions[];
+  orgId: string;
+  interactPrivelege: boolean;
+}) {
   return (
-    <div className={`shadow-sm rounded-md ${bgColors.primary}`}>
+    <section className="rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.05)]">
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className={`${bgColors.secondary} border-b-2 border-gray-500`}>
-            <tr className={`text-left text-xs md:text-sm font-semibold uppercase ${textColors.secondary} tracking-wider`}>
-              <th className={tableFieldSpacing}>Date</th>
-              <th className={tableFieldSpacing}>Description</th>
-              <th className={tableFieldSpacing}>Category</th>
-              <th className={tableFieldSpacing}>Amount</th>
-              <th>
-                {interactPrivelege && <div> Actions </div>}
-              </th>
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-200 dark:border-white/[0.12] bg-gray-50 dark:bg-white/[0.02]">
+              <th className="py-3 px-4 text-left text-xs uppercase tracking-[0.16em] font-medium text-gray-500 dark:text-neutral-400">Date</th>
+              <th className="py-3 px-4 text-left text-xs uppercase tracking-[0.16em] font-medium text-gray-500 dark:text-neutral-400">Description</th>
+              <th className="py-3 px-4 text-left text-xs uppercase tracking-[0.16em] font-medium text-gray-500 dark:text-neutral-400">Category</th>
+              <th className="py-3 px-4 text-left text-xs uppercase tracking-[0.16em] font-medium text-gray-500 dark:text-neutral-400">Amount</th>
+              {interactPrivelege && (
+                <th className="py-3 px-4 text-left text-xs uppercase tracking-[0.16em] font-medium text-gray-500 dark:text-neutral-400">Actions</th>
+              )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-500 text-xs md:text-sm whitespace-nowrap">
-            {transactions.map((transaction) => {
-              return (
-                <tr key={transaction.transaction_id} className={`${textColors.primary} odd:bg-white even:bg-gray-100 dark:odd:bg-black dark:even:bg-gray-900`}>
-                  <td className={tableFieldSpacing}>{transaction.date.toLocaleDateString("en-US", {dateStyle: "long"})}</td>
-                  <td className={tableFieldSpacing}>
-                    <div>
-                      <p>
-                        {transaction.description}
-                      </p>
-                      <p className={`hidden md:inline md:text-xs ${textColors.secondary}`}>
-                        {transaction.notes}
-                      </p>
-                    </div>
-                  </td>
-                  <td className={tableFieldSpacing}>{transaction.category}</td>
-                  <td className={tableFieldSpacing}>
-                    <p className={transaction.type === "income"
-                      ? `${textColors.green}`
-                      : `${textColors.red}`
-                    }
-                    >
-                    {transaction.type === "income"
-                      ? `+${transaction.amount.toLocaleString("en-US", { style: "currency", currency: "USD" }) }`
-                      : `-${transaction.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
-                    }
+          <tbody>
+            {transactions.map((transaction) => (
+              <tr
+                key={transaction.transaction_id}
+                className="border-b border-gray-100 dark:border-white/[0.06] last:border-b-0 transition hover:bg-gray-50 dark:hover:bg-white/[0.03]"
+              >
+                <td className="py-4 px-4 text-gray-900 dark:text-white whitespace-nowrap">
+                  {transaction.date.toLocaleDateString("en-US", { dateStyle: "long" })}
+                </td>
+                <td className="py-4 px-4 text-gray-900 dark:text-white">
+                  <p>{transaction.description}</p>
+                  {transaction.notes && (
+                    <p className={`hidden md:block text-xs mt-0.5 ${textColors.secondary}`}>
+                      {transaction.notes}
                     </p>
-                  </td>
-                  <td className={tableFieldSpacing}>
-                    <div className="flex space-x-2">
-                      {interactPrivelege && <UpdateTransaction id={transaction.transaction_id} orgId={orgId} />}
-                      {interactPrivelege && <DeleteTransaction id={transaction.transaction_id} />}
+                  )}
+                </td>
+                <td className="py-4 px-4 text-gray-900 dark:text-white whitespace-nowrap">
+                  {transaction.category}
+                </td>
+                <td className="py-4 px-4 font-medium whitespace-nowrap">
+                  <span className={transaction.type === "income" ? textColors.green : textColors.red}>
+                    {transaction.type === "income"
+                      ? `+${transaction.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
+                      : `-${transaction.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}`}
+                  </span>
+                </td>
+                {interactPrivelege && (
+                  <td className="py-4 px-4">
+                    <div className="flex gap-2">
+                      <UpdateTransaction id={transaction.transaction_id} orgId={orgId} />
+                      <DeleteTransaction id={transaction.transaction_id} />
                     </div>
                   </td>
-                </tr>
-              );
-            })}
+                )}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 }
