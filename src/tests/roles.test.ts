@@ -95,11 +95,15 @@ describe("roles", () => {
     expect(getAuditVisibilityScope(ORGANIZATION_ROLE.MEMBER)).toBe("none");
   });
 
-  it("keeps transaction export restricted to treasurer", () => {
-    expect(TRANSACTION_EXPORT_ROLES).toEqual([ORGANIZATION_ROLE.TREASURER]);
+  it("keeps transaction export restricted to treasurer and admin", () => {
+    expect(TRANSACTION_EXPORT_ROLES).toEqual([
+      ORGANIZATION_ROLE.TREASURER,
+      ORGANIZATION_ROLE.ADMIN,
+    ]);
     expect(canExportTransactions(ORGANIZATION_ROLE.TREASURER)).toBe(true);
-    expect(canExportTransactions(ORGANIZATION_ROLE.ADMIN)).toBe(false);
+    expect(canExportTransactions(ORGANIZATION_ROLE.ADMIN)).toBe(true);
   });
+
 
   it("allows task management only for treasury team, treasurer, and admin", () => {
     expect(TASK_MANAGEMENT_ROLES).toEqual([

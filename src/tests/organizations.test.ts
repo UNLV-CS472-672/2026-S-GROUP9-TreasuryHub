@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, test, beforeEach } from 'vitest'
-import { canManageOrganizationMembers, 
-         isOrganizationMemberRole,
-         normalizeMemberEmail,
-         getCurrentUserWithOrganizationMembership,
-         getOrganizationById,
-         getUserByEmail,
-         getOrganizationMembers
-        } from '../lib/organizations'
+import {
+    canManageOrganizationMembers,
+    isOrganizationMemberRole,
+    normalizeMemberEmail,
+    getCurrentUserWithOrganizationMembership,
+    getOrganizationById,
+    getUserByEmailForOrg,
+    getOrganizationMembers
+} from '../lib/organizations'
 
 // ─────────────────────────────────────────────
 // canManageOrganizationMembers
@@ -114,14 +115,14 @@ describe('normalizeMemberEmail', () => {
 //Global Mock Set Up
 
 //Mock supabase client
-    //This needs to be hoisted to prevent errors.
+//This needs to be hoisted to prevent errors.
 const { createClientMock } = vi.hoisted(() => ({
     createClientMock: vi.fn()
 }))
 
 //Place createClientMock in place of createClient
 vi.mock('@/lib/supabase/server', () => ({
-    createClient : createClientMock
+    createClient: createClientMock
 }))
 
 //getUser will need to be built out for some tests
@@ -142,7 +143,7 @@ const inMock = vi.fn()
 // --------------------------------------------------
 //  getCurrentUserWithOrganizationMembership Function
 // --------------------------------------------------
-    
+
 //Describe groups related tests together into a suite
 describe('getCurrentUserWithOrganizationMembership', () => {
 
@@ -175,9 +176,9 @@ describe('getCurrentUserWithOrganizationMembership', () => {
         getUserMock.mockResolvedValue(userMockReturn)
 
         //Build out return value of createClientMock
-            //In this function, the supabase object has:
-                //supabase.auth
-                    //Need to get a user that throws
+        //In this function, the supabase object has:
+        //supabase.auth
+        //Need to get a user that throws
         const createClientReturn = {
             auth: {
                 getUser: getUserMock,
@@ -189,12 +190,12 @@ describe('getCurrentUserWithOrganizationMembership', () => {
 
         //Now feed function arguments and expect it to reject and to throw an error message that was provided in this test.
         await expect(getCurrentUserWithOrganizationMembership('testOrg'))
-                .rejects
-                .toThrow('Authentication failed')
+            .rejects
+            .toThrow('Authentication failed')
     })
 
     //2. If user is null but not error, are we returning?
-    test('Null User Returns', async() => {
+    test('Null User Returns', async () => {
         //Set userMock return values
         const userMockReturn = {
             data: { user: null },
@@ -206,25 +207,25 @@ describe('getCurrentUserWithOrganizationMembership', () => {
         //Build out return value of createClientMock
         const createClientReturn = {
             auth: {
-                getUser : getUserMock,
+                getUser: getUserMock,
             },
         }
         createClientMock.mockResolvedValue(createClientReturn)
 
         //Run test
         await expect(getCurrentUserWithOrganizationMembership('testOrg'))
-                .resolves
-                .toEqual({
-                    user: null,
-                    membership: null,
-                })
+            .resolves
+            .toEqual({
+                user: null,
+                membership: null,
+            })
     })
-    
+
     //3. If member organization check fails, are we throwing an error?
-    test('Membership Check Fails', async() => {
+    test('Membership Check Fails', async () => {
         //Set userMock return values
         const userMockReturn = {
-            data: { user: { id: 'testUser'}},
+            data: { user: { id: 'testUser' } },
             error: null,
         }
         getUserMock.mockResolvedValue(userMockReturn)
@@ -232,12 +233,12 @@ describe('getCurrentUserWithOrganizationMembership', () => {
         //Supplying database query
         maybeSingleMock.mockResolvedValue({
             data: null,
-            error: { message : 'Error!'}
+            error: { message: 'Error!' }
         })
 
         //Build out return value of createClientMock
         const createClientReturn = {
-            auth:{
+            auth: {
                 getUser: getUserMock,
             },
             from: fromMock,
@@ -246,14 +247,14 @@ describe('getCurrentUserWithOrganizationMembership', () => {
 
         //Run test
         await expect(getCurrentUserWithOrganizationMembership('testOrg'))
-                .rejects
-                .toThrow('Error!')
+            .rejects
+            .toThrow('Error!')
     })
     //4. If nothing stops, are we properly returning user and membership?
-    test('Function returns and exits properly', async() => {
+    test('Function returns and exits properly', async () => {
         //Set userMock return values
         const userMockReturn = {
-            data: { user: { id: 'testUser' }},
+            data: { user: { id: 'testUser' } },
             error: null,
         }
         getUserMock.mockResolvedValue(userMockReturn)
@@ -270,7 +271,7 @@ describe('getCurrentUserWithOrganizationMembership', () => {
 
         //Build out return value of createClientMock
         const createClientReturn = {
-            auth:{
+            auth: {
                 getUser: getUserMock,
             },
             from: fromMock,
@@ -279,15 +280,15 @@ describe('getCurrentUserWithOrganizationMembership', () => {
 
         //Run test
         await expect(getCurrentUserWithOrganizationMembership('testOrg'))
-                .resolves
-                .toEqual({
-                    user: { id: 'testUser' },
-                    membership: {
-                        user_id: 'testUser',
-                        org_id: 'testOrg',
-                        role: 'testRole',
-                    }
-                })
+            .resolves
+            .toEqual({
+                user: { id: 'testUser' },
+                membership: {
+                    user_id: 'testUser',
+                    org_id: 'testOrg',
+                    role: 'testRole',
+                }
+            })
     })
 })
 
@@ -314,7 +315,7 @@ describe('getOrganizationById', () => {
     })
 
     //1. Does database query error throw an error?
-    test('Database Query Fails', async() => {
+    test('Database Query Fails', async () => {
         //Supplying database query
         maybeSingleMock.mockResolvedValue({
             data: null,
@@ -329,12 +330,12 @@ describe('getOrganizationById', () => {
 
         //Run test
         await expect(getOrganizationById('testOrg'))
-                .rejects
-                .toThrow('Error!')
+            .rejects
+            .toThrow('Error!')
     })
 
     //2. Is the function returning properly?
-    test('Proper return', async() => {
+    test('Proper return', async () => {
 
         //Supplying database query
         maybeSingleMock.mockResolvedValue({
@@ -356,88 +357,130 @@ describe('getOrganizationById', () => {
 
         //Running test
         await expect(getOrganizationById('12345'))
-                .resolves
-                .toEqual({
-                    org_id: '12345',
-                    org_name: 'testOrg',
-                    logo_path: 'logo.png',
-                })
-    }) 
+            .resolves
+            .toEqual({
+                org_id: '12345',
+                org_name: 'testOrg',
+                logo_path: 'logo.png',
+            })
+    })
 })
 
 
 // --------------------------------------------------
-//  getUserByEmail(email: string) Function
+//  getUserByEmailForOrg(email: string, orgId: string) Function
 // --------------------------------------------------
 
 //Test Suite
-describe('getUserByEmail', () => {
-    //Suite Setup
-    const databaseQuery = {
-        select: selectMock,
-        eq: eqMock,
-        maybeSingle: maybeSingleMock,
-    }
-
+describe('getUserByEmailForOrg', () => {
     //Reset mock states
     beforeEach(() => {
         vi.resetAllMocks()
-
-        //Reestablish database query chain
-        fromMock.mockReturnValue(databaseQuery)
-        selectMock.mockReturnValue(databaseQuery)
-        eqMock.mockReturnValue(databaseQuery)
     })
 
     //1. On failure, does database query throw an error?
-    test('Database Query Fails', async() => {
-        //Supplying database query
-        maybeSingleMock.mockResolvedValue({
+    test('Database Query Fails', async () => {
+        const rpcMock = vi.fn().mockResolvedValue({
             data: null,
             error: { message: 'Error!' }
         })
 
         const createClientReturn = {
-            from: fromMock
+            rpc: rpcMock
         }
 
         createClientMock.mockResolvedValue(createClientReturn)
 
         //Run test
-        await expect(getUserByEmail('test@email.com'))
-                .rejects
-                .toThrow('Error!')
+        await expect(getUserByEmailForOrg('test@email.com', 'org-123'))
+            .rejects
+            .toThrow('Error!')
     })
 
-    //2. Does function return properly?
-    test('Proper return', async() => {
-
-        //Supplying database query
-        maybeSingleMock.mockResolvedValue({
-            data: {
-                user_id: '12345',
-                email: 'test@email.com',
-                display_name: 'TestDisplayName'
-            },
+    //2. Does function return the first matching user?
+    test('Proper return', async () => {
+        const rpcMock = vi.fn().mockResolvedValue({
+            data: [
+                {
+                    user_id: '12345',
+                    email: 'test@email.com',
+                    display_name: 'TestDisplayName'
+                }
+            ],
             error: null,
         })
 
-        //Creating return value
         const createClientReturn = {
-            from: fromMock
+            rpc: rpcMock
         }
 
-        //Setting return value
         createClientMock.mockResolvedValue(createClientReturn)
 
         //Running test
-        await expect(getUserByEmail('test@email.com'))
-                .resolves
-                .toEqual({
-                    user_id: '12345',
-                    email: 'test@email.com',
-                    display_name: 'TestDisplayName',
-                })
+        await expect(getUserByEmailForOrg('test@email.com', 'org-123'))
+            .resolves
+            .toEqual({
+                user_id: '12345',
+                email: 'test@email.com',
+                display_name: 'TestDisplayName',
+            })
+    })
+
+    //3. Does function pass the correct parameters to the RPC?
+    test('Calls RPC with correct parameters', async () => {
+        const rpcMock = vi.fn().mockResolvedValue({
+            data: [],
+            error: null,
+        })
+
+        const createClientReturn = {
+            rpc: rpcMock
+        }
+
+        createClientMock.mockResolvedValue(createClientReturn)
+
+        await getUserByEmailForOrg('test@email.com', 'org-123')
+
+        expect(rpcMock).toHaveBeenCalledWith('find_user_by_email_for_org', {
+            target_email: 'test@email.com',
+            target_org: 'org-123',
+        })
+    })
+
+    //4. Returns null when RPC finds no matching user
+    test('Returns null when no user found', async () => {
+        const rpcMock = vi.fn().mockResolvedValue({
+            data: [],
+            error: null,
+        })
+
+        const createClientReturn = {
+            rpc: rpcMock
+        }
+
+        createClientMock.mockResolvedValue(createClientReturn)
+
+        await expect(getUserByEmailForOrg('test@email.com', 'org-123'))
+            .resolves
+            .toBeNull()
+    })
+
+    //5. Returns null when RPC returns null data
+    test('Returns null when data is null', async () => {
+        const rpcMock = vi.fn().mockResolvedValue({
+            data: null,
+            error: null,
+        })
+
+        const createClientReturn = {
+            rpc: rpcMock
+        }
+
+        createClientMock.mockResolvedValue(createClientReturn)
+
+        await expect(getUserByEmailForOrg('test@email.com', 'org-123'))
+            .resolves
+            .toBeNull()
     })
 })
 
@@ -453,7 +496,7 @@ describe('getOrganizationMembers', () => {
         eq: eqMock,
         order: orderMock
     }
-    
+
     const databaseQuery2 = {
         select: selectMock,
         in: inMock
@@ -469,7 +512,7 @@ describe('getOrganizationMembers', () => {
     })
 
     //1. Does the first database query throw an error?
-    test('Database Query #1 Fails', async() => {
+    test('Database Query #1 Fails', async () => {
         orderMock.mockResolvedValue({
             data: null,
             error: { message: 'Error!' }
@@ -483,12 +526,12 @@ describe('getOrganizationMembers', () => {
 
         //Run test
         await expect(getOrganizationMembers('56789'))
-                .rejects
-                .toThrow('Error!')
+            .rejects
+            .toThrow('Error!')
     })
 
     //2. Does the length check return on 0?
-    test('Length 0 Returns', async() => {
+    test('Length 0 Returns', async () => {
         orderMock.mockResolvedValue({
             //Empty array (length 0)
             data: [],
@@ -503,32 +546,32 @@ describe('getOrganizationMembers', () => {
 
         //Run test
         await expect(getOrganizationMembers('56789'))
-                .resolves
-                .toEqual([])      
+            .resolves
+            .toEqual([])
     })
 
     //3. Does the second database query return an error?
-    test('Database Query #2 Fails', async() => {
-        
+    test('Database Query #2 Fails', async () => {
+
         fromMock.mockReturnValueOnce(databaseQuery1)
         selectMock.mockReturnValueOnce(databaseQuery1)
         orderMock.mockResolvedValue({
             //Returns an array
-            data: [ 
-                    {
-                        user_id: '12345',
-                        org_id: '56789',
-                        role: 'admin',
-                    },
-                    {
-                        user_id: '23456',
-                        org_id: '56789',
-                        role: 'treasurer', 
-                    }
-                ],
+            data: [
+                {
+                    user_id: '12345',
+                    org_id: '56789',
+                    role: 'admin',
+                },
+                {
+                    user_id: '23456',
+                    org_id: '56789',
+                    role: 'treasurer',
+                }
+            ],
             error: null
         })
-        
+
         //Forming a new mock chain
         fromMock.mockReturnValueOnce(databaseQuery2)
         selectMock.mockReturnValueOnce(databaseQuery2)
@@ -548,47 +591,47 @@ describe('getOrganizationMembers', () => {
 
         //Run test
         await expect(getOrganizationMembers('56789'))
-                .rejects
-                .toThrow('Error!')
+            .rejects
+            .toThrow('Error!')
     })
 
     //4. Does the function return properly?
-    test('Function returns organization members', async() => {
-        
+    test('Function returns organization members', async () => {
+
         fromMock.mockReturnValueOnce(databaseQuery1)
         selectMock.mockReturnValueOnce(databaseQuery1)
         orderMock.mockResolvedValue({
             //Returns an array
-            data: [ 
-                    {
-                        user_id: '12345',
-                        org_id: '56789',
-                        role: 'admin',
-                    },
-                    {
-                        user_id: '23456',
-                        org_id: '56789',
-                        role: 'treasurer', 
-                    }
-                ],
+            data: [
+                {
+                    user_id: '12345',
+                    org_id: '56789',
+                    role: 'admin',
+                },
+                {
+                    user_id: '23456',
+                    org_id: '56789',
+                    role: 'treasurer',
+                }
+            ],
             error: null
         })
-        
+
         //Forming a new mock chain
         fromMock.mockReturnValueOnce(databaseQuery2)
         selectMock.mockReturnValueOnce(databaseQuery2)
         inMock.mockResolvedValue({
             data: [
-                    {
-                        user_id: '12345',
-                        email: 'test1@email.com',
-                        display_name: 'Test1'
-                    },
-                    {
-                        user_id: '23456',
-                        email: 'test2@email.com',
-                        display_name: 'Test2'
-                    }
+                {
+                    user_id: '12345',
+                    email: 'test1@email.com',
+                    display_name: 'Test1'
+                },
+                {
+                    user_id: '23456',
+                    email: 'test2@email.com',
+                    display_name: 'Test2'
+                }
             ],
             error: null
         })
@@ -605,7 +648,7 @@ describe('getOrganizationMembers', () => {
         await expect(getOrganizationMembers('56789'))
             .resolves
             //TO equal all the information retrieved
-                //user_id, org_id, role, and then all of user's information
+            //user_id, org_id, role, and then all of user's information
             .toEqual([
                 {
                     user_id: '12345',
@@ -620,7 +663,7 @@ describe('getOrganizationMembers', () => {
                 {
                     user_id: '23456',
                     org_id: '56789',
-                    role: 'treasurer', 
+                    role: 'treasurer',
                     user: {
                         user_id: '23456',
                         email: 'test2@email.com',
@@ -631,7 +674,7 @@ describe('getOrganizationMembers', () => {
     })
 
     //5. If the first database query is null, do we handle the branch appropriately?
-    test('Database Query #1 Returns Null', async() =>{
+    test('Database Query #1 Returns Null', async () => {
         orderMock.mockResolvedValue({
             data: null, //If null, the code should convert this to [] 
             error: null
@@ -645,30 +688,30 @@ describe('getOrganizationMembers', () => {
 
         //Run test
         await expect(getOrganizationMembers('56789'))
-                .resolves
-                .toEqual([])      
+            .resolves
+            .toEqual([])
     })
     //6. If the second database query is null, do we handle the branch appropriately?
-    test('Database Query #2 Returns Null', async() =>{
-                fromMock.mockReturnValueOnce(databaseQuery1)
+    test('Database Query #2 Returns Null', async () => {
+        fromMock.mockReturnValueOnce(databaseQuery1)
         selectMock.mockReturnValueOnce(databaseQuery1)
         orderMock.mockResolvedValue({
             //Returns an array
-            data: [ 
-                    {
-                        user_id: '12345',
-                        org_id: '56789',
-                        role: 'admin',
-                    },
-                    {
-                        user_id: '23456',
-                        org_id: '56789',
-                        role: 'treasurer', 
-                    }
-                ],
+            data: [
+                {
+                    user_id: '12345',
+                    org_id: '56789',
+                    role: 'admin',
+                },
+                {
+                    user_id: '23456',
+                    org_id: '56789',
+                    role: 'treasurer',
+                }
+            ],
             error: null
         })
-        
+
         //Forming a new mock chain
         fromMock.mockReturnValueOnce(databaseQuery2)
         selectMock.mockReturnValueOnce(databaseQuery2)
@@ -689,7 +732,7 @@ describe('getOrganizationMembers', () => {
         await expect(getOrganizationMembers('56789'))
             .resolves
             //TO equal all the information retrieved
-                //user_id, org_id, role, and then all of user's information
+            //user_id, org_id, role, and then all of user's information
             .toEqual([
                 {
                     user_id: '12345',
@@ -700,7 +743,7 @@ describe('getOrganizationMembers', () => {
                 {
                     user_id: '23456',
                     org_id: '56789',
-                    role: 'treasurer', 
+                    role: 'treasurer',
                     user: null
                 }
             ])

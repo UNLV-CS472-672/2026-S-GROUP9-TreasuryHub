@@ -30,7 +30,7 @@ export default function Navbar({
   logoSrc,
   logoAlt = "TreasuryHub logo",
 }: NavbarProps) {
-  const canEditLogo = ["treasurer", "advisor"].includes(
+  const canEditLogo = ["treasurer", "executive", "advisor", "admin"].includes(
     currentUserRole.toLowerCase()
   );
   return (

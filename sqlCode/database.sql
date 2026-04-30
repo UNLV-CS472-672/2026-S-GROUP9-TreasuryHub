@@ -1,8 +1,16 @@
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ============================================================================
+-- TreasuryHub Database Schema (Supabase Environment)
+-- ============================================================================
+-- This file is the source of truth for the database schema. It is fully
+-- rerunnable: every statement uses IF NOT EXISTS, ADD COLUMN IF NOT EXISTS,
+-- or DROP IF EXISTS, so it can be run repeatedly on an existing database
+-- without breaking anything.
+-- ============================================================================
 
--- TreasuryHub Database Schema
 
--- Tables:
+-- ----------------------------------------------------------------------------
+-- 1. Tables
+-- ----------------------------------------------------------------------------
 
 -- Organizations Table
 -- Represents an organization workspace.
@@ -14,10 +22,12 @@ CREATE TABLE IF NOT EXISTS organizations (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Add logo_path column if missing (Added after table was created)
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS logo_path TEXT;
+
+
 -- Users Table
 -- Public mirror of auth.users. Auto-populated via trigger on registration.
--- Teammates: query this table to look up users by ID or email.
--- See Supabase auth docs: https://supabase.com/docs/guides/auth/managing-user-data
 CREATE TABLE IF NOT EXISTS users (
     user_id      UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email        TEXT NOT NULL,
@@ -28,10 +38,9 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
+
 -- Org Members Table
--- Table connecting users to organizations with a role.
--- Role field is subject to change upon addition of the Roles table,
--- which would add more flexibility for creating/managing roles (UC3)
+-- Connects users to organizations with a role.
 CREATE TABLE IF NOT EXISTS org_members (
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     org_id  UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
@@ -39,34 +48,24 @@ CREATE TABLE IF NOT EXISTS org_members (
     role    TEXT NOT NULL CHECK (role IN ('member', 'executive', 'advisor', 'treasury_team', 'treasurer', 'admin'))
 );
 
--- Table: Transactions Table
--- Description: Stores financial transactions
--- Dependencies: organizations (org_id FK)
+
+-- Transactions Table
 CREATE TABLE IF NOT EXISTS transactions (
     transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
     date           DATE NOT NULL CHECK (date <= CURRENT_DATE),
-    description    TEXT NOT NULL,
-    category       TEXT NOT NULL,
-    type           TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-    amount         NUMERIC(12,2) NOT NULL CHECK (amount > 0),
-    notes          TEXT, -- Additional notes not included in description
-    -- TODO: Incorporate audit fields
-    -- -- Audit Fields
-    -- created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- created_by     UUID NOT NULL REFERENCES users(user_id) ON DELETE SET NULL,
-    -- updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
-    -- updated_by     UUID NOT NULL,
-    -- deleted_at     TIMESTAMPTZ, -- if NULL, not deleted
-    -- deleted_by     UUID,
-    -- TODO: Create views for active records, or have trigger once in audit log for deletion
-    -- TODO: Create triggers for updates, deletions
-    -- TODO: Create indexes for search
+    description    TEXT NOT NULL DEFAULT '',
+    category       TEXT NOT NULL DEFAULT 'operations',
+    type           TEXT NOT NULL DEFAULT 'income' CHECK (type IN ('income', 'expense')),
+    amount         NUMERIC(12,2) NOT NULL DEFAULT 1 CHECK (amount > 0),
+    notes          TEXT
 );
 
+-- Add created_by column if missing
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(user_id) ON DELETE SET NULL;
+
+
 -- Files Table
--- Stores metadata for uploaded receipts and documents.
--- Actual files live in the private Supabase Storage bucket named 'files'.
 CREATE TABLE IF NOT EXISTS files (
     file_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
@@ -74,136 +73,61 @@ CREATE TABLE IF NOT EXISTS files (
     file_path      TEXT NOT NULL UNIQUE,
     file_name      TEXT NOT NULL,
     file_type      TEXT NOT NULL CHECK (file_type IN ('receipt', 'document')),
-    mime_type      TEXT NOT NULL,
+    mime_type      TEXT NOT NULL DEFAULT '',
     uploaded_by    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     uploaded_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+
 -- Audit Log Table
---  - audit_id: unique identifier for each log entry
---  - org_id: identifies the organization the entry belongs to
---  - user_id: identifies which user performed the action
---  - action: type of change (CREATE, UPDATE, DELETE)
---  - entity: type of object affected (transactions and files for now)
---  - before_data: JSON snapshot of the object before the change
---  - after_data: JSON snapshot of the object after the change
---  - created_at: timestamp of when the audit entry was created
--- Note: audit logs for an organization must be archived or manually deleted
--- before an organization could be deleted.
 CREATE TABLE IF NOT EXISTS audit_logs (
     audit_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE RESTRICT, 
-    user_id        UUID REFERENCES users(user_id) ON DELETE RESTRICT,
+    org_id         UUID NOT NULL REFERENCES organizations(org_id) ON DELETE RESTRICT,
+    user_id        UUID NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     action         TEXT NOT NULL CHECK (action IN ('CREATE', 'UPDATE', 'DELETE')),
-    entity         TEXT NOT NULL, -- This is for 'transaction', ' file', etc.
-    entity_id      UUID NOT NULL, 
+    entity         TEXT NOT NULL,
+    entity_id      TEXT NOT NULL,
     before_data    JSONB,
     after_data     JSONB,
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-    type           TEXT NOT NULL CHECK (type IN ('financial', 'account', 'file', 'system')),
-    display_role   TEXT 
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Roles Table
--- Placeholder for future role management feature (UC3)
+-- Columns added after table creation
+ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS type TEXT;
+ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS display_role TEXT;
+
 
 -- Quotes Table
 CREATE TABLE IF NOT EXISTS quotes (
-    quotes_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id          UUID NOT NULL REFERENCES organizations(org_id) ON DELETE CASCADE,
-    vendor          TEXT NOT NULL,
-    memo            TEXT NOT NULL,
-    amount          NUMERIC(12,2) NOT NULL CHECK (amount >0),
-    accepted        BOOL NOT NULL DEFAULT false,
-    uploaded_by     UUID REFERENCES auth.users(id) ON DELETE SET NULL
+    quotes_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id       UUID REFERENCES organizations(org_id) ON DELETE CASCADE,
+    vendor       TEXT NOT NULL DEFAULT '',
+    memo         TEXT NOT NULL DEFAULT '',
+    amount       NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+    accepted     BOOLEAN NOT NULL DEFAULT false,
+    uploaded_by  UUID REFERENCES auth.users(id) ON DELETE SET NULL DEFAULT auth.uid()
 );
 
 
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
--- RLS Rules:
-
--- Enable RLS on files table
-ALTER TABLE files ENABLE ROW LEVEL SECURITY;
-
--- Enable RLS on audit_logs table
-ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Org members can view files" ON files;
-CREATE POLICY "Org members can view files"
-ON files FOR SELECT
-USING (
-    org_id IN (
-        SELECT org_id FROM org_members
-        WHERE user_id = auth.uid()
-        AND role IN ('treasurer', 'treasury_team', 'admin', 'executive', 'advisor')
-    )
+-- Tasks Table
+CREATE TABLE IF NOT EXISTS tasks (
+    id                 BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    title              TEXT NOT NULL,
+    task_type          TEXT NOT NULL,
+    assign_type        TEXT NOT NULL,
+    assigned_to        TEXT NOT NULL,
+    due_date           DATE,
+    created_at         TIMESTAMPTZ DEFAULT now(),
+    notify_days_before INTEGER DEFAULT 3,
+    org_id             UUID REFERENCES organizations(org_id) ON DELETE CASCADE,
+    created_by         UUID REFERENCES users(user_id) ON DELETE SET NULL
 );
 
-DROP POLICY IF EXISTS "Permitted roles can upload files" ON files;
-CREATE POLICY "Permitted roles can upload files"
-ON files FOR INSERT
-WITH CHECK (
-    org_id IN (
-        SELECT org_id FROM org_members
-        WHERE user_id = auth.uid()
-        AND role IN ('treasurer', 'treasury_team', 'admin')
-    )
-);
 
-DROP POLICY IF EXISTS "Permitted roles can delete files" ON files;
-CREATE POLICY "Permitted roles can delete files"
-ON files FOR DELETE
-USING (
-    org_id IN (
-        SELECT org_id FROM org_members
-        WHERE user_id = auth.uid()
-        AND role IN ('treasurer', 'treasury_team', 'admin')
-    )
-);
+-- ----------------------------------------------------------------------------
+-- 2. Trigger: Auto-create a public users row when someone signs up
+-- ----------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Permitted roles can view audit logs" ON audit_logs;
-DROP POLICY IF EXISTS "Treasurer can view audit logs" ON audit_logs;
-DROP POLICY IF EXISTS "Admins can view all audit logs" ON audit_logs;
-DROP POLICY IF EXISTS "Treasurers can view financial audit logs" ON audit_logs;
-
-CREATE POLICY "Admins can view all audit logs"
-ON audit_logs FOR SELECT
-USING (
-    org_id IN (
-        SELECT org_id FROM org_members
-        WHERE user_id = auth.uid()
-        AND role = 'admin'
-    )
-);
-
-CREATE POLICY "Treasurers can view financial audit logs"
-ON audit_logs FOR SELECT
-USING (
-    type = 'financial'
-    AND org_id IN (
-        SELECT org_id FROM org_members
-        WHERE user_id = auth.uid()
-        AND role = 'treasurer'
-    )
-);
-
--- Only treasurer can export csv of transactions
-DROP POLICY IF EXISTS "Treasurer can export transactions" ON transactions;
-CREATE POLICY "Treasurer can export transactions"
-ON transactions FOR SELECT
-USING (
-    org_id IN (
-        SELECT org_id FROM org_members
-        WHERE user_id = auth.uid()
-        AND role = 'treasurer'
-    )
-);
-
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
--- Trigger: Auto-create a public users row when someone signs up.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
@@ -217,21 +141,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Drop and recreate the trigger so re-runs don't throw a "trigger already exists" error
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--- One-time backfill for users that exist in auth.users
--- but are missing from public.users.
---
--- This matters because the members page reads from public.users
--- for display name + email. If older accounts never got copied over,
--- they show up as Unknown User / Unknown Email.
-
+-- One-time backfill for users in auth.users but missing from public.users
 INSERT INTO public.users (user_id, email, display_name)
 SELECT
     auth_user.id,
@@ -242,27 +158,438 @@ LEFT JOIN public.users AS public_user
     ON public_user.user_id = auth_user.id
 WHERE public_user.user_id IS NULL;
 
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--- Storage Policies:
--- Same pattern as RLS — drop first since there's no IF NOT EXISTS for policies.
+-- ============================================================================
+-- 3. ROW LEVEL SECURITY
+-- ============================================================================
+-- All policies below are rerunnable. Each one DROP IF EXISTS before CREATE.
+-- A SECURITY DEFINER function is used to break recursion when org_members
+-- policies reference org_members itself.
+-- ============================================================================
 
-DROP POLICY IF EXISTS "Authenticated users can upload files" ON storage.objects;
-CREATE POLICY "Authenticated users can upload files"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'files');
 
-DROP POLICY IF EXISTS "Authenticated users can read files" ON storage.objects;
-CREATE POLICY "Authenticated users can read files"
+-- ----------------------------------------------------------------------------
+-- 3.1 Helper functions
+-- ----------------------------------------------------------------------------
+-- Helper function to avoid infinite recursion in org_members policies
+-- Returns the set of (org_id, role) pairs for the current authenticated user.
+-- Runs as SECURITY DEFINER so it bypasses RLS on org_members.
+
+CREATE OR REPLACE FUNCTION public.get_current_user_memberships()
+RETURNS TABLE(org_id uuid, role text)
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT om.org_id, om.role
+  FROM public.org_members om
+  WHERE om.user_id = auth.uid();
+$$;
+
+
+-- Helper function for member email lookup
+-- This lets treasurer/admin find users by email to add to their org
+-- without needing a SELECT policy that exposes all users
+-- Runs as SECURITY DEFINER so it bypasses RLS on org_members.
+
+CREATE OR REPLACE FUNCTION public.find_user_by_email_for_org(target_email text, target_org uuid)
+RETURNS TABLE(user_id uuid, email text, display_name text)
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT u.user_id, u.email, u.display_name
+  FROM public.users u
+  WHERE lower(u.email) = lower(target_email)
+  AND EXISTS (
+    SELECT 1 FROM public.org_members om
+    WHERE om.user_id = auth.uid()
+    AND om.org_id = target_org
+    AND om.role IN ('treasurer', 'admin')
+  );
+$$;
+
+-- ----------------------------------------------------------------------------
+-- 3.2 Enable RLS on all tables
+-- ----------------------------------------------------------------------------
+
+ALTER TABLE org_members   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE files         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quotes        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks         ENABLE ROW LEVEL SECURITY;
+
+
+-- ----------------------------------------------------------------------------
+-- 3.3 Organizations
+-- ----------------------------------------------------------------------------
+-- NOTE: RLS is intentionally DISABLED on this table.
+-- Reason: With RLS enabled, INSERT was being rejected even with WITH CHECK (true)
+-- and an authenticated user. The exact cause was not pinpointed.
+-- Practical impact is minimal — organizations only contain org_id, org_name,
+-- description, and logo_path (no sensitive data). All sensitive data is in
+-- other tables (transactions, files, audit_logs) which DO have RLS scoped
+-- through org_members. A user can technically see every org's name in the DB,
+-- but cannot access any of their data.
+
+
+-- ----------------------------------------------------------------------------
+-- 3.4 Org Members
+-- ----------------------------------------------------------------------------
+
+-- SELECT: users see their own membership rows; treasurer/admin see all in their org
+DROP POLICY IF EXISTS "Users see own membership or all if treasurer/admin" ON org_members;
+CREATE POLICY "Users see own membership or all if treasurer/admin"
+ON org_members FOR SELECT
+USING (
+    user_id = auth.uid()
+    OR org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasurer', 'admin')
+    )
+);
+
+-- INSERT: a user can insert themselves (for org creation flow)
+-- OR treasurer/admin can add any user to their org
+DROP POLICY IF EXISTS "User can self-join or treasurer/admin can add" ON org_members;
+CREATE POLICY "User can self-join or treasurer/admin can add"
+ON org_members FOR INSERT
+WITH CHECK (
+    user_id = auth.uid()
+    OR org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasurer', 'admin')
+    )
+);
+
+-- UPDATE: treasurer/admin only
+DROP POLICY IF EXISTS "Treasurer and admin can update memberships" ON org_members;
+CREATE POLICY "Treasurer and admin can update memberships"
+ON org_members FOR UPDATE
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasurer', 'admin')
+    )
+);
+
+-- DELETE: treasurer/admin only
+DROP POLICY IF EXISTS "Treasurer and admin can remove memberships" ON org_members;
+CREATE POLICY "Treasurer and admin can remove memberships"
+ON org_members FOR DELETE
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasurer', 'admin')
+    )
+);
+
+
+-- ----------------------------------------------------------------------------
+-- 3.5 Users
+-- ----------------------------------------------------------------------------
+
+-- SELECT: a user can read themselves, plus anyone they share an org with
+DROP POLICY IF EXISTS "Users can view themselves and org co-members" ON users;
+CREATE POLICY "Users can view themselves and org co-members"
+ON users FOR SELECT
+USING (
+    user_id = auth.uid()
+    OR EXISTS (
+        SELECT 1
+        FROM public.get_current_user_memberships() me
+        JOIN public.org_members them ON them.org_id = me.org_id
+        WHERE them.user_id = users.user_id
+    )
+);
+
+-- UPDATE: only own profile
+DROP POLICY IF EXISTS "Users can update their own profile" ON users;
+CREATE POLICY "Users can update their own profile"
+ON users FOR UPDATE
+USING (user_id = auth.uid());
+
+
+-- ----------------------------------------------------------------------------
+-- 3.6 Transactions
+-- ----------------------------------------------------------------------------
+
+-- SELECT: executive, advisor, treasury_team, treasurer, admin (members get nothing)
+DROP POLICY IF EXISTS "Officers and above can view transactions" ON transactions;
+CREATE POLICY "Officers and above can view transactions"
+ON transactions FOR SELECT
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('executive', 'advisor', 'treasury_team', 'treasurer', 'admin')
+    )
+);
+
+-- INSERT: treasury_team, treasurer, admin
+DROP POLICY IF EXISTS "Treasury team and above can create transactions" ON transactions;
+CREATE POLICY "Treasury team and above can create transactions"
+ON transactions FOR INSERT
+WITH CHECK (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+-- UPDATE
+DROP POLICY IF EXISTS "Treasury team and above can update transactions" ON transactions;
+CREATE POLICY "Treasury team and above can update transactions"
+ON transactions FOR UPDATE
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+-- DELETE
+DROP POLICY IF EXISTS "Treasury team and above can delete transactions" ON transactions;
+CREATE POLICY "Treasury team and above can delete transactions"
+ON transactions FOR DELETE
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+
+-- ----------------------------------------------------------------------------
+-- 3.7 Files
+-- ----------------------------------------------------------------------------
+
+DROP POLICY IF EXISTS "Org members can view files" ON files;
+CREATE POLICY "Org members can view files"
+ON files FOR SELECT
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('executive', 'advisor', 'treasury_team', 'treasurer', 'admin')
+    )
+);
+
+DROP POLICY IF EXISTS "Permitted roles can upload files" ON files;
+CREATE POLICY "Permitted roles can upload files"
+ON files FOR INSERT
+WITH CHECK (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+DROP POLICY IF EXISTS "Permitted roles can delete files" ON files;
+CREATE POLICY "Permitted roles can delete files"
+ON files FOR DELETE
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+
+-- ----------------------------------------------------------------------------
+-- 3.8 Audit Logs
+-- ----------------------------------------------------------------------------
+
+-- SELECT: treasurer/admin see all audit logs in their org
+DROP POLICY IF EXISTS "Treasurer and admin can view audit logs" ON audit_logs;
+CREATE POLICY "Treasurer and admin can view audit logs"
+ON audit_logs FOR SELECT
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasurer', 'admin')
+    )
+);
+
+-- INSERT: any authenticated user in the org can insert an audit entry
+-- (server actions call logAuditEntry as the user)
+DROP POLICY IF EXISTS "Allow authenticated inserts on audit_logs" ON audit_logs;
+DROP POLICY IF EXISTS "Org members can insert audit logs" ON audit_logs;
+CREATE POLICY "Org members can insert audit logs"
+ON audit_logs FOR INSERT
+WITH CHECK (
+    user_id = auth.uid()
+    AND org_id IN (SELECT m.org_id FROM public.get_current_user_memberships() m)
+);
+
+
+-- ----------------------------------------------------------------------------
+-- 3.9 Quotes
+-- ----------------------------------------------------------------------------
+
+-- SELECT: executive, advisor, treasury_team, treasurer, admin (members cannot view)
+DROP POLICY IF EXISTS "Officers and above can view quotes" ON quotes;
+CREATE POLICY "Officers and above can view quotes"
+ON quotes FOR SELECT
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('executive', 'advisor', 'treasury_team', 'treasurer', 'admin')
+    )
+);
+
+-- INSERT: treasury_team, treasurer, admin
+DROP POLICY IF EXISTS "Treasury team and above can create quotes" ON quotes;
+CREATE POLICY "Treasury team and above can create quotes"
+ON quotes FOR INSERT
+WITH CHECK (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+-- UPDATE
+DROP POLICY IF EXISTS "Treasury team and above can update quotes" ON quotes;
+CREATE POLICY "Treasury team and above can update quotes"
+ON quotes FOR UPDATE
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+-- DELETE
+DROP POLICY IF EXISTS "Treasury team and above can delete quotes" ON quotes;
+CREATE POLICY "Treasury team and above can delete quotes"
+ON quotes FOR DELETE
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+
+-- ----------------------------------------------------------------------------
+-- 3.10 Tasks
+-- ----------------------------------------------------------------------------
+
+-- SELECT: all org members can view tasks
+DROP POLICY IF EXISTS "All org members can view tasks" ON tasks;
+CREATE POLICY "All org members can view tasks"
+ON tasks FOR SELECT
+USING (
+    org_id IN (SELECT m.org_id FROM public.get_current_user_memberships() m)
+);
+
+-- INSERT: treasury_team, treasurer, admin (matching TASK_MANAGEMENT_ROLES in roles.ts)
+DROP POLICY IF EXISTS "Treasury team and above can create tasks" ON tasks;
+CREATE POLICY "Treasury team and above can create tasks"
+ON tasks FOR INSERT
+WITH CHECK (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+-- UPDATE
+DROP POLICY IF EXISTS "Treasury team and above can update tasks" ON tasks;
+CREATE POLICY "Treasury team and above can update tasks"
+ON tasks FOR UPDATE
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+-- DELETE
+DROP POLICY IF EXISTS "Treasury team and above can delete tasks" ON tasks;
+CREATE POLICY "Treasury team and above can delete tasks"
+ON tasks FOR DELETE
+USING (
+    org_id IN (
+        SELECT m.org_id FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+
+-- ----------------------------------------------------------------------------
+-- 3.11 Storage Bucket: files
+-- ----------------------------------------------------------------------------
+
+DROP POLICY IF EXISTS "Org members can read files bucket" ON storage.objects;
+CREATE POLICY "Org members can read files bucket"
 ON storage.objects FOR SELECT
 TO authenticated
-USING (bucket_id = 'files');
+USING (
+    bucket_id = 'files'
+    AND (storage.foldername(name))[1] IN (
+        SELECT m.org_id::text FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('executive', 'advisor', 'treasury_team', 'treasurer', 'admin')
+    )
+);
 
-DROP POLICY IF EXISTS "Authenticated users can delete files" ON storage.objects;
-CREATE POLICY "Authenticated users can delete files"
+DROP POLICY IF EXISTS "Privileged org members can upload to files bucket" ON storage.objects;
+CREATE POLICY "Privileged org members can upload to files bucket"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+    bucket_id = 'files'
+    AND (storage.foldername(name))[1] IN (
+        SELECT m.org_id::text FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
+
+DROP POLICY IF EXISTS "Privileged org members can delete from files bucket" ON storage.objects;
+CREATE POLICY "Privileged org members can delete from files bucket"
 ON storage.objects FOR DELETE
 TO authenticated
-USING (bucket_id = 'files');
+USING (
+    bucket_id = 'files'
+    AND (storage.foldername(name))[1] IN (
+        SELECT m.org_id::text FROM public.get_current_user_memberships() m
+        WHERE m.role IN ('treasury_team', 'treasurer', 'admin')
+    )
+);
 
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-- ----------------------------------------------------------------------------
+-- 3.12 Storage Bucket: organization-logos
+-- ----------------------------------------------------------------------------
+
+DROP POLICY IF EXISTS "Allow org members to read org logos" ON storage.objects;
+CREATE POLICY "Allow org members to read org logos"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (
+    bucket_id = 'organization-logos'
+    AND EXISTS (
+        SELECT 1 FROM public.get_current_user_memberships() m
+        WHERE m.org_id::text = (storage.foldername(name))[1]
+    )
+);
+
+DROP POLICY IF EXISTS "Allow privileged org members to upload org logos" ON storage.objects;
+CREATE POLICY "Allow privileged org members to upload org logos"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+    bucket_id = 'organization-logos'
+    AND EXISTS (
+        SELECT 1 FROM public.get_current_user_memberships() m
+        WHERE m.org_id::text = (storage.foldername(name))[1]
+        AND lower(m.role) IN ('treasurer', 'advisor', 'executive', 'admin')
+    )
+);
+
+-- ============================================================================
+-- END OF FILE
+-- ============================================================================
