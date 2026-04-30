@@ -10,11 +10,14 @@ type Props = {
     org_name: string
     role: string
   }[]
-    currentOrgId: string
-    basePath: string // e.g. '/dashboard' or '/files'
+  currentOrgId: string
+  basePath: string // e.g. '/dashboard' or '/files'
 }
 
 export default function OrgDropDown({ organizations, currentOrgId, basePath }: Props) {
+  // Hide entirely if user has only one org (no other orgs to switch to)
+  if (organizations.length <= 1) return null;
+
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
