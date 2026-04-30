@@ -38,7 +38,7 @@ export default async function OrgSettingsPage({
     .eq("user_id", user.id)
     .single();
 
-  const allowedRoles = ["treasurer", "advisor"];
+  const allowedRoles = ["treasurer", "advisor", "executive", "admin"];
 
   if (!membership || !allowedRoles.includes(membership.role.toLowerCase())) {
     redirect(`/?orgId=${orgId}`);
