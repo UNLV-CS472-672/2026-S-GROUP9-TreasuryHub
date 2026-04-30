@@ -1,10 +1,23 @@
-import Form from 'next/form'
-import { createOrganization } from "./actions";
-import Link from "next/link";
+"use client";
 
-export const metadata = { title: "New Organization" };
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createOrganization } from "./actions";
 
 export default function NewOrganization() {
+    const [isPending, startTransition] = useTransition();
+    const [name, setName] = useState("");
+    const router = useRouter();
+
+    function handleSubmit(formData: FormData) {
+        startTransition(async () => {
+            await createOrganization(formData);
+            // Once create succeeds, send user back to org list (which will show the new org)
+            router.push("/organizations");
+        });
+    }
+
     return (
         <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
             <section className="w-full max-w-sm rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] p-8 shadow-[0_0_20px_rgba(255,255,255,0.05)] backdrop-blur-sm">
@@ -15,19 +28,23 @@ export default function NewOrganization() {
                     New Organization
                 </h1>
 
-                <Form action={createOrganization} className="flex flex-col gap-3">
+                <form action={handleSubmit} className="flex flex-col gap-3">
                     <input
                         name="organizationName"
                         type="text"
                         required
+                        disabled={isPending}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
                         placeholder="Organization name"
-                        className="w-full rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                     />
                     <button
                         type="submit"
-                        className="w-full rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition hover:bg-blue-500/20"
+                        disabled={isPending || !name.trim()}
+                        className="w-full rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition hover:bg-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Create Organization
+                        {isPending ? "Creating..." : "Create Organization"}
                     </button>
                     <Link
                         href="/organizations"
@@ -35,7 +52,7 @@ export default function NewOrganization() {
                     >
                         Go Back
                     </Link>
-                </Form>
+                </form>
             </section>
         </main>
     );
