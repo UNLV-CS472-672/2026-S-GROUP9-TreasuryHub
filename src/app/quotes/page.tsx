@@ -116,8 +116,8 @@ function QuotesPageContent() {
                     <BackButton />
                 </div>
 
-                {/* Access denied state */}
-                {!loading && !canView && (
+                {/* Access denied state - only show after role has been fetched */}
+                {!loading && userRole !== null && !canView && (
                     <section className="rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] p-8 text-center backdrop-blur-sm shadow-[0_0_20px_rgba(255,255,255,0.05)]">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                             Access denied
@@ -128,11 +128,11 @@ function QuotesPageContent() {
                     </section>
                 )}
 
-                {/* Main content */}
-                {(loading || canView) && (
+                {/* Main content - show during loading, while role resolves, or if user can view */}
+                {(loading || userRole === null || canView) && (
                     <>
                         {/* Add Quote Form (only for users with manage permission) */}
-                        {(loading || canManage) && (
+                        {(loading || userRole === null || canManage) && (
                             <section className="rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] p-6 backdrop-blur-sm shadow-[0_0_20px_rgba(255,255,255,0.05)] mb-8">
                                 <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-4">Add Quote</h2>
 
@@ -179,7 +179,7 @@ function QuotesPageContent() {
                             </section>
                         )}
 
-                        {/* Error banner - moved up to be visible without scrolling */}
+                        {/* Error banner */}
                         {error && (
                             <div className="mb-8 flex items-start justify-between gap-3 rounded-xl border border-red-300 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
                                 <span>{error}</span>
