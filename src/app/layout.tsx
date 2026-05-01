@@ -35,8 +35,16 @@ const themeInitScript = `
     var saved = localStorage.getItem('treasuryhub-theme');
     var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     var theme = saved || (prefersDark ? 'dark' : 'light');
+
+    var root = document.documentElement;
+    root.classList.remove('light', 'dark', 'lightbright');
+
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+    } else if (theme === 'lightbright') {
+      root.classList.add('lightbright');
+    } else {
+      root.classList.add('light');
     }
   } catch (e) {}
 })();

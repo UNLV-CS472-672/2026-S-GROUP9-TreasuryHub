@@ -46,6 +46,66 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   --skeleton-highlight: #374151;
 }
 
+/* GREAT WALL OF LightBright theme */
+.lightbright {
+  --background: #fff7ed;
+  --foreground: #3f2614;
+  --card: #ffffff;
+  --border: #fbdea8;
+
+  --lb-primary: #f3ab42;
+  --lb-secondary: #ffc76b;
+  --lb-soft: #fbdea8;
+  --lb-light: #ffeae3;
+  --lb-muted: #8a5a2f;
+}
+
+/* Cards */
+.lightbright .lb-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  box-shadow: 0 10px 28px rgba(243, 171, 66, 0.12);
+  transition: all 0.2s ease;
+}
+
+.lightbright .lb-card:hover {
+  background: var(--lb-light);
+  border-color: var(--lb-secondary);
+  box-shadow: 0 14px 36px rgba(243, 171, 66, 0.18);
+}
+
+/* Text */
+.lightbright .lb-text {
+  color: var(--foreground);
+}
+
+.lightbright .lb-muted {
+  color: var(--lb-muted);
+}
+
+/* Table rows */
+.lightbright .lb-row {
+  border-color: var(--border);
+}
+
+.lightbright .lb-row:hover {
+  background: #fff1e8;
+}
+
+/* Buttons */
+.lightbright .lb-button {
+  background: var(--lb-light);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.lightbright .lb-button:hover {
+  background: var(--lb-soft);
+  border-color: var(--lb-secondary);
+}
+
+
 @keyframes skeleton-shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
