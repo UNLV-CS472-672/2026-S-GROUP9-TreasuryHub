@@ -86,10 +86,18 @@ function StatCard({
         backdrop-blur-sm
         transition duration-300
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
+        hover:border-gray-300
+        hover:bg-gray-50
+        hover:shadow-md
         dark:hover:border-white/[0.25]
         dark:hover:bg-white/[0.06]
         dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
-        ${hoverAccent ?? ""}
+        hover:border-gray-300
+        hover:bg-gray-50
+        hover:shadow-md
+        dark:hover:border-white/[0.25]
+        dark:hover:bg-white/[0.06]
+        dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
       `}
     >
     <div className="flex items-start justify-between gap-4 overflow-hidden">
@@ -130,6 +138,9 @@ function LinkCard({
         backdrop-blur-sm
         transition duration-300
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
+        hover:border-gray-300
+        hover:bg-gray-50
+        hover:shadow-md
         dark:hover:border-white/[0.25]
         dark:hover:bg-white/[0.06]
         dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
@@ -162,9 +173,10 @@ function QuotesCard({ orgId }: { orgId: string }) {
         backdrop-blur-sm
         transition duration-300
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
-        hover:border-white/[0.25]
-        hover:bg-white/[0.06]
-        hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
+        hover:bg-gray-50 hover:border-gray-300
+        dark:hover:border-white/[0.25]
+        dark:hover:bg-white/[0.06]
+        dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
       "
     >
       <p className="lb-muted text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
@@ -219,6 +231,7 @@ function TransactionsTable({
           <Link
             href={`/transaction?orgId=${orgId}`}
             className="
+              lb-button
               rounded-xl
               border border-white/[0.2]
               bg-white/[0.05]
@@ -226,7 +239,7 @@ function TransactionsTable({
               text-sm font-medium text-gray-900 dark:text-white
               transition
               hover:border-white/[0.35]
-              hover:bg-white/[0.08]
+              hover:bg-gray-100 dark:hover:bg-white/[0.08]
             "
           >
             View Transactions
@@ -244,7 +257,7 @@ function TransactionsTable({
                 text-sm font-medium text-gray-900 dark:text-white
                 transition
                 hover:border-white/[0.35]
-                hover:bg-blue-100/[0.08]
+                hover:bg-gray-100 dark:hover:bg-white/[0.08]
               "
             />
           )}
@@ -271,7 +284,7 @@ function TransactionsTable({
                   lb-row
                   border-b border-white/[0.12]
                   transition
-                  hover:bg-white/[0.05]
+                  hover:bg-gray-50 dark:hover:bg-white/[0.05]
                 "
               >
                 <td className="py-4 pr-6  text-gray-900 dark:text-white">
@@ -553,21 +566,21 @@ export default async function DashboardPage({
                 value={formatCurrency(data.summary.income)}
                 icon={<DollarSign className="h-5 w-5" />}
                 accent="bg-green-100 text-green-600"
-                hoverAccent="dark:hover:bg-emerald-50 dark:hover:bg-white/[0.06]"
+                hoverAccent="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-emerald-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Expenses"
                 value={formatCurrency(data.summary.expenses)}
                 icon={<TrendingDown className="h-5 w-5" />}
                 accent="bg-rose-100 text-rose-600"
-                hoverAccent="dark:hover:bg-rose-50 dark:hover:bg-white/[0.06]"
+                hoverAccent="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-rose-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard 
                 label="Net" 
                 value={formatCurrency(data.summary.net)} 
                 icon={<Wallet className="h-5 w-5" />}
                 accent="bg-violet-100 text-violet-600"
-                hoverAccent="dark:hover:bg-violet-50 dark:hover:bg-white/[0.06]"
+                hoverAccent="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-violet-50 dark:hover:bg-white/[0.06]"
               />
 
               <LinkCard
