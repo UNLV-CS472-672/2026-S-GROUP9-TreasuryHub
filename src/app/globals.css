@@ -55,8 +55,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   --lb-primary: #f3ab42;
   --lb-secondary: #ffc76b;
-  --lb-soft: #fbdea8;
-  --lb-light: #ffeae3;
+  --lb-soft: #fc9d7dc2;
+  --lb-light: #fbeed15c;
   --lb-muted: #8a5a2f;
 }
 
@@ -65,14 +65,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: var(--card);
   border: 1px solid var(--border);
   color: var(--foreground);
-  box-shadow: 0 10px 28px rgba(243, 171, 66, 0.12);
   transition: all 0.2s ease;
 }
 
 .lightbright .lb-card:hover {
   background: var(--lb-light);
   border-color: var(--lb-secondary);
-  box-shadow: 0 14px 36px rgba(243, 171, 66, 0.18);
+  box-shadow: 0 14px 36px rgb(247, 213, 213);
 }
 
 /* Text */
@@ -95,14 +94,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Buttons */
 .lightbright .lb-button {
-  background: var(--lb-light);
-  border: 1px solid var(--border);
+  background: #ffcbb3a7;
+  border: var(--lb-secondary);
   color: var(--foreground);
 }
 
 .lightbright .lb-button:hover {
   background: var(--lb-soft);
   border-color: var(--lb-secondary);
+  color: var(--foreground);
 }
 
 

@@ -138,9 +138,9 @@ function LinkCard({
         backdrop-blur-sm
         transition duration-300
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
-        hover:border-gray-300
-        hover:bg-gray-50
-        hover:shadow-md
+        hover:border-[#F3AB42]/40
+        hover:bg-[#FFF6DB]
+        hover:shadow-[0_0_20px_rgba(243,171,66,0.18)]
         dark:hover:border-white/[0.25]
         dark:hover:bg-white/[0.06]
         dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
@@ -173,7 +173,9 @@ function QuotesCard({ orgId }: { orgId: string }) {
         backdrop-blur-sm
         transition duration-300
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
-        hover:bg-gray-50 hover:border-gray-300
+        hover:border-[#F3AB42]/40
+        hover:bg-[#FFF6DB]
+        hover:shadow-[0_0_20px_rgba(243,171,66,0.18)]
         dark:hover:border-white/[0.25]
         dark:hover:bg-white/[0.06]
         dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
@@ -182,7 +184,7 @@ function QuotesCard({ orgId }: { orgId: string }) {
       <p className="lb-muted text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
         Quotes
       </p>
-      <p className="lb-muted mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
         Open
       </p>
       <p className="mt-2 text-sm text-gray-600 dark:text-neutral-300 transition group-hover:text-gray-900 dark:group-hover:text-white">
@@ -213,7 +215,6 @@ function TransactionsTable({
   return (
     <section //changed for layout -prabh
       className="
-        lb-card
         rounded-2xl
         border border-gray-200 dark:border-white/[0.12]
         bg-white dark:bg-white/[0.03]
@@ -323,7 +324,6 @@ function TasksSection({
   return (
     <section //changed for layout - prabh
       className="
-        lb-card
         rounded-2xl
         border border-gray-200 dark:border-white/[0.12]
       bg-white dark:bg-white/[0.03]
@@ -354,6 +354,7 @@ function TasksSection({
   <Link
     href={`/tasks?orgId=${orgId}`}
     className="
+      lb-button
       rounded-xl
       border border-white/[0.2]
       bg-white/[0.05]
@@ -376,28 +377,37 @@ function TasksSection({
           </div>
         ) : (
           tasks.map((task) => (
-            <div
+            <Link
               key={task.id}
-              className="
-                rounded-xl border border-gray-200 bg-gray-50 px-4 py-3
-                dark:border-white/[0.12] dark:bg-white/[0.03]
-              "
+              href={`/tasks?orgId=${orgId}`}
+              className="block rounded-xl"
             >
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {task.title}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-neutral-400">
-                    Assigned to {task.assigned_to} • {task.task_type}
+              <div
+                className="
+                  lb-row
+                  rounded-xl border border-gray-200 bg-gray-50 px-4 py-3
+                  transition
+                  hover:bg-gray-100
+                  dark:border-white/[0.12] dark:bg-white/[0.03]
+                  dark:hover:bg-white/[0.08]
+                "
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {task.title}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-neutral-400">
+                      Assigned to {task.assigned_to} • {task.task_type}
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-gray-600 dark:text-neutral-300">
+                    Due {formatDateOnly(task.due_date)}
                   </p>
                 </div>
-
-                <p className="text-sm text-gray-600 dark:text-neutral-300">
-                  Due {formatDateOnly(task.due_date)}
-                </p>
               </div>
-            </div>
+            </Link>
           ))
         )}
       </div>
