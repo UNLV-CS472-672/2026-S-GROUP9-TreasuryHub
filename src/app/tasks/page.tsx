@@ -43,7 +43,7 @@ const inputClass =
   "w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500";
 
 const selectClass =
-  "w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.03] text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500";
+  "w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-[#181818] text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"; //changed
 
 function TasksPageContent() {
   const orgId = useSearchParams().get("orgId");
