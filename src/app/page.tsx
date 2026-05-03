@@ -8,6 +8,16 @@ import { canExportTransactions, canViewFiles } from "@/lib/roles";
 import Navbar from "@/components/Navbar";
 import { getTasks } from "@/app/tasks/actions";
 import TaskRoleFilter from "@/components/TaskRoleFilter";
+import {
+  DollarSign,
+  TrendingDown,
+  Wallet,
+  ReceiptText,
+  ShieldCheck,
+  FileText,
+  ClipboardList,
+  Upload,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: {
@@ -55,13 +65,20 @@ function formatCurrency(value: number) {
 function StatCard({
   label,
   value,
+  icon,
+  accent,
+  hoverAccent,
 }: {
   label: string;
   value: string | number;
+  icon: React.ReactNode;
+  accent: string;
+  hoverAccent?: string;
 }) {
   return (
     <div //chnaged for layout -prabh
-      className="
+      className= {`
+        lb-card
         rounded-2xl
         border border-gray-200 dark:border-white/[0.12] 
         bg-white dark:bg-white/[0.03]
@@ -69,17 +86,30 @@ function StatCard({
         backdrop-blur-sm
         transition duration-300
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
-        hover:border-white/[0.25]
-        hover:bg-white/[0.06]
-        hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
-      "
+        hover:border-gray-300
+        hover:bg-gray-50
+        hover:shadow-md
+        dark:hover:border-white/[0.25]
+        dark:hover:bg-white/[0.06]
+        dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
+        hover:border-gray-300
+        hover:bg-gray-50
+        hover:shadow-md
+        dark:hover:border-white/[0.25]
+        dark:hover:bg-white/[0.06]
+        dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
+      `}
     >
-      <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
-        {label}
-      </p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
-        {value}
-      </p>
+    <div className="flex items-start justify-between gap-4 overflow-hidden">
+        <div>
+          <p className="lb-muted text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
+            {label}
+          </p>
+          <p className="lb-text mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+            {value}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -99,6 +129,7 @@ function LinkCard({
     <Link
       href={href} //changed for layout -prabh
       className=" 
+        lb-card
         group
         rounded-2xl
         border border-gray-200 dark:border-white/[0.12]
@@ -107,15 +138,18 @@ function LinkCard({
         backdrop-blur-sm
         transition duration-300
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
-        hover:border-white/[0.25]
-        hover:bg-white/[0.06]
-        hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
+        hover:border-[#F3AB42]/40
+        hover:bg-[#FFF6DB]
+        hover:shadow-[0_0_20px_rgba(243,171,66,0.18)]
+        dark:hover:border-white/[0.25]
+        dark:hover:bg-white/[0.06]
+        dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
       "
     >
-      <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
+      <p className="lb-muted text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
         {label}
       </p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+      <p className="lb-text mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
         {title}
       </p>
       <p className="mt-2 text-sm text-gray-600 dark:text-neutral-300 transition group-hover:text-gray-900 dark:group-hover:text-white">
@@ -130,6 +164,7 @@ function QuotesCard({ orgId }: { orgId: string }) {
     <Link 
       href={`/quotes?orgId=${orgId}`} //changed for layout- prabh
       className="
+        lb-card
         group
         rounded-2xl
         border border-gray-200 dark:border-white/[0.12]
@@ -138,12 +173,15 @@ function QuotesCard({ orgId }: { orgId: string }) {
         backdrop-blur-sm
         transition duration-300
         shadow-[0_0_20px_rgba(255,255,255,0.05)]
-        hover:border-white/[0.25]
-        hover:bg-white/[0.06]
-        hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
+        hover:border-[#F3AB42]/40
+        hover:bg-[#FFF6DB]
+        hover:shadow-[0_0_20px_rgba(243,171,66,0.18)]
+        dark:hover:border-white/[0.25]
+        dark:hover:bg-white/[0.06]
+        dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
       "
     >
-      <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
+      <p className="lb-muted text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
         Quotes
       </p>
       <p className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
@@ -194,6 +232,7 @@ function TransactionsTable({
           <Link
             href={`/transaction?orgId=${orgId}`}
             className="
+              lb-button
               rounded-xl
               border border-white/[0.2]
               bg-white/[0.05]
@@ -201,7 +240,7 @@ function TransactionsTable({
               text-sm font-medium text-gray-900 dark:text-white
               transition
               hover:border-white/[0.35]
-              hover:bg-white/[0.08]
+              hover:bg-gray-100 dark:hover:bg-white/[0.08]
             "
           >
             View Transactions
@@ -211,6 +250,7 @@ function TransactionsTable({
             <ExportCSVButton
               orgId={orgId}
               className="
+                lb-button
                 rounded-xl
                 border border-white/[0.2]
                 bg-blue-500/[0.05]
@@ -218,7 +258,7 @@ function TransactionsTable({
                 text-sm font-medium text-gray-900 dark:text-white
                 transition
                 hover:border-white/[0.35]
-                hover:bg-blue-100/[0.08]
+                hover:bg-gray-100 dark:hover:bg-white/[0.08]
               "
             />
           )}
@@ -242,9 +282,10 @@ function TransactionsTable({
               <tr
                 key={tx.transaction_id}
                 className="
+                  lb-row
                   border-b border-white/[0.12]
                   transition
-                  hover:bg-white/[0.05]
+                  hover:bg-gray-50 dark:hover:bg-white/[0.05]
                 "
               >
                 <td className="py-4 pr-6  text-gray-900 dark:text-white">
@@ -313,6 +354,7 @@ function TasksSection({
   <Link
     href={`/tasks?orgId=${orgId}`}
     className="
+      lb-button
       rounded-xl
       border border-white/[0.2]
       bg-white/[0.05]
@@ -335,28 +377,37 @@ function TasksSection({
           </div>
         ) : (
           tasks.map((task) => (
-            <div
+            <Link
               key={task.id}
-              className="
-                rounded-xl border border-gray-200 bg-gray-50 px-4 py-3
-                dark:border-white/[0.12] dark:bg-white/[0.03]
-              "
+              href={`/tasks?orgId=${orgId}`}
+              className="block rounded-xl"
             >
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {task.title}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-neutral-400">
-                    Assigned to {task.assigned_to} • {task.task_type}
+              <div
+                className="
+                  lb-row
+                  rounded-xl border border-gray-200 bg-gray-50 px-4 py-3
+                  transition
+                  hover:bg-gray-100
+                  dark:border-white/[0.12] dark:bg-white/[0.03]
+                  dark:hover:bg-white/[0.08]
+                "
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {task.title}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-neutral-400">
+                      Assigned to {task.assigned_to} • {task.task_type}
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-gray-600 dark:text-neutral-300">
+                    Due {formatDateOnly(task.due_date)}
                   </p>
                 </div>
-
-                <p className="text-sm text-gray-600 dark:text-neutral-300">
-                  Due {formatDateOnly(task.due_date)}
-                </p>
               </div>
-            </div>
+            </Link>
           ))
         )}
       </div>
@@ -393,12 +444,13 @@ bg-white dark:bg-white/[0.03]
               <button
                 type="submit"
                 className="
-            inline-flex items-center rounded-xl
-            border border-gray-300 dark:border-white/[0.2]
-           bg-white dark:bg-white/[0.05]
-            px-5 py-3 text-sm font-medium text-gray-900 dark:text-white transition
-           hover:bg-gray-100 dark:hover:bg-white/[0.1]
-          "
+                lb-button
+                inline-flex items-center rounded-xl
+              border border-gray-300 dark:border-white/[0.2]
+              bg-white dark:bg-white/[0.05]
+              px-5 py-3 text-sm font-medium text-gray-900 dark:text-white transition
+              hover:bg-gray-100 dark:hover:bg-white/[0.1]
+            "
               >
                 Sign Out
               </button>
@@ -407,6 +459,7 @@ bg-white dark:bg-white/[0.03]
             <Link
               href="/organizations"
               className="
+                lb-button
                 inline-flex items-center rounded-xl
                 border border-blue-500
                bg-blue-500
@@ -498,7 +551,7 @@ export default async function DashboardPage({
   const canExport = canExportTransactions(data.role);
 
   return ( //changed for layout - prabh
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="lb-page min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <Navbar
           currentUserRole={data.role}
           organizations={data.organizations}
@@ -521,12 +574,24 @@ export default async function DashboardPage({
               <StatCard
                 label="Income"
                 value={formatCurrency(data.summary.income)}
+                icon={<DollarSign className="h-5 w-5" />}
+                accent="bg-green-100 text-green-600"
+                hoverAccent="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-emerald-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Expenses"
                 value={formatCurrency(data.summary.expenses)}
+                icon={<TrendingDown className="h-5 w-5" />}
+                accent="bg-rose-100 text-rose-600"
+                hoverAccent="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-rose-50 dark:hover:bg-white/[0.06]"
               />
-              <StatCard label="Net" value={formatCurrency(data.summary.net)} />
+              <StatCard 
+                label="Net" 
+                value={formatCurrency(data.summary.net)} 
+                icon={<Wallet className="h-5 w-5" />}
+                accent="bg-violet-100 text-violet-600"
+                hoverAccent="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-violet-50 dark:hover:bg-white/[0.06]"
+              />
 
               <LinkCard
                 href={`/transaction?orgId=${data.orgId}`}
@@ -574,22 +639,37 @@ export default async function DashboardPage({
               <StatCard
                 label="Reimbursements"
                 value={formatCurrency(data.summary.reimbursementsTotal)}
+                icon={<DollarSign className="h-5 w-5" />}
+                accent="bg-emerald-100 text-emerald-600"
+                hoverAccent="dark:hover:bg-emerald-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Payables"
                 value={formatCurrency(data.summary.payablesTotal)}
+                icon={<TrendingDown className="h-5 w-5" />}
+                accent="bg-rose-100 text-rose-600"
+                hoverAccent="dark:hover:bg-rose-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Receivables"
                 value={formatCurrency(data.summary.receivablesTotal)}
+                icon={<Wallet className="h-5 w-5" />}
+                accent="bg-violet-100 text-violet-600"
+                hoverAccent="dark:hover:bg-violet-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Transactions"
                 value={data.summary.personalTransactionCount}
+                icon={<ReceiptText className="h-5 w-5" />}
+                accent="bg-blue-100 text-blue-600"
+                hoverAccent="dark:hover:bg-blue-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Uploaded Files"
                 value={data.summary.uploadedFilesCount}
+                icon={<Upload className="h-5 w-5" />}
+                accent="bg-sky-100 text-sky-600"
+                hoverAccent="dark:hover:bg-sky-50 dark:hover:bg-white/[0.06]"
               />
             </section>
 

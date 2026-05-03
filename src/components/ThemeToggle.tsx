@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 
-type Theme = "light" | "dark"
+type Theme = "light" | "dark" | "lightbright"
 
 const STORAGE_KEY = "treasuryhub-theme"
 
@@ -11,16 +11,20 @@ const STORAGE_KEY = "treasuryhub-theme"
 // has already applied the correct theme before this component mounts.
 function getCurrentTheme(): Theme {
     if (typeof document === "undefined") return "light"
-    return document.documentElement.classList.contains("dark") ? "dark" : "light"
+    const root = document.documentElement
+
+    if (root.classList.contains("dark")) return "dark"
+    if (root.classList.contains("lightbright")) return "lightbright"
+
+    return "light"
 }
 
 function applyTheme(theme: Theme) {
     const root = document.documentElement
-    if (theme === "dark") {
-        root.classList.add("dark")
-    } else {
-        root.classList.remove("dark")
-    }
+    
+    root.classList.remove("light", "dark", "lightbright")
+    root.classList.add(theme)
+
     try {
         localStorage.setItem(STORAGE_KEY, theme)
     } catch {
@@ -38,20 +42,29 @@ export default function ThemeToggle() {
         setTheme(getCurrentTheme())
     }, [])
 
-    function toggle() {
-        const next: Theme = theme === "dark" ? "light" : "dark"
+    function setSelectedTheme(next: Theme) {
         applyTheme(next)
         setTheme(next)
     }
 
     return (
+        <div className="flex rounded-xl border border-[var(--border)] bg-[var(--card)] p-1 shadow-sm">
+      {(["light", "lightbright", "dark"] as Theme[]).map((option) => (
         <button
-            type="button"
-            onClick={toggle}
-            aria-label="Toggle theme"
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-black hover:bg-gray-100 dark:border-white/[0.15] dark:bg-white/[0.05] dark:text-white dark:hover:bg-white/[0.08]"
+          key={option}
+          type="button"
+          onClick={() => setSelectedTheme(option)}
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            theme === option
+              ? "bg-amber-100 text-amber-700"
+              : "text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.08]"
+          }`}
         >
-            {theme === null ? "..." : theme === "dark" ? "Switch to light" : "Switch to dark"}
+          {option === "lightbright"
+            ? "LightBright"
+            : option.charAt(0).toUpperCase() + option.slice(1)}
         </button>
+      ))}
+    </div>
     )
 }
