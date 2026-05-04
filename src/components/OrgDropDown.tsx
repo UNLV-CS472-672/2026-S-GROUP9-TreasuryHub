@@ -24,6 +24,7 @@ export default function OrgDropDown({ organizations, currentOrgId, basePath }: P
   const inputRef = useRef<HTMLInputElement>(null)
 
   const otherOrgs = organizations.filter((org) => org.org_id !== currentOrgId)
+  const currentOrg = organizations.find((org) => org.org_id === currentOrgId)
 
   const filtered = query.trim()
     ? otherOrgs.filter((org) =>
@@ -73,7 +74,7 @@ export default function OrgDropDown({ organizations, currentOrgId, basePath }: P
           focus:outline-none
         "
       >
-        CHANGE ORGANIZATION
+        {currentOrg?.org_name ?? "Select organization"} ▾
       </button>
 
       {open && (
