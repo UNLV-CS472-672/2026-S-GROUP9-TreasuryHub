@@ -36,11 +36,12 @@ const validTaskTypes = [
 function isValidFutureDate(dateString?: string) {
   if (!dateString) return true;
 
-  const selectedDate = new Date(dateString);
-  const today = new Date();
-
-  today.setHours(0, 0, 0, 0);
+  const [year, month, day] = dateString.split('-');
+  const selectedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   selectedDate.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   return selectedDate > today;
 }

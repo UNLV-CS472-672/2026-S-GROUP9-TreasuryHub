@@ -106,10 +106,14 @@ function TasksPageContent() {
 
   const isValidFutureDate = (dateString: string) => {
     if (!dateString) return true;
-    const selectedDate = new Date(dateString);
+
+    const [year, month, day] = dateString.split('-');
+    const selectedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    selectedDate.setHours(0, 0, 0, 0);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    selectedDate.setHours(0, 0, 0, 0);
+
     return selectedDate > today;
   };
 
@@ -166,9 +170,17 @@ function TasksPageContent() {
 
   function getAlert(dueDate?: string) {
     if (!dueDate) return "";
-    const today = new Date(); const due = new Date(dueDate);
-    today.setHours(0, 0, 0, 0); due.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [year, month, day] = dueDate.split('-');
+    const due = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    due.setHours(0, 0, 0, 0);
+
+
     const diff = Math.floor((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diff < 0) return "🔴 PAST DUE";
     if (diff === 1) return "🟡 DUE TOMORROW";
     if (diff <= 3) return "🟢 UPCOMING";
     return "";
