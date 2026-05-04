@@ -209,11 +209,11 @@ function TasksPageContent() {
 
         {/* Upcoming alerts banner */}
         {getNotifications(tasks).length > 0 && (
-          <div className="mb-6 rounded-2xl border border-yellow-200 dark:border-yellow-500/30 bg-yellow-50 dark:bg-yellow-500/10 px-5 py-4">
-            <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Upcoming Task Alerts</p>
+          <div className="lb-alert lb-alert-warning mb-6 rounded-2xl border border-yellow-200 dark:border-yellow-500/30 bg-yellow-50 dark:bg-yellow-500/10 px-5 py-4">
+            <p className="lb-alert-warning text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Upcoming Task Alerts</p>
             <ul className="space-y-1">
               {getNotifications(tasks).map((task) => (
-                <li key={task.id} className="text-sm text-yellow-700 dark:text-yellow-400">
+                <li key={task.id} className="lb-alert-warning text-sm text-yellow-700 dark:text-yellow-400">
                   {task.title} is due on {task.dueDate}
                 </li>
               ))}
