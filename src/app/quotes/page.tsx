@@ -1,5 +1,7 @@
 "use client"
 
+import { createClient } from "@/lib/supabase/client";
+import OrgDropDown from "@/components/OrgDropDown";
 import { useEffect, useState, Suspense } from "react"
 import { addQuote, getQuotes, acceptQuote, deleteQuote, getCurrentUserRole } from "./actions"
 import BackButton from "@/components/BackButton"
@@ -17,6 +19,12 @@ function SkeletonPulse({ className = "" }: SkeletonPulseProps) {
     )
 }
 
+type OrgOption = {
+    org_id: string;
+    org_name: string;
+    role: string;
+};
+
 function QuotesPageContent() {
     const [quotes, setQuotes] = useState<{
         quotes_id: number
@@ -29,6 +37,7 @@ function QuotesPageContent() {
     const searchParams = useSearchParams()
     const orgID = searchParams.get('orgId')
 
+    const [organizations, setOrganizations] = useState<OrgOption[]>([]);
     const [vendor, setVendor] = useState("")
     const [memo, setMemo] = useState("")
     const [amount, setAmount] = useState("")
@@ -78,7 +87,29 @@ function QuotesPageContent() {
     useEffect(() => {
         fetchQuotes()
         fetchUserRole()
+        fetchOrganizations()
     }, [])
+
+    async function fetchOrganizations() {
+        if (!orgID) return;
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: memberships } = await supabase
+            .from("org_members")
+            .select("org_id, role, organizations(org_name)")
+            .eq("user_id", user.id);
+
+        if (!memberships) return;
+
+        const orgList: OrgOption[] = memberships.map((m: any) => ({
+            org_id: m.org_id,
+            org_name: m.organizations?.org_name ?? m.org_id,
+            role: m.role,
+        }));
+        setOrganizations(orgList);
+    }
 
     async function handleAddQuote() {
         if (!vendor || !memo || !amount || !orgID) return
@@ -111,10 +142,16 @@ function QuotesPageContent() {
             <div className="mx-auto max-w-3xl px-6 py-8 lg:px-8">
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                     <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Quotes</h1>
                     <BackButton />
                 </div>
+
+                {organizations.length > 1 && orgID && (
+                    <div className="mb-6">
+                        <OrgDropDown organizations={organizations} currentOrgId={orgID} basePath="/quotes" />
+                    </div>
+                )}
 
                 {/* Access denied state - only show after role has been fetched */}
                 {!loading && userRole !== null && !canView && (

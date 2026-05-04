@@ -1,5 +1,7 @@
 "use client";
 
+import { createClient } from "@/lib/supabase/client";
+import OrgDropDown from "@/components/OrgDropDown";
 import { Suspense, useEffect, useState, useRef } from "react";
 import BackButton from "@/components/BackButton";
 import Skeleton from "@/components/Skeleton";
@@ -32,6 +34,12 @@ type DatabaseTask = {
   notify_days_before?: number | null;
 };
 
+type OrgOption = {
+  org_id: string;
+  org_name: string;
+  role: string;
+};
+
 type SkeletonPulseProps = { className?: string };
 function SkeletonPulse({ className = "" }: SkeletonPulseProps) {
   return (
@@ -47,6 +55,7 @@ const selectClass =
 
 function TasksPageContent() {
   const orgId = useSearchParams().get("orgId");
+  const [organizations, setOrganizations] = useState<OrgOption[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -102,6 +111,30 @@ function TasksPageContent() {
     };
 
     fetchTasks();
+  }, [orgId]);
+
+  useEffect(() => {
+    async function fetchOrganizations() {
+      if (!orgId) return;
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: memberships } = await supabase
+        .from("org_members")
+        .select("org_id, role, organizations(org_name)")
+        .eq("user_id", user.id);
+
+      if (!memberships) return;
+
+      const orgList: OrgOption[] = memberships.map((m: any) => ({
+        org_id: m.org_id,
+        org_name: m.organizations?.org_name ?? m.org_id,
+        role: m.role,
+      }));
+      setOrganizations(orgList);
+    }
+    fetchOrganizations();
   }, [orgId]);
 
   const isValidFutureDate = (dateString: string) => {
@@ -202,10 +235,16 @@ function TasksPageContent() {
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Task List</h1>
           <BackButton />
         </div>
+
+        {organizations.length > 1 && orgId && (
+          <div className="mb-6">
+            <OrgDropDown organizations={organizations} currentOrgId={orgId} basePath="/tasks" />
+          </div>
+        )}
 
         {/* Upcoming alerts banner */}
         {getNotifications(tasks).length > 0 && (
