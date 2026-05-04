@@ -3,6 +3,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { updateDisplayName } from "./actions"
 import ThemeToggle from "@/components/ThemeToggle"
+import BackButton from "@/components/BackButton"
 
 // Account-level settings page (not org-scoped).
 // Lives at /settings, accessible from the navbar regardless of which org the
@@ -36,16 +37,19 @@ export default async function SettingsPage() {
     return (
         <main className="min-h-screen bg-background text-foreground">
             <div className="mx-auto max-w-2xl px-6 py-10">
-                <div className="mb-8">
-                    <p className="text-xs uppercase tracking-[0.18em] text-neutral-500 dark:text-neutral-400">
-                        Account Settings
-                    </p>
-                    <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-                        Your Account
-                    </h1>
-                    <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                        Manage your profile, appearance, and password.
-                    </p>
+                <div className="mb-8 flex items-start justify-between gap-4">
+                    <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-neutral-500 dark:text-neutral-400">
+                            Account Settings
+                        </p>
+                        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+                            Your Account
+                        </h1>
+                        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+                            Manage your profile, appearance, and password.
+                        </p>
+                    </div>
+                    <BackButton />
                 </div>
 
                 {/* Profile info */}
@@ -117,15 +121,6 @@ export default async function SettingsPage() {
                         </Link>
                     </div>
                 </section>
-
-                <div className="mt-8">
-                    <Link
-                        href="/"
-                        className="text-sm text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                        &larr; Back to dashboard
-                    </Link>
-                </div>
             </div>
         </main>
     )
