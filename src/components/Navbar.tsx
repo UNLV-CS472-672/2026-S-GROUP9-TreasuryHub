@@ -80,7 +80,7 @@ export default function Navbar({
             <button
               type="button"
               onClick={() =>
-                window.alert("Only treasurers and advisors can change the organization logo.")
+                window.alert("Only treasurers, executives, advisors, and admins can change the organization logo.")
               }
               title="You do not have permission to edit the logo"
               className="
