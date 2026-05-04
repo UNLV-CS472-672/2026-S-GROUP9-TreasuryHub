@@ -84,12 +84,6 @@ function QuotesPageContent() {
         setUserRole(role)
     }
 
-    useEffect(() => {
-        fetchQuotes()
-        fetchUserRole()
-        fetchOrganizations()
-    }, [])
-
     async function fetchOrganizations() {
         if (!orgID) return;
         const supabase = createClient();
@@ -110,6 +104,12 @@ function QuotesPageContent() {
         }));
         setOrganizations(orgList);
     }
+
+    useEffect(() => {
+        fetchQuotes()
+        fetchUserRole()
+        fetchOrganizations()
+    }, [])
 
     async function handleAddQuote() {
         if (!vendor || !memo || !amount || !orgID) return

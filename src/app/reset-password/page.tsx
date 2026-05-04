@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
                     Set a new password
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-neutral-400 mb-6">
-                    Choose a new password for your account. You'll be redirected to login after.
+                    Choose a new password for your account. You&apos;ll be redirected to login after.
                 </p>
 
                 <div className="flex flex-col gap-3">
