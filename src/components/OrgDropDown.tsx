@@ -12,9 +12,10 @@ type Props = {
   }[]
   currentOrgId: string
   basePath: string // e.g. '/dashboard' or '/files'
+  showCurrentOrgName?: boolean // default true; set false when parent already shows org name
 }
 
-export default function OrgDropDown({ organizations, currentOrgId, basePath }: Props) {
+export default function OrgDropDown({ organizations, currentOrgId, basePath, showCurrentOrgName = true }: Props) {
   // Hide entirely if user has only one org (no other orgs to switch to)
 
   const router = useRouter()
@@ -74,7 +75,7 @@ export default function OrgDropDown({ organizations, currentOrgId, basePath }: P
           focus:outline-none
         "
       >
-        {currentOrg?.org_name ?? "Select organization"} ▾
+        {showCurrentOrgName ? (currentOrg?.org_name ?? "Select organization") : "Change organization"} ▾
       </button>
 
       {open && (

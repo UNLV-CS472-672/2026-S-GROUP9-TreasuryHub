@@ -33,6 +33,11 @@ export default function Navbar({
   const canEditLogo = ["treasurer", "executive", "advisor", "admin"].includes(
     currentUserRole.toLowerCase()
   );
+
+
+
+
+
   return (
     <nav
       className="
@@ -124,6 +129,7 @@ export default function Navbar({
                 organizations={organizations}
                 currentOrgId={currentOrgId}
                 basePath={basePath}
+                showCurrentOrgName={false}
               />
             </div>
           </div>
