@@ -75,7 +75,7 @@ export default function OrgDropDown({ organizations, currentOrgId, basePath, sho
           focus:outline-none
         "
       >
-        {showCurrentOrgName ? (currentOrg?.org_name ?? "Select organization") : "Change organization"} ▾
+        {showCurrentOrgName ? (currentOrg?.org_name ?? "Select organization") : "CHANGE ORGANIZATION"} ▾
       </button>
 
       {open && (
