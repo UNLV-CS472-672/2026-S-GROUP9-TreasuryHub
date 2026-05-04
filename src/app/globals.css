@@ -64,7 +64,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .lightbright .lb-card {
   background: var(--card);
   border: 1px solid var(--border);
-  color: var(--foreground);
+  color: var(--border);
   transition: all 0.2s ease;
 }
 
@@ -94,7 +94,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Buttons */
 .lightbright .lb-button {
-  background: #ffcbb3a7;
+  background: #f4ac8ba7;
   border: var(--lb-secondary);
   color: var(--foreground);
 }
@@ -103,6 +103,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: var(--lb-soft);
   border-color: var(--lb-secondary);
   color: var(--foreground);
+}
+
+.lb-alert {
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.lb-alert-warning {
+  background-color: #eaf2ff;
+  border-color: #5b8def;
+  color: #2a4b8d;
 }
 
 

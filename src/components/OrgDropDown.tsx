@@ -61,6 +61,7 @@ export default function OrgDropDown({ organizations, currentOrgId, basePath }: P
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="
+          lb-button
           font-[var(--font-geist-sans)]
           cursor-pointer rounded-lg
           border border-white/[0.15]

@@ -65,15 +65,9 @@ function formatCurrency(value: number) {
 function StatCard({
   label,
   value,
-  icon,
-  accent,
-  hoverAccent,
 }: {
   label: string;
   value: string | number;
-  icon: React.ReactNode;
-  accent: string;
-  hoverAccent?: string;
 }) {
   return (
     <div //chnaged for layout -prabh
@@ -574,23 +568,14 @@ export default async function DashboardPage({
               <StatCard
                 label="Income"
                 value={formatCurrency(data.summary.income)}
-                icon={<DollarSign className="h-5 w-5" />}
-                accent="bg-green-100 text-green-600"
-                hoverAccent="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-emerald-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Expenses"
                 value={formatCurrency(data.summary.expenses)}
-                icon={<TrendingDown className="h-5 w-5" />}
-                accent="bg-rose-100 text-rose-600"
-                hoverAccent="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-rose-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard 
                 label="Net" 
                 value={formatCurrency(data.summary.net)} 
-                icon={<Wallet className="h-5 w-5" />}
-                accent="bg-violet-100 text-violet-600"
-                hoverAccent="hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-violet-50 dark:hover:bg-white/[0.06]"
               />
 
               <LinkCard
@@ -639,37 +624,22 @@ export default async function DashboardPage({
               <StatCard
                 label="Reimbursements"
                 value={formatCurrency(data.summary.reimbursementsTotal)}
-                icon={<DollarSign className="h-5 w-5" />}
-                accent="bg-emerald-100 text-emerald-600"
-                hoverAccent="dark:hover:bg-emerald-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Payables"
                 value={formatCurrency(data.summary.payablesTotal)}
-                icon={<TrendingDown className="h-5 w-5" />}
-                accent="bg-rose-100 text-rose-600"
-                hoverAccent="dark:hover:bg-rose-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Receivables"
                 value={formatCurrency(data.summary.receivablesTotal)}
-                icon={<Wallet className="h-5 w-5" />}
-                accent="bg-violet-100 text-violet-600"
-                hoverAccent="dark:hover:bg-violet-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Transactions"
                 value={data.summary.personalTransactionCount}
-                icon={<ReceiptText className="h-5 w-5" />}
-                accent="bg-blue-100 text-blue-600"
-                hoverAccent="dark:hover:bg-blue-50 dark:hover:bg-white/[0.06]"
               />
               <StatCard
                 label="Uploaded Files"
                 value={data.summary.uploadedFilesCount}
-                icon={<Upload className="h-5 w-5" />}
-                accent="bg-sky-100 text-sky-600"
-                hoverAccent="dark:hover:bg-sky-50 dark:hover:bg-white/[0.06]"
               />
             </section>
 
