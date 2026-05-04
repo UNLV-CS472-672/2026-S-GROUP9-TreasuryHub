@@ -75,20 +75,20 @@ export default function UploadModal({ orgId, transactionId, onSuccess, onClose }
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                <h2 className="text-lg font-semibold mb-4 text-black">Upload File</h2>
+            <div className="bg-white dark:bg-neutral-900 rounded-lg p-6 w-full max-w-md">
+                <h2 className="text-lg font-semibold mb-4 text-black dark:text-white">Upload File</h2>
 
                 {/* Toggle between receipt and document */}
                 <div className="flex gap-4 mb-4">
                     <button
                         onClick={() => setFileType('receipt')}
-                        className={`flex-1 py-2 rounded border ${fileType === 'receipt' ? 'bg-blue-600 text-white' : 'border-gray-300 text-black'}`}
+                        className={`flex-1 py-2 rounded border ${fileType === 'receipt' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-white/[0.15] text-black dark:text-white'}`}
                     >
                         Receipt
                     </button>
                     <button
                         onClick={() => setFileType('document')}
-                        className={`flex-1 py-2 rounded border ${fileType === 'document' ? 'bg-blue-600 text-white' : 'border-gray-300 text-black'}`}
+                        className={`flex-1 py-2 rounded border ${fileType === 'document' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-white/[0.15] text-black dark:text-white'}`}
                     >
                         Document
                     </button>
@@ -97,13 +97,13 @@ export default function UploadModal({ orgId, transactionId, onSuccess, onClose }
                 {/* Optional transaction linking for both receipts and documents */}
                 {/* NOTE: transaction labels will improve when transaction table has display fields */}
                 <div className="mb-4">
-                    <label className="block text-sm text-black mb-1">
+                    <label className="block text-sm text-black dark:text-white mb-1">
                         Link to Transaction (optional)
                     </label>
                     <select
                         value={selectedTransaction}
                         onChange={(e) => setSelectedTransaction(e.target.value)}
-                        className="w-full border border-gray-300 rounded p-2 text-black"
+                        className="w-full border border-gray-300 dark:border-white/[0.15] bg-white dark:bg-neutral-800 rounded p-2 text-black dark:text-white"
                     >
                         <option value="">No transaction</option>
                         {transactions.map((t) => (
@@ -128,7 +128,7 @@ export default function UploadModal({ orgId, transactionId, onSuccess, onClose }
                 {/* Clicking this label opens the file picker */}
                 <label
                     htmlFor="file-input"
-                    className="block w-full mb-4 p-4 border-2 border-dashed border-gray-300 rounded text-center cursor-pointer hover:border-blue-400 text-black"
+                    className="block w-full mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-white/[0.15] rounded text-center cursor-pointer hover:border-blue-400 text-black dark:text-white"
                 >
                     {file ? file.name : 'Click to choose a file'}
                 </label>
@@ -138,14 +138,14 @@ export default function UploadModal({ orgId, transactionId, onSuccess, onClose }
                 <div className="flex gap-3">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-2 rounded border border-gray-300 text-black"
+                        className="flex-1 py-2 rounded border border-gray-300 dark:border-white/[0.15] text-black dark:text-white hover:bg-gray-100 dark:hover:bg-white/[0.05]"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleUpload}
                         disabled={!file || uploading}
-                        className="flex-1 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
+                        className="flex-1 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                     >
                         {uploading ? 'Uploading...' : 'Upload'}
                     </button>
