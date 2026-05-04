@@ -247,7 +247,7 @@ function TransactionsTable({
                 lb-button
                 rounded-xl
                 border border-gray-200 dark:border-white/[0.2]
-                bg-blue-50 dark:bg-blue-500/[0.05]
+                bg-white dark:bg-white/[0.05]
                 px-4 py-2
                 text-sm font-medium text-gray-900 dark:text-white
                 transition
