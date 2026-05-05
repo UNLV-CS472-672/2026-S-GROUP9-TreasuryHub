@@ -2,21 +2,21 @@
 
 // base function used by all other skeleton components
 function SkeletonPulse({ className = "" }: { className?: string }) {
-    return(
+    return (
         <div
-            className={`animate-pulse rounded-md bg-white/[0.07] ${className}`}
+            className={`animate-pulse rounded-md bg-gray-200 dark:bg-white/[0.07] ${className}`}
         />
     );
 }
 
 // StatCardSkeleton - placeholder for the <StatCard> component
-function StatCardSkeleton(){
-    return(
+function StatCardSkeleton() {
+    return (
         <div
             className="
-                rounded-2x1
-                border border-white/[0.12]
-                bg-white/[0.03]
+                rounded-2xl
+                border border-gray-200 dark:border-white/[0.12]
+                bg-white dark:bg-white/[0.03]
                 p-5
                 backdrop-blur-sm
                 shadow-[0_0_20px_rgba(255,255,255,0.05)]
@@ -29,13 +29,13 @@ function StatCardSkeleton(){
 }
 
 // LinkCardSkeleton - placeholder for the <LinkCard> and <QuotesCard>
-function LinkCardSkeleton(){
-    return(
+function LinkCardSkeleton() {
+    return (
         <div
             className="
-                rounded-2x1
-                border border-white/[0.12]
-                bg-white/[0.03]
+                rounded-2xl
+                border border-gray-200 dark:border-white/[0.12]
+                bg-white dark:bg-white/[0.03]
                 p-5
                 backdrop-blur-sm
                 shadow-[0_0_20px_rgba(255,255,255,0.05)]
@@ -49,20 +49,20 @@ function LinkCardSkeleton(){
 }
 
 // TransactionsTableSkeleton - placeholder for the <TransactionsTable>
-function TransactionsTableSkeleton({ title }: { title: string }){
-    return(
+function TransactionsTableSkeleton({ title }: { title: string }) {
+    return (
         <section
             className="
-                rounded-2x1
-                border border-white/[0.12]
-                bg-white/[0.03]
+                rounded-2xl
+                border border-gray-200 dark:border-white/[0.12]
+                bg-white dark:bg-white/[0.03]
                 p-6
                 backdrop-blur-sm
-                shadow-[0_0_20px_rgba(255.255,255,0.05)]
+                shadow-[0_0_20px_rgba(255,255,255,0.05)]
             "
         >
             <div className="mb-6 flex items-center justify-between gap-4">
-                <h2 className="text-lg font-semibold tracking-tight text-white">
+                <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
                     {title}
                 </h2>
                 <div className="flex flex-wrap items-center gap-3">
@@ -74,12 +74,12 @@ function TransactionsTableSkeleton({ title }: { title: string }){
             <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                     <thead>
-                        <tr className="border-b border-white/[0.2]">
+                        <tr className="border-b border-gray-200 dark:border-white/[0.2]">
                             {["Date", "Description", "Category", "Type", "Amount"].map(
                                 (col) => (
                                     <th
                                         key={col}
-                                        className="py-3 pr-6 text-left text-xs uppercase tracking-[0.16em] text-neutral-500 font-medium last:text-right last:pr-0"
+                                        className="py-3 pr-6 text-left text-xs uppercase tracking-[0.16em] text-gray-500 dark:text-neutral-500 font-medium last:text-right last:pr-0"
                                     >
                                         {col}
                                     </th>
@@ -87,12 +87,12 @@ function TransactionsTableSkeleton({ title }: { title: string }){
                             )}
                         </tr>
                     </thead>
-                    
+
                     <tbody>
                         {Array.from({ length: 6 }).map((_, i) => (
                             <tr
                                 key={i}
-                                className="border-b border-white/[0.08]"
+                                className="border-b border-gray-100 dark:border-white/[0.08]"
                             >
                                 <td className="py-4 pr-6">
                                     <SkeletonPulse className="h-4 w-20" />
@@ -119,13 +119,13 @@ function TransactionsTableSkeleton({ title }: { title: string }){
 }
 
 // TasksSectionSkeleton - placeholder for the <TasksSection> component
-function TasksSectionSkeleton(){
-    return(
+function TasksSectionSkeleton() {
+    return (
         <section
             className="
-                rounded-2x1
-                border border-white/[0.12]
-                bg-white/[0.03]
+                rounded-2xl
+                border border-gray-200 dark:border-white/[0.12]
+                bg-white dark:bg-white/[0.03]
                 p-6
                 backdrop-blur-sm
                 shadow-[0_0_20px_rgba(255,255,255,0.05)]
@@ -139,7 +139,7 @@ function TasksSectionSkeleton(){
                 <SkeletonPulse className="h-9 w-28 rounded-xl" />
             </div>
 
-            <div className="rounded-xl border border-dashed border-white/[0.12] px-4 py-6">
+            <div className="rounded-xl border border-dashed border-gray-200 dark:border-white/[0.12] px-4 py-6">
                 <SkeletonPulse className="h-4 w-72 mx-auto" />
             </div>
         </section>
@@ -147,8 +147,8 @@ function TasksSectionSkeleton(){
 }
 
 // NavbarSkeleton - placeholder for the <Navbar> component
-function NavbarSkeleton(){
-    return(
+function NavbarSkeleton() {
+    return (
         <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
                 <SkeletonPulse className="h-8 w-8 rounded-lg" />
@@ -166,28 +166,28 @@ function NavbarSkeleton(){
 
 // DashboardLoading - the default export by Next.js as the Suspense
 export default function DashboardLoading() {
-  return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        <NavbarSkeleton />
- 
-        <div className="space-y-8">
-          {/* Stat + link cards — matches the 7-column org layout (widest case) */}
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-7">
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <LinkCardSkeleton />
-            <LinkCardSkeleton />
-            <LinkCardSkeleton />
-          </section>
- 
-          <TransactionsTableSkeleton title="Recent Organization Transactions" />
- 
-          <TasksSectionSkeleton />
-        </div>
-      </div>
-    </main>
-  );
+    return (
+        <main className="min-h-screen bg-background text-foreground">
+            <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                <NavbarSkeleton />
+
+                <div className="space-y-8">
+                    {/* Stat + link cards — matches the 7-column org layout (widest case) */}
+                    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-7">
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <LinkCardSkeleton />
+                        <LinkCardSkeleton />
+                        <LinkCardSkeleton />
+                    </section>
+
+                    <TransactionsTableSkeleton title="Recent Organization Transactions" />
+
+                    <TasksSectionSkeleton />
+                </div>
+            </div>
+        </main>
+    );
 }

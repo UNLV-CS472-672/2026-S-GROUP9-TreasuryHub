@@ -75,7 +75,7 @@ export default function FileViewer({ filePath, fileName, mimeType, onClose }: Pr
 
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4">
-                <p className="text-black">This file type cannot be previewed inline.</p>
+                <p className="text-black dark:text-white">This file type cannot be previewed inline.</p>
                 <a href={url} download={fileName} className="bg-blue-600 text-white px-4 py-2 rounded">
                     Download {fileName}
                 </a>
@@ -85,22 +85,22 @@ export default function FileViewer({ filePath, fileName, mimeType, onClose }: Pr
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-4xl h-[80vh] flex flex-col">
+            <div className="bg-white dark:bg-neutral-900 rounded-lg w-full max-w-4xl h-[80vh] flex flex-col">
 
                 {/* Header with filename and close button */}
-                <div className="flex items-center justify-between p-4 border-b">
-                    <h2 className="text-lg font-semibold text-black">{fileName}</h2>
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-white/[0.12]">
+                    <h2 className="text-lg font-semibold text-black dark:text-white">{fileName}</h2>
                     <button
                         onClick={onClose}
-                        className="text-black hover:text-gray-600 text-xl font-bold"
+                        className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 text-xl font-bold"
                     >
                         ✕
                     </button>
                 </div>
 
                 {/* File content area */}
-                <div className="flex-1 overflow-auto p-4">
-                    {loading && <p className="text-black">Loading file...</p>}
+                <div className="flex-1 overflow-auto p-4 flex items-center justify-center">
+                    {loading && <p className="text-black dark:text-white">Loading file...</p>}
                     {error && <p className="text-red-500">{error}</p>}
                     {!loading && !error && renderFile()}
                 </div>

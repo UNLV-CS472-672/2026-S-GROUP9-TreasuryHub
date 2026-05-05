@@ -71,7 +71,7 @@ function StatCard({
 }) {
   return (
     <div //chnaged for layout -prabh
-      className= {`
+      className={`
         lb-card
         rounded-2xl
         border border-gray-200 dark:border-white/[0.12] 
@@ -94,7 +94,7 @@ function StatCard({
         dark:hover:shadow-[0_0_35px_rgba(255,255,255,0.12)]
       `}
     >
-    <div className="flex items-start justify-between gap-4 overflow-hidden">
+      <div className="flex items-start justify-between gap-4 overflow-hidden">
         <div>
           <p className="lb-muted text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-neutral-400">
             {label}
@@ -155,7 +155,7 @@ function LinkCard({
 
 function QuotesCard({ orgId }: { orgId: string }) {
   return (
-    <Link 
+    <Link
       href={`/quotes?orgId=${orgId}`} //changed for layout- prabh
       className="
         lb-card
@@ -228,12 +228,12 @@ function TransactionsTable({
             className="
               lb-button
               rounded-xl
-              border border-white/[0.2]
-              bg-white/[0.05]
+              border border-gray-200 dark:border-white/[0.2]
+              bg-white dark:bg-white/[0.05]
               px-4 py-2
               text-sm font-medium text-gray-900 dark:text-white
               transition
-              hover:border-white/[0.35]
+              hover:border-gray-300 dark:hover:border-white/[0.35]
               hover:bg-gray-100 dark:hover:bg-white/[0.08]
             "
           >
@@ -246,12 +246,12 @@ function TransactionsTable({
               className="
                 lb-button
                 rounded-xl
-                border border-white/[0.2]
-                bg-blue-500/[0.05]
+                border border-gray-200 dark:border-white/[0.2]
+                bg-white dark:bg-white/[0.05]
                 px-4 py-2
                 text-sm font-medium text-gray-900 dark:text-white
                 transition
-                hover:border-white/[0.35]
+                hover:border-gray-300 dark:hover:border-white/[0.35]
                 hover:bg-gray-100 dark:hover:bg-white/[0.08]
               "
             />
@@ -332,36 +332,36 @@ function TasksSection({
             Tasks
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-neutral-400">
-           Upcoming tasks due soon. View and manage assignments.
+            Upcoming tasks due soon. View and manage assignments.
           </p>
         </div>
         <div className="flex items-center gap-2">
-  {canSeeAllTasks && roleOptions.length > 0 && (
-    <TaskRoleFilter
-      orgId={orgId}
-      roleOptions={roleOptions}
-      selectedRole={selectedRole}
-    />
+          {canSeeAllTasks && roleOptions.length > 0 && (
+            <TaskRoleFilter
+              orgId={orgId}
+              roleOptions={roleOptions}
+              selectedRole={selectedRole}
+            />
 
-  )}
+          )}
 
-  <Link
-    href={`/tasks?orgId=${orgId}`}
-    className="
-      lb-button
-      rounded-xl
-      border border-white/[0.2]
-      bg-white/[0.05]
-      px-4 py-2
-      text-sm font-medium text-gray-900 dark:text-white
-      transition
-      hover:border-white/[0.35]
-      hover:bg-white/[0.08]
-    "
-  >
-    Open Tasks
-  </Link>
-</div>
+          <Link
+            href={`/tasks?orgId=${orgId}`}
+            className="
+              lb-button
+              rounded-xl
+              border border-gray-200 dark:border-white/[0.2]
+              bg-white dark:bg-white/[0.05]
+              px-4 py-2
+              text-sm font-medium text-gray-900 dark:text-white
+              transition
+              hover:border-gray-300 dark:hover:border-white/[0.35]
+              hover:bg-gray-100 dark:hover:bg-white/[0.08]
+            "
+          >
+            Open Tasks
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -411,7 +411,7 @@ function TasksSection({
 
 function NoOrganizationState() {
   return ( //changed for layout - prabh
-    <main className="min-h-screen bg-background text-foreground"> 
+    <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-6 py-12">
         <section
           className="
@@ -474,7 +474,7 @@ bg-white dark:bg-white/[0.03]
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
-  const { orgId, taskRole = "all"} = await searchParams;
+  const { orgId, taskRole = "all" } = await searchParams;
 
   let data: Awaited<ReturnType<typeof getDashboardData>> | null = null;
 
@@ -490,73 +490,73 @@ export default async function DashboardPage({
 
   const currentOrg =
     data.organizations.find((org) => org.org_id === data.orgId) || null;
-    const tasksResult = await getTasks(data.orgId);
+  const tasksResult = await getTasks(data.orgId);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const twoWeeksFromNow = new Date(today);
-    twoWeeksFromNow.setDate(today.getDate() + 14);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    const canSeeAllTasks = ["treasurer", "advisor", "executive", "admin"].includes(
-      data.role.toLowerCase()
-    );
-    
-    const roleOptions = Array.from(
-      new Set(
-        ((tasksResult.data ?? []) as DashboardTask[])
-          .filter((task) => task.assign_type === "role")
-          .map((task) => task.assigned_to)
-      )
-    );
-    
-    const upcomingTasks = ((tasksResult.data ?? []) as DashboardTask[])
-      .filter((task) => {
-        if (!task.due_date) return false;
-    
-        const [year, month, day] = task.due_date.split("-").map(Number);
-        const dueDate = new Date(year, month - 1, day);
-    
-        const isDueSoon = dueDate >= today && dueDate <= twoWeeksFromNow;
+  const twoWeeksFromNow = new Date(today);
+  twoWeeksFromNow.setDate(today.getDate() + 14);
 
-        const matchesSelectedRole =
-          taskRole === "all" ||
-          task.assigned_to.toLowerCase() === taskRole.toLowerCase();
+  const canSeeAllTasks = ["treasurer", "advisor", "executive", "admin"].includes(
+    data.role.toLowerCase()
+  );
 
-        const memberCanSeeTask =
-          task.assign_type === "role" &&
-          task.assigned_to.toLowerCase() === data.role.toLowerCase();
+  const roleOptions = Array.from(
+    new Set(
+      ((tasksResult.data ?? []) as DashboardTask[])
+        .filter((task) => task.assign_type === "role")
+        .map((task) => task.assigned_to)
+    )
+  );
 
-        return (
-          isDueSoon &&
-          (canSeeAllTasks ? matchesSelectedRole : memberCanSeeTask)
-        );
-      })
-      .sort((a, b) => {
-        const [ay, am, ad] = (a.due_date as string).split("-").map(Number);
-        const [by, bm, bd] = (b.due_date as string).split("-").map(Number);
-      
-        return (
-          new Date(ay, am - 1, ad).getTime() -
-          new Date(by, bm - 1, bd).getTime()
-        );
-      });
+  const upcomingTasks = ((tasksResult.data ?? []) as DashboardTask[])
+    .filter((task) => {
+      if (!task.due_date) return false;
+
+      const [year, month, day] = task.due_date.split("-").map(Number);
+      const dueDate = new Date(year, month - 1, day);
+
+      const isDueSoon = dueDate >= today && dueDate <= twoWeeksFromNow;
+
+      const matchesSelectedRole =
+        taskRole === "all" ||
+        task.assigned_to.toLowerCase() === taskRole.toLowerCase();
+
+      const memberCanSeeTask =
+        task.assign_type === "role" &&
+        task.assigned_to.toLowerCase() === data.role.toLowerCase();
+
+      return (
+        isDueSoon &&
+        (canSeeAllTasks ? matchesSelectedRole : memberCanSeeTask)
+      );
+    })
+    .sort((a, b) => {
+      const [ay, am, ad] = (a.due_date as string).split("-").map(Number);
+      const [by, bm, bd] = (b.due_date as string).split("-").map(Number);
+
+      return (
+        new Date(ay, am - 1, ad).getTime() -
+        new Date(by, bm - 1, bd).getTime()
+      );
+    });
   const canAccessFiles = canViewFiles(data.role);
   const canExport = canExportTransactions(data.role);
 
   return ( //changed for layout - prabh
     <main className="lb-page min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <Navbar
-          currentUserRole={data.role}
-          organizations={data.organizations}
-          currentOrgId={data.orgId}
-          currentOrgName={
-            data.organizations.find(org => org.org_id === data.orgId)?.org_name || "Unknown Org"
-          }
-          basePath="/"
-          logoSrc={currentOrg?.logo_url || null}
-          pageTitle="Dashboard"
-        />
+        currentUserRole={data.role}
+        organizations={data.organizations}
+        currentOrgId={data.orgId}
+        currentOrgName={
+          data.organizations.find(org => org.org_id === data.orgId)?.org_name || "Unknown Org"
+        }
+        basePath="/"
+        logoSrc={currentOrg?.logo_url || null}
+        pageTitle="Dashboard"
+      />
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
 
         {data.scope === "organization" ? (
@@ -573,9 +573,9 @@ export default async function DashboardPage({
                 label="Expenses"
                 value={formatCurrency(data.summary.expenses)}
               />
-              <StatCard 
-                label="Net" 
-                value={formatCurrency(data.summary.net)} 
+              <StatCard
+                label="Net"
+                value={formatCurrency(data.summary.net)}
               />
 
               <LinkCard
@@ -603,14 +603,14 @@ export default async function DashboardPage({
                 />
               )}
             </section>
-            
+
             <TasksSection
               orgId={data.orgId}
               tasks={upcomingTasks}
               canSeeAllTasks={canSeeAllTasks}
               roleOptions={data.roleOptions}
               selectedRole={taskRole}
-              />
+            />
             <TransactionsTable
               title="Recent Organization Transactions"
               transactions={data.recentTransactions}
@@ -645,11 +645,11 @@ export default async function DashboardPage({
 
             <TasksSection
               orgId={data.orgId}
-              tasks={upcomingTasks} 
+              tasks={upcomingTasks}
               canSeeAllTasks={canSeeAllTasks}
               roleOptions={data.roleOptions}
               selectedRole={taskRole}
-              />
+            />
             <TransactionsTable
               title="My Recent Transactions"
               transactions={data.recentTransactions}

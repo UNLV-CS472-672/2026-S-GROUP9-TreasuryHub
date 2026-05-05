@@ -110,14 +110,14 @@ export default async function OrganizationMembersPage({
 
         {/* Org Logo */}
         <div className="flex flex-col items-center justify-center gap-3 text-center mb-8">
-          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-gray-200 dark:border-white/[0.12] bg-gray-50 dark:bg-white/[0.03] sm:h-28 sm:w-28 md:h-32 md:w-32">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 dark:border-white/[0.12] bg-gray-50 dark:bg-white/[0.03] sm:h-28 sm:w-28 md:h-32 md:w-32">
             {signedLogoUrl ? (
               <Image
                 src={signedLogoUrl}
                 alt={`${organization.org_name} logo`}
                 width={128}
                 height={128}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
               />
             ) : (
               <span className="text-2xl font-semibold text-gray-900 dark:text-white md:text-3xl">
