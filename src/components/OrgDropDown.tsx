@@ -82,12 +82,12 @@ export default function OrgDropDown({ organizations, currentOrgId, basePath, sho
       {
         open && (
           <div className="
-          absolute left-0 top-full z-50 mt-1 w-56
-          rounded-lg border border-white/[0.15]
-          bg-neutral-950 shadow-xl
-        ">
+            absolute left-0 top-full z-50 mt-1 w-56
+            rounded-lg border border-gray-200 dark:border-white/[0.15]
+            bg-white dark:bg-neutral-950 shadow-xl
+          ">
             {/* Search input */}
-            <div className="border-b border-white/[0.1] p-2">
+            <div className="border-b border-gray-200 dark:border-white/[0.1] p-2">
               <input
                 ref={inputRef}
                 type="text"
@@ -100,12 +100,13 @@ export default function OrgDropDown({ organizations, currentOrgId, basePath, sho
                 }}
                 placeholder="Search organizations..."
                 className="
-                w-full rounded-md
-                bg-white/[0.06]
-                px-2 py-1.5
-                text-xs text-neutral-200 placeholder-neutral-500
-                focus:outline-none focus:ring-1 focus:ring-white/20
-              "
+            w-full rounded-md
+            bg-white dark:bg-white/[0.06]
+            px-2 py-1.5
+            text-xs text-gray-900 dark:text-neutral-200
+            placeholder-gray-400 dark:placeholder-neutral-500
+            focus:outline-none focus:ring-1 focus:ring-gray-300 dark:focus:ring-white/20
+          "
               />
             </div>
 
@@ -117,18 +118,20 @@ export default function OrgDropDown({ organizations, currentOrgId, basePath, sho
                     <button
                       onClick={() => handleSelect(org.org_id)}
                       className="
-                      w-full px-3 py-2 text-left
-                      text-xs text-neutral-200
-                      hover:bg-white/[0.08]
-                      transition-colors
-                    "
+                  w-full px-3 py-2 text-left
+                  text-xs text-gray-700 dark:text-neutral-200
+                  hover:bg-gray-100 dark:hover:bg-white/[0.08]
+                  transition-colors
+                "
                     >
                       {org.org_name}
                     </button>
                   </li>
                 ))
               ) : (
-                <li className="px-3 py-2 text-xs text-neutral-500">No results</li>
+                <li className="px-3 py-2 text-xs text-gray-500 dark:text-neutral-500">
+                  No results
+                </li>
               )}
             </ul>
           </div>
